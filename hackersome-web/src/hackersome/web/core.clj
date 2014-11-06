@@ -8,6 +8,7 @@
      [compojure.handler :refer [site]]
     [compojure.core :as cmpj]
     [compojure.route :as route]
+    [liberator.core :refer [resource defresource]]
     [org.httpkit.server :as httpkit]
     [hackersome.web.conf :refer [read-config]]
     [hackersome.web.utils :refer [->int]]
@@ -34,12 +35,17 @@
   { :status 200
     :headers access-control-headers })
 
+(defresource parameter [options txt]
+  :available-media-types ["text/plain"]
+  :handle-ok (fn [_] (format "The text is %s" txt)))
+
 (defn startup
   [options]
   (cmpj/defroutes all-routes
                   (cmpj/GET "/" [] show-landing-page)
                   (cmpj/OPTIONS "/export" [] options-query )
-                  (cmpj/GET "/welcome" [] (partial welcome-page options))
+                  (cmpj/ANY "/welcome" [] (partial welcome-page options))
+                  (cmpj/ANY "/bar/:txt" [txt] (parameter options txt))
                   (route/not-found "<p>Page not found.</p>"))
   (warn options)
   (warn (:port options))
