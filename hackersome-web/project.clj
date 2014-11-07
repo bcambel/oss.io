@@ -12,6 +12,7 @@
                     [com.draines/postal "1.11.2"]
                     [me.raynes/fs "1.4.4"]
                     [clojurewerkz/cassaforte "2.0.0-beta8"]
+                    [clj-oauth "1.5.1"]
                     [hiccup "1.0.5"]
                     [liberator "0.12.2"]
                     [clj-time "0.7.0"]
