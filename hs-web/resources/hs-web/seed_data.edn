@@ -1,0 +1,6 @@
+[
+{:db/id #db/id[:db.part/user -1], :hello/color "True Mint"}
+{:db/id #db/id[:db.part/user -2], :hello/color "Yellowish White"}
+{:db/id #db/id[:db.part/user -3], :hello/color "Orange Red"}
+{:db/id #db/id[:db.part/user -4], :hello/color "Olive Green"}
+]
