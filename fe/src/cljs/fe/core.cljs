@@ -34,7 +34,7 @@
                         parse-contact)]
     (when new-contact
       (om/transact! app :contacts #(conj % new-contact))
-      (set! (.-value input) "")
+      (om/set-state! owner :text "")
       )))
 
 (defn middle-name [{:keys [middle middle-initial]}]
@@ -53,47 +53,43 @@
         (dom/span nil (display-name contact))
         (dom/button #js {:onClick (fn [e] (put! delete @contact))} "Delete")))))
 
+(defn handle-change2 [e owner {:keys [text]}]
+  (om/set-state! owner :text (.. e -target -value)))
+
+(defn handle-change [e owner {:keys [text]}]
+  (let [value (.. e -target -value)]
+    (if-not (re-find #"[0-9]" value)
+      (om/set-state! owner :text value)
+      (om/set-state! owner :text text))))
+
 (defn contacts-view [app owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:delete (chan) :text ""})
+      {:delete (chan)
+       :text ""})
     om/IWillMount
     (will-mount [_]
       (let [delete (om/get-state owner :delete)]
         (go (loop []
-          (let [contact (<! delete)]
-            (om/transact! app :contacts
-              (fn [xs] (vec (remove #(= contact %) xs))))
-            (recur))))))
+              (let [contact (<! delete)]
+                (om/transact! app :contacts
+                  (fn [xs] (vec (remove #(= contact %) xs))))
+                (recur))))))
     om/IRenderState
-    (render-state [this {:keys [delete]}]
+    (render-state [this state]
       (dom/div nil
         (dom/h2 nil "Contact list")
         (apply dom/ul nil
           (om/build-all contact-view (:contacts app)
-            {:init-state {:delete delete}}))
+            {:init-state state}))
         (dom/div nil
-          (dom/input #js {:type "text" :ref "new-contact"})
-          (dom/button #js {:onClick #(add-contact app owner)} "Add contact"))
-        ))))
+          (dom/input #js {:type "text" :ref "new-contact" :value (:text state) 
+                          :onChange #(handle-change % owner state)})
+          (dom/button #js {:onClick #(add-contact app owner)} "Add contact"))))))
 
 (defn main []
 (om/root
   contacts-view
   app-state
   {:target (. js/document (getElementById "app"))}))
-
-; (swap! app-state assoc :text "Multiple roots!")
-; (defn main []
-;   (om/root
-;     (fn [app owner]
-;       (om/component (dom/h2 nil (:text app))))
-;       ; (reify
-;         ; om/IRender
-;         ; (render [_]
-;           ; (dom/h1 nil (:text app))
-;           ; (dom/h2 "Setting" (:text app))
-;           ))
-;     app-state
-;     {:target (. js/document (getElementById "app"))}))
