@@ -1,1 +1,0 @@
-web: java $JVM_OPTS -cp target/fe.jar clojure.main -m fe.server

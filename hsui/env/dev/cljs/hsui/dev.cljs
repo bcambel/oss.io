@@ -1,5 +1,5 @@
-(ns fe.dev
-  (:require [fe.core :as core]
+(ns hsui.dev
+  (:require [hsui.core :as core]
             [figwheel.client :as figwheel :include-macros true]
             [cljs.core.async :refer [put!]]
             [weasel.repl :as weasel]))

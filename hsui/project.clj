@@ -1,4 +1,4 @@
-(defproject fe "0.1.0-SNAPSHOT"
+(defproject hsui "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -12,10 +12,25 @@
                  [compojure "1.2.0"]
                  [enlive "1.1.5"]
                  [om "0.7.3"]
-                 [racehub/om-bootstrap "0.3.1"]
+                 [cljs-http "0.1.20"]
                  [figwheel "0.1.4-SNAPSHOT"]
                  [environ "1.0.0"]
+                 [com.cognitect/transit-clj "0.8.259"]
+                 [com.cognitect/transit-cljs "0.8.192"]
+                 [cheshire "5.3.1"]
+                 [clj-http "1.0.1"]
+                 [com.cemerick/friend "0.2.1" :exclusions [org.clojure/core.cache]]
+                 [friend-oauth2 "0.1.1"]
+                 [clojurewerkz/cassaforte "2.0.0-beta8"]
+                 [prismatic/schema "0.3.3"]
+                 [prismatic/om-tools "0.3.6"]
+                 [prismatic/dommy "1.0.0"]
                  [com.cemerick/piggieback "0.1.3"]
+                 [hiccup "1.0.5"]
+                 [liberator "0.12.2"]
+                 [commons-logging "1.1.3"]
+                 [ch.qos.logback/logback-classic "1.1.2"]
+                 [org.clojure/tools.logging "0.3.1"]
                  [weasel "0.4.0-SNAPSHOT"]
                  [leiningen "2.5.0"]]
 
@@ -24,8 +39,8 @@
 
   :min-lein-version "2.5.0"
 
-  :uberjar-name "fe.jar"
-
+  :uberjar-name "hsui.jar"
+  :main hsui.server
   :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
@@ -35,7 +50,7 @@
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
-  :profiles {:dev {:repl-options {:init-ns fe.server
+  :profiles {:dev {:repl-options {:init-ns hsui.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
                    :plugins [[lein-figwheel "0.1.4-SNAPSHOT"]]

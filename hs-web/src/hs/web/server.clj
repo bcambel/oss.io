@@ -32,3 +32,4 @@
   (println "\nCreating your server...")
   (server/start runnable-service))
 
+(println "Testing")

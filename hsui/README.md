@@ -1,4 +1,4 @@
-# fe
+# hsui
 
 
 ## Development
@@ -37,13 +37,13 @@ and a REPL prompt that looks like `cljs.user=>`.
 Open `resources/public/css/style.css` and change some styling of the
 H1 element. Notice how it's updated instantly in the browser.
 
-Open `src/cljs/fe/core.cljs`, and change `dom/h1` to
+Open `src/cljs/hsui/core.cljs`, and change `dom/h1` to
 `dom/h2`. As soon as you save the file, your browser is updated.
 
 In the REPL, type
 
 ```
-(ns fe.core)
+(ns hsui.core)
 (swap! app-state assoc :text "Interactivity FTW")
 ```
 
