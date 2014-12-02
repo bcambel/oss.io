@@ -118,6 +118,6 @@
     ))
   )
 
-(defn -main [config]
-  (startup {:conf config})
+(defn -main [& args]
+  (startup {})
   )

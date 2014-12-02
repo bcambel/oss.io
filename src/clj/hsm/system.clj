@@ -7,11 +7,14 @@
         [compojure.core :refer [GET defroutes]]
         [com.stuartsierra.component :as component]))
 
+(defn generate-response [data & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/edn"}
+   :body (pr-str data)})
+
 (defn sample-conn [db request]
   (let [conn (:connection db)]
-    (cql/select conn :users)
-    )
-  )
+    (generate-response (cql/select conn :user))))
 
 (defrecord HTTP [port db server]
   component/Lifecycle
