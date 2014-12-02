@@ -1,6 +1,4 @@
-(ns hsm.actions
-
-    (:require ))
+(ns hsm.actions)
 
 ;; USER
 

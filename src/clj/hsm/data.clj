@@ -1,5 +1,7 @@
 (ns hsm.data
-    (:require [clj-http.client :as client]))
+    (:require 
+      [clojure.tools.logging :as log]
+      [clj-http.client :as client]))
 
 (defn extract 
   [data]
@@ -23,9 +25,9 @@
 
 (defn alinks
   ([] 
-     (links def-url))
+     (alinks def-url))
   ([url]
      (let [jdata (get-reddit url)
         link-items (extract-links (get-in jdata [:data :children]))]
         (clojure.pprint/pprint link-items)
-        (respond link-items))))
+        link-items)))

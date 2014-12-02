@@ -1,8 +1,8 @@
 language: clojure
 #before_install: cd hs_web
-env:
-    - TEST_DIR=hsui
-    - TEST_DIR=hackersome-web
+# env:
+#     - TEST_DIR=hsui
+#     - TEST_DIR=hackersome-web
 lein: lein2
 script: lein midje
 jdk:
