@@ -1,4 +1,5 @@
-(ns hsm.actions)
+(ns hsm.actions
+  (:require [clojurewerkz.cassaforte.cql  :as cql]))
 
 ;; USER
 
@@ -27,7 +28,9 @@
 
 
 (defn create-user
-    [user-data])
+    [db user-data]
+    (let [conn (:connection db)]
+      (cql/insert conn :user user-data)))
 
 ;; DISCUSS
 

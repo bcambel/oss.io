@@ -6,11 +6,11 @@
             [liberator.core :refer [resource defresource]]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :as route :refer [resources]]
-            [compojure.handler :as handler :refer [api]]
+            
             [ring.util.response :as resp]
             [ring.util.codec :as codec]
             [net.cgrand.enlive-html :refer [deftemplate]]
-            [ring.middleware.reload :as reload]
+            
             [cognitect.transit :as t]
             [cemerick.friend :as friend]
             [hsm.users :as users :refer (users)]
@@ -51,8 +51,7 @@
      ;(pr-str data)
 ))
 
-(deftemplate defaultpage
-  (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
+
 
 (defn links
   []
@@ -61,48 +60,14 @@
                        {:url "http://github.com" :title "Github" :shares 2342} 
                        {:url "http://travelbird.nl" :title :travelbird :shares 100 }]))
 
-(defroutes routes
-  (resources "/")
-  (resources "/react" {:root "react"})
-  (GET "/" req (defaultpage))
-  ;(GET "/user/:id" req (user-details))
-  (GET "/test" request (friend/authorize #{::user} (render-repos-page request)))
-  (GET "/links" req (links)))
+; (defroutes routes
+;   (resources "/")
+;   (resources "/react" {:root "react"})
+;   (GET "/" req (defaultpage))
+;   ;(GET "/user/:id" req (user-details))
+;   (GET "/test" request (friend/authorize #{::user} (render-repos-page request)))
+;   (GET "/links" req (links)))
 
-(defn wrap-exception-handler
-  [handler]
-  (fn [req]
-    (try
-      (handler req)
-      (catch IllegalArgumentException e
-        (->
-         (resp/response e)
-         (resp/status 400)))
-      (catch Throwable e
-        (do 
-          (log/error e)
-        (->
-         (resp/response (.getMessage e))
-         (resp/status 500)))))))
-
-(def http-handler
-  (if is-dev?
-    (reload/wrap-reload (api #'routes))
-    (api routes)))
-
-(def app
-  (-> http-handler
-      (wrap-exception-handler)))
-
-(defn run [& [port]]
-  (defonce ^:private server
-    (do
-      (if is-dev? (start-figwheel))
-      (let [port (Integer. (or port (env :port) 10555))]
-        (print "Starting web server on port" port ".\n")
-        (run-jetty app {:port port
-                          :join? false}))))
-  server)
 
 (defn startup 
   [{:keys [conf] :or {conf "app.ini"}} ]

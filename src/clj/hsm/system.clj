@@ -1,20 +1,52 @@
 (ns hsm.system
      (:require 
+        [clojure.java.io :as io]
+        [cheshire.core :refer :all]
         [clojurewerkz.cassaforte.client :as cc]
         [clojurewerkz.cassaforte.cql    :as cql]
         [clojure.tools.logging :as log]
+        [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
+        [compojure.handler :as handler :refer [api]]
+        [compojure.route :as route :refer [resources]]
+        [ring.middleware.reload :as reload]
+        [ring.util.response :as resp]
         [ring.adapter.jetty :refer [run-jetty]]
+        [net.cgrand.enlive-html :refer [deftemplate]]
         [compojure.core :refer [GET defroutes]]
         [com.stuartsierra.component :as component]))
+
+(deftemplate defaultpage
+  (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
+
+(defn wrap-exception-handler
+  [handler]
+  (fn [req]
+    (try
+      (handler req)
+      (catch IllegalArgumentException e
+        (->
+         (resp/response e)
+         (resp/status 400)))
+      (catch Throwable e
+        (do 
+          (log/error e)
+        (->
+         (resp/response (.getMessage e))
+         (resp/status 500)))))))
 
 (defn generate-response [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/edn"}
    :body (pr-str data)})
 
+(defn generate-json-resp [data & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/json"}
+   :body (generate-string data)})
+
 (defn sample-conn [db request]
   (let [conn (:connection db)]
-    (generate-response (cql/select conn :user))))
+    (generate-json-resp (cql/select conn :user))))
 
 (defrecord HTTP [port db server]
   component/Lifecycle
@@ -23,9 +55,22 @@
     (log/info "Starting HTTP Server on " port)
 
     (defroutes routes
+          (resources "/")
+          (resources "/react" {:root "react"})
+          (GET "/" req (defaultpage))
           (GET "/test" request (sample-conn db request)))
-    
-    (let [server (run-jetty routes {:port (Integer. port)
+
+    (def http-handler
+      (if is-dev?
+        (reload/wrap-reload (api #'routes))
+        (api routes)))
+
+    (def app
+      (-> http-handler
+          (wrap-exception-handler)))
+
+    (if is-dev? (start-figwheel))
+    (let [server (run-jetty app {:port (Integer. port)
                             :join? false})]
       (assoc this :server server)))
 
@@ -67,21 +112,6 @@
 (defn cassandra-db 
   [host port keyspace]
   (map->CassandraDB {:host host :port port :keyspace keyspace}))
-
-
-
-; (defrecord Routing [db]
-;   component/Lifecycle
-;   (start [component]
-;     (defroutes routes
-;       (GET "/test" request (sample-conn db request)))
-;     (assoc this :routes routes)
-;     )
-;   (stop [component])
-;   )
-
-; (defn routes [])
-
 
 
 (defn front-end-system [config-options]
