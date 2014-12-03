@@ -6,13 +6,15 @@
         [clojurewerkz.cassaforte.cql    :as cql]
         [clojure.tools.logging :as log]
         [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
+        [hsm.controllers.user :as cont-user]
+        [hsm.controllers.discussion :as cont-disc]
         [compojure.handler :as handler :refer [api]]
         [compojure.route :as route :refer [resources]]
         [ring.middleware.reload :as reload]
         [ring.util.response :as resp]
         [ring.adapter.jetty :refer [run-jetty]]
         [net.cgrand.enlive-html :refer [deftemplate]]
-        [compojure.core :refer [GET defroutes]]
+        [compojure.core :refer [GET POST PUT defroutes]]
         [com.stuartsierra.component :as component]))
 
 (deftemplate defaultpage
@@ -58,7 +60,13 @@
           (resources "/")
           (resources "/react" {:root "react"})
           (GET "/" req (defaultpage))
-          (GET "/test" request (sample-conn db request)))
+          (GET "/test" request (sample-conn db request))
+          (POST "/user/create" request (cont-user/create-user db request))
+          (POST "/discussion/create" request (cont-disc/create-discussion db request))
+          (GET "/discussion/:id" [id request] (cont-disc/get-discussion db id request))
+          (POST "/discussion/:id/post/create" [id request] (cont-disc/post-discussion db id request))
+          (GET "/user/:id" [id request] (cont-user/get-user db id request))
+          )
 
     (def http-handler
       (if is-dev?
@@ -76,9 +84,7 @@
 
   (stop [this]
     (log/warn "Stopping HTTP Server")
-    (.stop server)
-    ) 
-  )
+    (.stop server)))
 
 (defn http-server [port]
   (map->HTTP {:port port}))
@@ -88,10 +94,6 @@
 
   (start [component]
     (log/info "Starting Cassandra database")
-    ;; In the 'start' method, initialize this component
-    ;; and start it running. For example, connect to a
-    ;; database, create thread pools, or initialize shared
-    ;; state.
     (let [conn (cc/connect [host])]
         (cql/use-keyspace conn keyspace)
       ;; Return an updated version of the component with
@@ -108,11 +110,9 @@
     ;; dissoc one of a record's base fields, you get a plain map.
     (assoc component :connection nil)))
 
-
 (defn cassandra-db 
   [host port keyspace]
   (map->CassandraDB {:host host :port port :keyspace keyspace}))
-
 
 (defn front-end-system [config-options]
   (let [{:keys [host port keyspace server-port]} config-options]

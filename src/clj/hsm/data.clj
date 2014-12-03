@@ -31,3 +31,9 @@
         link-items (extract-links (get-in jdata [:data :children]))]
         (clojure.pprint/pprint link-items)
         link-items)))
+
+(defn links
+  []
+  ; (throw (Throwable. "Testing"))
+  [ {:url "http://google.com" :title "Google" :shares 213} 
+                       {:url "http://github.com" :title "Github" :shares 2342}])

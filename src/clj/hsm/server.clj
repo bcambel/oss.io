@@ -26,18 +26,6 @@
             [ring.adapter.jetty :refer [run-jetty]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
-(defn body-as-string 
-  [ctx]
-  (if-let [body (get-in ctx [:request :body])]
-    (condp instance? body
-      java.lang.String body
-      (slurp (io/reader body)))))
-
-(defn generate-response [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/edn"}
-   :body (pr-str data)})
-
 (defn respond [data & [status]]
   (let [out (ByteArrayOutputStream. 4096)
         writer (t/writer out :json)]
@@ -48,26 +36,7 @@
      (generate-string data)
      ;(.toString out)
      }
-     ;(pr-str data)
 ))
-
-
-
-(defn links
-  []
-  ; (throw (Throwable. "Testing"))
-  (respond [ {:url "http://google.com" :title "Google" :shares 213} 
-                       {:url "http://github.com" :title "Github" :shares 2342} 
-                       {:url "http://travelbird.nl" :title :travelbird :shares 100 }]))
-
-; (defroutes routes
-;   (resources "/")
-;   (resources "/react" {:root "react"})
-;   (GET "/" req (defaultpage))
-;   ;(GET "/user/:id" req (user-details))
-;   (GET "/test" request (friend/authorize #{::user} (render-repos-page request)))
-;   (GET "/links" req (links)))
-
 
 (defn startup 
   [{:keys [conf] :or {conf "app.ini"}} ]
@@ -79,9 +48,7 @@
                                     :port (:db-port c) 
                                     :keyspace (:db-keyspace c)})
         app-sys (component/start sys)]
-    ; (run (:port c))
-    ))
-  )
+    )))
 
 (defn -main [& args]
   (startup {})

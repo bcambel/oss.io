@@ -1,9 +1,15 @@
+-- CREATE KEYSPACE hackersome WITH replication = {
+--   'class': 'SimpleStrategy',
+--   'replication_factor': '1'
+-- };
+
 use hackersome;
 
 CREATE TABLE platform (
   id int,
   name text,
   slug text,
+  url text,
   PRIMARY KEY (id)
 ) WITH
   bloom_filter_fp_chance=0.010000 AND
@@ -24,7 +30,7 @@ CREATE TABLE platform (
 
 CREATE TABLE channel (
   platform_id int,
-  id int,
+  id bigint,
   name text,
   slug text,
   PRIMARY KEY (platform_id, id)
@@ -47,8 +53,8 @@ CREATE TABLE channel (
 CREATE INDEX index_channel_slug ON channel (slug);
 
 CREATE TABLE channel_follower (
-  channel_id int,
-  user_id int,
+  channel_id bigint,
+  user_id bigint,
   created_at timestamp,
   PRIMARY KEY (channel_id, user_id)
 ) WITH
@@ -68,7 +74,7 @@ CREATE TABLE channel_follower (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE channel_time_line (
-  channel_id int,
+  channel_id bigint,
   post_id bigint,
   PRIMARY KEY (channel_id, post_id)
 ) WITH
@@ -96,7 +102,7 @@ CREATE TABLE discussion (
   slug text,
   title text,
   topic_id int,
-  user_id int,
+  user_id bigint,
   users set<int>,
   PRIMARY KEY (platform_id, id)
 ) WITH
@@ -146,7 +152,7 @@ CREATE TABLE discussion_counter (
 
 CREATE TABLE discussion_follower (
   disc_id bigint,
-  user_id int,
+  user_id bigint,
   created_at bigint,
   PRIMARY KEY (disc_id, user_id)
 ) WITH
@@ -168,7 +174,7 @@ CREATE TABLE discussion_follower (
 CREATE TABLE discussion_post (
   disc_id bigint,
   post_id bigint,
-  user_id int,
+  user_id bigint,
   PRIMARY KEY (disc_id, post_id, user_id)
 ) WITH
   bloom_filter_fp_chance=0.010000 AND
@@ -306,7 +312,7 @@ CREATE TABLE github_user_list (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE post (
-  user_id int,
+  user_id bigint,
   id bigint,
   channel_id int,
   created_at bigint,
@@ -368,8 +374,8 @@ CREATE TABLE post_counter (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE post_follower (
-  post_id timeuuid,
-  user_id int,
+  post_id bigint,
+  user_id bigint,
   created_at timestamp,
   PRIMARY KEY (post_id, user_id)
 ) WITH
@@ -410,7 +416,7 @@ CREATE TABLE post_reply (
 
 CREATE TABLE post_vote (
   post_id bigint,
-  user_id int,
+  user_id bigint,
   created_at bigint,
   positive boolean,
   PRIMARY KEY (post_id, user_id)
@@ -453,7 +459,7 @@ CREATE TABLE project (
 
 CREATE TABLE project_follower (
   project_id int,
-  user_id int,
+  user_id bigint,
   created_at timestamp,
   PRIMARY KEY (project_id, user_id)
 ) WITH
@@ -494,13 +500,13 @@ CREATE TABLE project_time_line (
 
 CREATE TABLE topic (
   platform_id int,
-  id int,
+  id bigint,
   description text,
   last_message_id bigint,
   last_message_time timestamp,
   main_topic boolean,
   name text,
-  parent_topic int,
+  parent_topic bigint,
   slug text,
   subtopics set<int>,
   PRIMARY KEY (platform_id, id)
@@ -521,7 +527,7 @@ CREATE TABLE topic (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE topic_counter (
-  id int,
+  id bigint,
   discussions counter,
   messages counter,
   views counter,
@@ -543,7 +549,7 @@ CREATE TABLE topic_counter (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE topic_discussion (
-  topic_id int,
+  topic_id bigint,
   discussion_id bigint,
   PRIMARY KEY (topic_id, discussion_id)
 ) WITH
@@ -563,13 +569,12 @@ CREATE TABLE topic_discussion (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user (
-  id int,
+  id bigint,
   created_at bigint,
   nick text,
   email text,
   password text,
-  first_name text,
-  last_name text,
+  name text,
   followers int,
   following int,
   roles set<text>,
@@ -596,7 +601,7 @@ CREATE TABLE user (
 CREATE INDEX index_user_nick ON user (nick);
 
 CREATE TABLE user_counter (
-  id int,
+  id bigint,
   down_vote_given counter,
   down_vote_taken counter,
   follower_count counter,
@@ -623,7 +628,7 @@ CREATE TABLE user_counter (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_discussion (
-  user_id int,
+  user_id bigint,
   discussion_id bigint,
   PRIMARY KEY (user_id, discussion_id)
 ) WITH
@@ -643,8 +648,8 @@ CREATE TABLE user_discussion (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_follower (
-  user_id int,
-  follower_id int,
+  user_id bigint,
+  follower_id bigint,
   created_at timestamp,
   PRIMARY KEY (user_id, follower_id)
 ) WITH
@@ -664,8 +669,8 @@ CREATE TABLE user_follower (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_following (
-  user_id int,
-  following_id int,
+  user_id bigint,
+  following_id bigint,
   created_at timestamp,
   PRIMARY KEY (user_id, following_id)
 ) WITH
@@ -685,7 +690,7 @@ CREATE TABLE user_following (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_post (
-  user_id int,
+  user_id bigint,
   post_id bigint,
   PRIMARY KEY (user_id, post_id)
 ) WITH
@@ -705,7 +710,7 @@ CREATE TABLE user_post (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_project (
-  user_id int,
+  user_id bigint,
   project_id int,
   PRIMARY KEY (user_id, project_id)
 ) WITH
@@ -725,7 +730,7 @@ CREATE TABLE user_project (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE user_time_line (
-  user_id int,
+  user_id bigint,
   post_id bigint,
   PRIMARY KEY (user_id, post_id)
 ) WITH

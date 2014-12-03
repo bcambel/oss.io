@@ -2,7 +2,7 @@
   :description "Hackersome"
   :url "http://hackersome.com"
   :license {:name "MIT"
-            :url "http://www.github.com/bcambel/hackersome/blob/master/LICENCE"}
+            :url "http://raw.github.com/bcambel/hackersome/blob/master/LICENCE"}
 
   :source-paths ["src/clj" "src/cljs"]
 
@@ -22,7 +22,8 @@
                 [cheshire "5.3.1"]
                 [com.cemerick/friend "0.2.0" :exclusions [org.clojure/core.cache]]
                 [friend-oauth2 "0.1.1"]
-                [clojurewerkz/cassaforte "2.0.0-beta8"]
+                [clojurewerkz/cassaforte "2.0.0-rc2"]
+                [net.jpountz.lz4/lz4  "1.2.0"]
                 [prismatic/schema "0.3.3"]
                 [prismatic/om-tools "0.3.6"]
                 [prismatic/dommy "1.0.0"]
@@ -65,7 +66,7 @@
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                     :plugins [[lein-figwheel "0.1.4-SNAPSHOT"]
                               [lein-midje "3.1.3"]]
-                    :dependencies [[midje "1.6.3"]]
+                    :dependencies [[midje "1.6.3"] [org.xerial.snappy/snappy-java "1.0.5"]]
                     :figwheel {:http-server-root "public"
                               :port 3449
                               :css-dirs ["resources/public/css"]}
