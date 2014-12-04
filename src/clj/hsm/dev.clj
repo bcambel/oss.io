@@ -22,3 +22,5 @@
   (future
     (print "Starting figwheel.\n")
     (lein/-main ["figwheel"])))
+
+(def reload refresh)

@@ -49,7 +49,7 @@
   (let [host  (get-in request [:headers "host"])
         body (parse-string (utils/body-as-string request))
         platform 1
-        id 111111
+        id (get-in request [:route-params :id])
         user 243975551163827208
         discussion-id (BigInteger. id)
         data (utils/mapkeyw body)]
