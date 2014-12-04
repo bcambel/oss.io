@@ -73,6 +73,7 @@
   (let [conn (:connection db)
         post-id (id-generate)
         post-data (merge post {:id post-id :user_id user })]
+        (log/warn post post-data)
     (cql/atomic-batch conn 
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
@@ -94,11 +95,31 @@
     (let [post-id (:post_id discussion)]
       (assoc discussion :post (load-post db post-id))))))
 
-(defn follow-discussion [discussion user])
+(defn follow-discussion [db disc-id user-id]
+  (let [conn (:connection db)]
+    (cql/atomic-batch conn 
+      (dbq/queries
+        ; (hs/insert :post (dbq/values post-data))
+        (hs/insert :discussion_follower 
+          (dbq/values { :created_at (now->ep)
+                        :user_id user-id
+                        :disc_id disc-id }))))
+    ))
 
-(defn unfollow-discussion [discussion user])
+(defn unfollow-discussion [db disc-id user-id]
+  (let [conn (:connection db)]
+    (cql/delete conn 
+      :discussion_follower 
+      {:user_id user-id
+        :disc_id disc-id } )))
 
-(defn load-discussion-posts [id])
+(defn load-discussion-posts [db disc-id]
+  (let [conn (:connection db)]
+    (when-let [post-ids (mapv :post_id (cql/select conn :discussion_post 
+      (dbq/where [[= :disc_id disc-id]])))]
+    (log/warn "Found " post-ids)
+      (cql/select conn :post (dbq/where [[:in :id post-ids]]))
+    )))
 
 (defn delete-discussion [id])
 

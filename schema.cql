@@ -330,7 +330,7 @@ CREATE TABLE post (
   stats map<ascii, int>,
   text text,
   user_nick text,
-  PRIMARY KEY (user_id, id)
+  PRIMARY KEY (id)
 ) WITH
   bloom_filter_fp_chance=0.010000 AND
   caching='KEYS_ONLY' AND

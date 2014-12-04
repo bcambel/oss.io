@@ -3,7 +3,8 @@
             [net.cgrand.enlive-html :refer [set-attr prepend append html]]
             [cemerick.piggieback :as piggieback]
             [weasel.repl.websocket :as weasel]
-            [leiningen.core.main :as lein]))
+            [leiningen.core.main :as lein])
+   (:use [clojure.tools.namespace.repl :only (refresh)]))
 
 (def is-dev? (env :is-dev))
 

@@ -57,16 +57,19 @@
     (log/info "Starting HTTP Server on " port)
 
     (defroutes routes
-          (resources "/")
-          (resources "/react" {:root "react"})
-          (GET "/" req (defaultpage))
-          (GET "/test" request (sample-conn db request))
-          (POST "/user/create" request (cont-user/create-user db request))
-          (POST "/discussion/create" request (cont-disc/create-discussion db request))
-          (GET "/discussion/:id" [id request] (cont-disc/get-discussion db id request))
-          (POST "/discussion/:id/post/create" [id request] (cont-disc/post-discussion db id request))
-          (GET "/user/:id" [id request] (cont-user/get-user db id request))
-          )
+      (resources "/")
+      (resources "/react" {:root "react"})
+      (GET  "/" req (defaultpage))
+      (GET  "/test" request (sample-conn db request))
+      (POST "/user/create" request (cont-user/create-user db request))
+      (POST "/discussion/create" request (cont-disc/create-discussion db request))
+      (GET  "/discussion/:id" [id request] (cont-disc/get-discussion db id request))
+      (GET  "/discussion/:id/posts" [id request] (cont-disc/get-discussion-posts db id request))
+      (POST "/discussion/:id/post/create" request (cont-disc/post-discussion db request))
+      (POST "/discussion/:id/follow" [id request] (cont-disc/follow-discussion db id request))
+      (POST "/discussion/:id/unfollow" [id request] (cont-disc/unfollow-discussion db id request))
+      (GET  "/user/:id" [id request] (cont-user/get-user db id request))
+      )
 
     (def http-handler
       (if is-dev?
