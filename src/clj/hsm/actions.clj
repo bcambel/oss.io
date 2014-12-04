@@ -10,10 +10,20 @@
 ;; USER
 
 (defn follow-user
-    [userA userB])
+  [db user current-user]
+  (let [conn (:connection db)]
+    (cql/atomic-batch conn
+          (dbq/queries
+            (hs/insert :user_follower (dbq/values {:user_id user :follower_id current-user :created_at (now->ep)}))
+            (hs/insert :user_following (dbq/values {:user_id current-user :following_id user :created_at (now->ep)}))))))
 
 (defn unfollow-user
-    [userA userB])
+  [db user current-user]
+  (let [conn (:connection db)]
+    (cql/atomic-batch conn
+          (dbq/queries
+            (hs/delete :user_follower (dbq/values {:user_id user :follower_id current-user }))
+            (hs/delete :user_following (dbq/values {:user_id current-user :following_id user }))))))
 
 (defn load-user
   [db user-id]
@@ -34,12 +44,12 @@
         user-info (merge additional user-data)]
     (cql/insert conn :user user-info)))
 
-(defn load-user-activity [user-id])
-(defn load-user-followers [user-id])
-(defn load-user-following [user-id])
+(defn load-user-activity [db user-id])
+(defn load-user-followers [db user-id])
+(defn load-user-following [db user-id])
 
 (defn get-profile
-    [user visitor])
+    [db user visitor])
 
 (defn get-profile-by-nick
   [nick visitor]
@@ -97,7 +107,7 @@
 
 (defn follow-discussion [db disc-id user-id]
   (let [conn (:connection db)]
-    (cql/atomic-batch conn 
+    (cql/atomic-batch conn
       (dbq/queries
         ; (hs/insert :post (dbq/values post-data))
         (hs/insert :discussion_follower 
@@ -108,7 +118,7 @@
 
 (defn unfollow-discussion [db disc-id user-id]
   (let [conn (:connection db)]
-    (cql/delete conn 
+    (cql/delete conn
       :discussion_follower 
       {:user_id user-id
         :disc_id disc-id } )))

@@ -1,6 +1,8 @@
 (ns hsm.utils
   (:require 
     [clojure.java.io :as io]
+    [cheshire.core :refer :all]
+    [ring.util.response :as resp]
     [clj-time.core :as t]
     [clj-time.format :as f]
     [clj-time.local :as l]
@@ -50,3 +52,9 @@
         (if (> sequence 4095) (swap! idseq zero))
         (bit-or time worker sequence)))
 
+
+(defn json-resp
+  [data]
+  (-> (generate-string data)
+        (resp/response)
+        (resp/status 200)))

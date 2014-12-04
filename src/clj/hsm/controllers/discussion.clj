@@ -4,13 +4,9 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
-            [hsm.utils :as utils]))
+            [hsm.utils :as utils :refer [json-resp]]))
 
-(defn json-resp 
-  [data]
-  (-> (generate-string data)
-        (resp/response)
-        (resp/status 200)))
+
 
 (defn get-discussion 
   [db id request]

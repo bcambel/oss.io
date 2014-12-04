@@ -58,7 +58,7 @@
                                         :externs       ["react/externs/react.js"]
                                         :optimizations :none
                                         :pretty-print  true}}}}
-
+  :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
