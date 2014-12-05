@@ -48,6 +48,7 @@
                                     :port (:db-port c) 
                                     :keyspace (:db-keyspace c)})
         app-sys (component/start sys)]
+        app-sys
     )))
 
 (defn -main [& args]

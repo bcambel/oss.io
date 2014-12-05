@@ -1,5 +1,11 @@
-# hsui
+# Hackersome
 
+A Combination of multiple portals
+
+- [Python Hackers](http://pythonhackers.com)
+- [Clojure Hackers](http://clojurehackers.com)
+- [Hackersome](http://hackersome.com)
+- [Sweet.io](http://sweet.io)
 
 ## Development
 

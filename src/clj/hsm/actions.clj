@@ -8,7 +8,6 @@
     [hsm.utils :refer [id-generate now->ep]]))
 
 ;; USER
-
 (defn follow-user
   [db user current-user]
   (let [conn (:connection db)]
@@ -28,28 +27,40 @@
 (defn load-user
   [db user-id]
   (let [conn (:connection db)]
-      (cql/select conn :user 
+      (cql/select conn :user
         (dbq/where [[= :nick user-id]]))))
 
 (def User {:email s/Str :name s/Str :nick s/Str })
-
-; (defmacro defndb)
 
 (defn create-user
   [db user-data]
   (s/validate User user-data)
   (let [conn (:connection db)
         dt (now->ep)
-        additional {:id (id-generate) :password "" :roles #{"user"} :created_at dt  :registered_at dt }
+        additional {:id (id-generate) :password ""
+                    :roles #{"user"} :created_at dt  :registered_at dt }
         user-info (merge additional user-data)]
     (cql/insert conn :user user-info)))
 
-(defn load-user-activity [db user-id])
-(defn load-user-followers [db user-id])
-(defn load-user-following [db user-id])
+(defn load-user-activity
+  [db user-id])
+
+(defn load-user-followers
+  [db user-id]
+  (let [conn (:connection db)]
+    (cql/select conn :user_follower
+      (dbq/columns :follower_id)
+      (dbq/where [[= :user_id user-id]]))))
+
+(defn load-user-following
+  [db user-id]
+  (let [conn (:connection db)]
+    (map :following_id (cql/select conn :user_following
+      (dbq/columns :following_id)
+      (dbq/where [[= :user_id user-id]])))))
 
 (defn get-profile
-    [db user visitor])
+  [db user visitor])
 
 (defn get-profile-by-nick
   [nick visitor]
@@ -74,6 +85,10 @@
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
+    (cql/insert conn :post_counter {:id (:id post-info)
+                              :karma (dbq/increment-by 1)
+                              :upvotes (dbq/increment-by 1)
+                              :views (dbq/increment-by 1)})
     additional))
 
 (def Post {:text s/Str})
@@ -84,63 +99,83 @@
         post-id (id-generate)
         post-data (merge post {:id post-id :user_id user })]
         (log/warn post post-data)
-    (cql/atomic-batch conn 
+    (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
-        (hs/insert :discussion_post 
+        ; (hs/update :post_counter (dbq/values {:id post-id :karma 0 :upvotes 0 :views 1 }))
+        (hs/insert :discussion_post
           (dbq/values { :post_id post-id
                         :user_id user
                         :disc_id disc-id }))))
+    (cql/update conn :post_counter {:id post-id
+                              ; :karma 1;(dbq/increment-by 1)
+                              ; :upvotes 1;(dbq/increment-by 1)
+                              ; :views 1;(dbq/increment-by 1)
+                              })
     post-id))
 
-(defn load-post [db post-id]
+(defn load-post
+  [db post-id]
   (let [conn (:connection db)]
     (first (or (cql/select conn :post (dbq/where [[= :id post-id]])) []))))
 
-(defn load-discussion [db disc-id]
+(defn load-discussion
+  [db disc-id]
   (let [conn (:connection db)]
-    (when-let [discussion (first (cql/select conn :discussion 
+    (when-let [discussion (first (cql/select conn :discussion
                     (dbq/where [[= :id disc-id] [= :platform_id 1]])))]
-    (log/warn discussion)
-    (let [post-id (:post_id discussion)]
-      (assoc discussion :post (load-post db post-id))))))
+      (log/warn discussion)
+      (let [post-id (:post_id discussion)]
+        (assoc discussion :post (load-post db post-id))))))
 
-(defn follow-discussion [db disc-id user-id]
+(defn follow-discussion
+  [db disc-id user-id]
   (let [conn (:connection db)]
     (cql/atomic-batch conn
       (dbq/queries
-        ; (hs/insert :post (dbq/values post-data))
-        (hs/insert :discussion_follower 
+        ;; TODO: Add UserDiscussion table
+        (hs/insert :discussion_follower
           (dbq/values { :created_at (now->ep)
                         :user_id user-id
-                        :disc_id disc-id }))))
-    ))
+                        :disc_id disc-id }))))))
 
-(defn unfollow-discussion [db disc-id user-id]
+(defn unfollow-discussion
+  [db disc-id user-id]
   (let [conn (:connection db)]
     (cql/delete conn
-      :discussion_follower 
+      :discussion_follower
       {:user_id user-id
-        :disc_id disc-id } )))
+        :disc_id disc-id})))
 
-(defn load-discussion-posts [db disc-id]
+(defn load-discussion-posts 
+  [db disc-id]
   (let [conn (:connection db)]
-    (when-let [post-ids (mapv :post_id (cql/select conn :discussion_post 
-      (dbq/where [[= :disc_id disc-id]])))]
+    (when-let [post-ids (mapv :post_id 
+                          (cql/select conn :discussion_post 
+                            (dbq/where [[= :disc_id disc-id]])))]
     (log/warn "Found " post-ids)
-      (cql/select conn :post (dbq/where [[:in :id post-ids]]))
-    )))
+      (cql/select conn :post (dbq/where [[:in :id post-ids]])))))
 
 (defn delete-discussion [id])
 
 ;; POST Related 
 
-
-
 (defn new-post [data])
 
 (defn edit-post [data])
 
-(defn upvote-post [post user])
+(defn upvote-post [db post user]
+  (let [conn (:connection db)]
+    (cql/insert conn :post_vote { :post_id post :user_id user
+      :created_at (now->ep) :positive true})))
 
 (defn delete-post [post user])
+
+(defn create-link
+  [db link-data user]
+  (let [conn (:connection db)]
+    (cql/insert conn :link
+      (merge link-data {
+        :id (id-generate)
+        :submit_by user
+        :created_at (now->ep)}))))

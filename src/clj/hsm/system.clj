@@ -7,6 +7,7 @@
         [clojure.tools.logging :as log]
         [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
         [hsm.controllers.user :as cont-user]
+        [hsm.controllers.post :as cont-post]
         [hsm.controllers.discussion :as cont-disc]
         [compojure.handler :as handler :refer [api]]
         [compojure.route :as route :refer [resources]]
@@ -71,6 +72,9 @@
       (GET  "/user/:id" [id request] (cont-user/get-user db id request))
       (POST  "/user/:id/follow" request (cont-user/follow-user db request))
       (POST  "/user/:id/unfollow" request (cont-user/unfollow-user db request))
+      (GET  "/user/:id/followers" request (cont-user/get-user-followers db request))
+      (GET  "/user/:id/following" request (cont-user/get-user-following db request))
+      (POST "/link/create" request (cont-post/create-link db request))
       )
 
     (def http-handler

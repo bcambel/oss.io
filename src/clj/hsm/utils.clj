@@ -52,7 +52,6 @@
         (if (> sequence 4095) (swap! idseq zero))
         (bit-or time worker sequence)))
 
-
 (defn json-resp
   [data]
   (-> (generate-string data)
