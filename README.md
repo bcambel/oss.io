@@ -1,5 +1,7 @@
 # Hackersome
 
+[![Build Status](https://travis-ci.org/bcambel/hackersome.svg?branch=development)](https://travis-ci.org/bcambel/hackersome)
+
 A Combination of multiple portals
 
 - [Python Hackers](http://pythonhackers.com)
