@@ -36,7 +36,10 @@
 
 (defn mapkeyw
   [data]
-  (apply merge (map #(hash-map (keyword %) (get data %)) (keys data))))
+  (apply merge
+    (map
+      #(hash-map (keyword %) (get data %))
+      (keys data))))
 
 (def zero (fn[& args] 0))
 (def idseq (atom 0))

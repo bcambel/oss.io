@@ -75,6 +75,10 @@
       (GET  "/user/:id/followers" request (cont-user/get-user-followers db request))
       (GET  "/user/:id/following" request (cont-user/get-user-following db request))
       (POST "/link/create" request (cont-post/create-link db request))
+      (POST "/link/:id/upvote" request (cont-post/upvote-link db request))
+
+
+      (route/not-found "Page not found")
       )
 
     (def http-handler

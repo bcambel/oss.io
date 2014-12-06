@@ -20,7 +20,9 @@
   [db request]
   (let [host  (get-in request [:headers "host"])
     body (parse-string (utils/body-as-string request))
-    link-id (get-in request [:route-params :id])
+    link-id (BigInteger. (get-in request [:route-params :id]))
     user 243975551163827208]
-    (actions/upvote-post db )
+    (actions/upvote-post db link-id user)
+    (json-resp {:ok 1})
     ))
+

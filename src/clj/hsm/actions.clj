@@ -102,16 +102,16 @@
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
-        ; (hs/update :post_counter (dbq/values {:id post-id :karma 0 :upvotes 0 :views 1 }))
+        (hs/update :post_counter (dbq/values {:karma 0 :upvotes 0 :views 1 }) (dbq/where {:id post-id}))
         (hs/insert :discussion_post
           (dbq/values { :post_id post-id
                         :user_id user
                         :disc_id disc-id }))))
-    (cql/update conn :post_counter {:id post-id
-                              ; :karma 1;(dbq/increment-by 1)
-                              ; :upvotes 1;(dbq/increment-by 1)
-                              ; :views 1;(dbq/increment-by 1)
-                              })
+    ; (cql/update conn :post_counter {:id post-id
+    ;                           ; :karma 1;(dbq/increment-by 1)
+    ;                           ; :upvotes 1;(dbq/increment-by 1)
+    ;                           ; :views 1;(dbq/increment-by 1)
+    ;                           })
     post-id))
 
 (defn load-post
@@ -166,8 +166,11 @@
 
 (defn upvote-post [db post user]
   (let [conn (:connection db)]
-    (cql/insert conn :post_vote { :post_id post :user_id user
-      :created_at (now->ep) :positive true})))
+    (cql/insert conn :post_vote { 
+      :post_id post 
+      :user_id user
+      :created_at (now->ep) 
+      :positive true})))
 
 (defn delete-post [post user])
 
