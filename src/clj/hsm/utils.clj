@@ -59,4 +59,5 @@
   [data]
   (-> (generate-string data)
         (resp/response)
+        (resp/header "Content-Type" "application/json")
         (resp/status 200)))

@@ -26,3 +26,13 @@
     (json-resp {:ok 1})
     ))
 
+(defn show-link
+  [db request]
+  (let [host  (get-in request [:headers "host"])
+    body (parse-string (utils/body-as-string request))
+    link-id (BigInteger. (get-in request [:route-params :id]))
+    user 243975551163827208]
+    (json-resp (actions/get-link db link-id user))
+
+    )
+  )

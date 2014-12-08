@@ -182,3 +182,10 @@
         :id (id-generate)
         :submit_by user
         :created_at (now->ep)}))))
+
+(defn get-link 
+  [db link-id user]
+    (let [conn (:connection db)]
+      (when-let [link (first (cql/select conn :link (dbq/where [[= :id link-id]])))]
+        (merge link (first (cql/select conn :post_counter (dbq/where [[= :id link-id]]))))
+  )))

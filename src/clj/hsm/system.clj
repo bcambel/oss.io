@@ -76,7 +76,7 @@
       (GET  "/user/:id/following" request (cont-user/get-user-following db request))
       (POST "/link/create" request (cont-post/create-link db request))
       (POST "/link/:id/upvote" request (cont-post/upvote-link db request))
-
+      (GET "/link/:id" request (cont-post/show-link db request))
 
       (route/not-found "Page not found")
       )
