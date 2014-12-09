@@ -242,22 +242,20 @@ CREATE TABLE github_event (
   compression={'sstable_compression': 'LZ4Compressor'};
 
 CREATE TABLE github_project (
-  id int,
+  id bigint,
   description text,
   fork boolean,
-  forks_count int,
+  forks int,
   full_name text,
-  hide boolean,
   homepage text,
-  is_py boolean,
   language text,
   master_branch text,
   name text,
   network_count int,
   open_issues int,
-  owner int,
+  owner text,
   url text,
-  watchers_count int,
+  watchers int,
   PRIMARY KEY (id)
 ) WITH
   bloom_filter_fp_chance=0.010000 AND

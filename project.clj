@@ -28,6 +28,7 @@
                 [prismatic/om-tools "0.3.6"]
                 [prismatic/dommy "1.0.0"]
                 [prismatic/plumbing "0.3.5"]
+                [tentacles "0.2.5"]
                 [com.stuartsierra/component "0.2.2"]
                 [com.brainbot/iniconfig "0.2.0"]
                 [com.draines/postal "1.11.1"]

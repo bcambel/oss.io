@@ -9,6 +9,7 @@
         [hsm.controllers.user :as cont-user]
         [hsm.controllers.post :as cont-post]
         [hsm.controllers.discussion :as cont-disc]
+        [hsm.integration.ghub :as ghub]
         [compojure.handler :as handler :refer [api]]
         [compojure.route :as route :refer [resources]]
         [ring.middleware.reload :as reload]
@@ -32,7 +33,8 @@
          (resp/status 400)))
       (catch Throwable e
         (do 
-          (log/error e)
+          (log/error (.getMessage e))
+          (clojure.stacktrace/print-stack-trace e)
         (->
          (resp/response (.getMessage e))
          (resp/status 500)))))))
@@ -70,13 +72,14 @@
       (POST "/discussion/:id/follow" [id request] (cont-disc/follow-discussion db id request))
       (POST "/discussion/:id/unfollow" [id request] (cont-disc/unfollow-discussion db id request))
       (GET  "/user/:id" [id request] (cont-user/get-user db id request))
-      (POST  "/user/:id/follow" request (cont-user/follow-user db request))
-      (POST  "/user/:id/unfollow" request (cont-user/unfollow-user db request))
+      (POST "/user/:id/follow" request (cont-user/follow-user db request))
+      (POST "/user/:id/unfollow" request (cont-user/unfollow-user db request))
       (GET  "/user/:id/followers" request (cont-user/get-user-followers db request))
       (GET  "/user/:id/following" request (cont-user/get-user-following db request))
       (POST "/link/create" request (cont-post/create-link db request))
       (POST "/link/:id/upvote" request (cont-post/upvote-link db request))
-      (GET "/link/:id" request (cont-post/show-link db request))
+      (GET  "/link/:id" request (cont-post/show-link db request))
+      (GET  "/import/:language" [language] (ghub/import-repos db language))
 
       (route/not-found "Page not found")
       )

@@ -1,3 +1,4 @@
+profiles.clj
 pom.xml
 pom.xml.asc
 *jar
@@ -5,6 +6,7 @@ pom.xml.asc
 /classes/
 /target/
 /checkouts/
+.lein-env
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/

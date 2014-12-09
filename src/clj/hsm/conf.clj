@@ -22,6 +22,8 @@
                        (keys configs))]
     (apply merge (apply concat intermediate))))
 
+(def app-conf (atom {}))
+
 (defn parse-conf
   [config apply-transform]
   (if-not (exists? config)

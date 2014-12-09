@@ -85,10 +85,10 @@
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
-    (cql/insert conn :post_counter {:id (:id post-info)
+    (cql/update conn :post_counter (dbq/values {
                               :karma (dbq/increment-by 1)
                               :upvotes (dbq/increment-by 1)
-                              :views (dbq/increment-by 1)})
+                              :views (dbq/increment-by 1)} ) (dbq/where {:id (:id post-info)}))
     additional))
 
 (def Post {:text s/Str})
@@ -102,7 +102,7 @@
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
-        (hs/update :post_counter (dbq/values {:karma 0 :upvotes 0 :views 1 }) (dbq/where {:id post-id}))
+        (hs/update :post_counter (dbq/values {:karma 0 :upvotes (0) :views 1 }) (dbq/where {:id post-id}))
         (hs/insert :discussion_post
           (dbq/values { :post_id post-id
                         :user_id user
@@ -186,6 +186,9 @@
 (defn get-link 
   [db link-id user]
     (let [conn (:connection db)]
-      (when-let [link (first (cql/select conn :link (dbq/where [[= :id link-id]])))]
-        (merge link (first (cql/select conn :post_counter (dbq/where [[= :id link-id]]))))
-  )))
+      (when-let [link (first 
+                        (cql/select conn :link (dbq/where [[= :id link-id]])))]
+        (when-not (empty? link)
+          (merge link 
+            (first (cql/select conn :post_counter 
+                      (dbq/where [[= :id link-id]]))))))))
