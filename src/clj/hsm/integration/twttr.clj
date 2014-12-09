@@ -6,6 +6,7 @@
    [twitter.api.streaming])
     (:require
    [cheshire.core :as json]
+   [environ.core :refer [env]]
    [http.async.client :as ac])
   (:import
    (twitter.callbacks.protocols AsyncStreamingCallback))
@@ -28,4 +29,4 @@
 
 (statuses-filter :params {:track "clojure"}
          :oauth-creds my-creds
-         :callbacks *custom-streaming-callback*
+         :callbacks *custom-streaming-callback*)
