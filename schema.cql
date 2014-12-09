@@ -276,7 +276,7 @@ CREATE TABLE github_project (
 CREATE INDEX index_github_project_full_name ON github_project (full_name);
 
 CREATE TABLE github_user (
-  nick text,
+  login text,
   bio text,
   blog text,
   company text,
@@ -291,8 +291,8 @@ CREATE TABLE github_user (
   public_gists int,
   public_repos int,
   url text,
-  utype text,
-  PRIMARY KEY (nick)
+  type text,
+  PRIMARY KEY (login)
 ) WITH
   bloom_filter_fp_chance=0.010000 AND
   caching='KEYS_ONLY' AND

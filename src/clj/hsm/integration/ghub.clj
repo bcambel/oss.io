@@ -1,4 +1,5 @@
 (ns hsm.integration.ghub
+    "Fetch repository information from github"
     (:require 
       [clojure.string :as s]
       [clojure.tools.logging :as log]
@@ -12,13 +13,21 @@
       [hsm.utils :refer [id-generate]]
       ))
 
-(defn ^:private insert-project
-  [conn coll]
-  (cql/insert-batch conn :github_project 
+(defn find-users
+  [coll]
+  (vals (apply merge 
+          (map #(hash-map (get % "login") %)  
+                (map #(select-keys (get % "owner") ["id" "login" "type"]) coll)))))
 
+(defn insert-records
+  [conn coll]
+  (log/info (format "Inserting %d projects" (count coll)))
+  (cql/insert-batch conn :github_project 
     (doall (map (fn[item] (merge {:id (id-generate)}
       (select-keys item 
-        (map name [:name :fork :watchers :open_issues :language :description :full_name])))) coll))))
+        (map name [:name :fork :watchers :open_issues :language :description :full_name])))) coll)))
+  (cql/insert-batch conn :github_user
+    (find-users coll)))
 
 (defn find-next-url
   "Figure out the next url to call
@@ -31,10 +40,12 @@
     (when is-next 
       (s/replace (subs (first next-page) 1) ">" ""))))
 
-(defn ^:private fetch-url
+(defn fetch-url
   [url]
   (try 
     (let [response (client/get url) 
+          ; /repositories call returns result in root
+          ; /search/repositories returns under items
           repos (parse-string (:body response)) ;(get  "items")
           next-url (find-next-url 
                       (-> response :headers (get "link")))]
@@ -62,8 +73,7 @@
     (loop [url (format ghub-url language)]
       (log/warn url)
       (let [{:keys [success next-url repos]} (fetch-url url)]
-        (log/info (format "Inserting %d projects" (count repos)))
-        (insert-project conn repos)
+        (insert-records conn repos)
         (when next-url
           (recur next-url))))))
 

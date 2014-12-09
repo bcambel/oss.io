@@ -39,6 +39,7 @@
                 [liberator "0.12.2"]
                 [commons-logging "1.1.3"]
                 [raven-clj "1.2.0"]
+                [twitter-api "0.7.7"]
                 [ch.qos.logback/logback-classic "1.1.2"]
                 [org.clojure/tools.logging "0.3.1"]
                 [weasel "0.4.0-SNAPSHOT"]
