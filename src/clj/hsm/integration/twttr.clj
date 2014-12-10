@@ -9,9 +9,7 @@
    [environ.core :refer [env]]
    [http.async.client :as ac])
   (:import
-   (twitter.callbacks.protocols AsyncStreamingCallback))
-
-    )
+   (twitter.callbacks.protocols AsyncStreamingCallback)))
 
 
 
@@ -27,6 +25,7 @@
                       (comp println response-return-everything)
                   exception-print))
 
-(statuses-filter :params {:track "clojure"}
-         :oauth-creds my-creds
-         :callbacks *custom-streaming-callback*)
+(defn testing []
+  (statuses-filter :params {:track "clojure"}
+             :oauth-creds my-creds
+             :callbacks *custom-streaming-callback*))
