@@ -1,31 +1,47 @@
 (ns hsm.integration.twttr
-    (:use
+  (:use
    [twitter.oauth]
    [twitter.callbacks]
    [twitter.callbacks.handlers]
-   [twitter.api.streaming])
-    (:require
-   [cheshire.core :as json]
+   )
+  (:require
+   [cheshire.core :refer :all]
+   [clojure.tools.logging :as log]
+   [twitter-streaming-client.core :as twt-strm-cli]
+   [clojure.core.async :as async :refer :all]
    [environ.core :refer [env]]
-   [http.async.client :as ac])
-  (:import
-   (twitter.callbacks.protocols AsyncStreamingCallback)))
-
-
-
+   [hsm.pipe.main :as pipe]
+   [http.async.client :as ac]
+   [twitter.api.streaming :as twt-stream])
+  (:gen-class))
 
 (def my-creds (make-oauth-creds (env :app-consumer-key)
                                 (env :app-consumer-secret)
                                 (env :user-access-token)
                                 (env :user-access-token-secret)))
 
-(def ^:dynamic 
-     *custom-streaming-callback* 
-     (AsyncStreamingCallback. (comp println #(:text %) json/parse-string #(str %2)) 
-                      (comp println response-return-everything)
-                  exception-print))
+(defn vacuum-twttr
+  [tracking pipe-fn]
+  (let [stream (twt-strm-cli/create-twitter-stream
+                  twt-stream/statuses-filter
+                  :oauth-creds my-creds
+                  :params {:track tracking})]
+    (twt-strm-cli/start-twitter-stream stream)
+    (loop []
+      (let [q (twt-strm-cli/retrieve-queues stream)
+        tweets (:tweet q)
+        texts (mapv #(:text %) tweets)]
+        (pipe-fn texts)
+        (Thread/sleep 1000))
+      (recur))))
 
-(defn testing []
-  (statuses-filter :params {:track "clojure"}
-             :oauth-creds my-creds
-             :callbacks *custom-streaming-callback*))
+(defn start-listen
+  [keywords]
+  (let [tweet-chan (chan) 
+        kafka-pipe (pipe/init tweet-chan "test")]
+    (vacuum-twttr keywords (fn[tweets]
+                                (mapv #(go (>! tweet-chan %)) tweets)))))
+
+(defn -main
+  [& args]
+  (start-listen (first args)))

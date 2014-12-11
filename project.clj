@@ -8,6 +8,7 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                 [org.clojure/clojurescript "0.0-2371" :scope "provided"]
+                [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                 [ring "1.3.1"]
                 [compojure "1.2.0"]
                 [enlive "1.1.5"]
@@ -41,6 +42,7 @@
                 [commons-logging "1.1.3"]
                 [raven-clj "1.2.0"]
                 [twitter-api "0.7.7"]
+                [twitter-streaming-client/twitter-streaming-client "0.3.2"]
                 [ch.qos.logback/logback-classic "1.1.2"]
                 [org.clojure/tools.logging "0.3.1"]
                 [weasel "0.4.0-SNAPSHOT"]
@@ -65,6 +67,7 @@
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
+              :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :dev {
                     :repl-options {:init-ns hsm.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
