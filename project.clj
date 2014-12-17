@@ -7,27 +7,21 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                [org.clojure/clojurescript "0.0-2371" :scope "provided"]
                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                [ring "1.3.1"]
-                [compojure "1.2.0"]
+                [ring "1.3.2"]
+                [compojure "1.3.1"]
                 [enlive "1.1.5"]
-                [om "0.7.3"]
-                [clj-http "1.0.1"]
-                [cljs-http "0.1.20"]
+                [clj-http "1.0.1"]              
                 [clj-time "0.7.0"]
                 [figwheel "0.1.4-SNAPSHOT"]
                 [environ "1.0.0"]
                 [com.cognitect/transit-clj "0.8.259"]
-                [com.cognitect/transit-cljs "0.8.192"]
                 [cheshire "5.3.1"]
                 [com.cemerick/friend "0.2.0" :exclusions [org.clojure/core.cache]]
                 [friend-oauth2 "0.1.1"]
                 [clojurewerkz/cassaforte "2.0.0-rc2"]
                 [net.jpountz.lz4/lz4  "1.2.0"]
                 [prismatic/schema "0.3.3"]
-                [prismatic/om-tools "0.3.6"]
-                [prismatic/dommy "1.0.0"]
                 [prismatic/plumbing "0.3.5"]
                 [tentacles "0.2.5"]
                 [com.stuartsierra/component "0.2.2"]
@@ -48,21 +42,12 @@
                 [weasel "0.4.0-SNAPSHOT"]
                 [leiningen "2.5.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.3"]
-            [lein-environ "1.0.0"]]
+  :plugins [[lein-environ "1.0.0"]]
 
   :min-lein-version "2.5.0"
 
   :uberjar-name "hsm.jar"
   :main hsm.server
-  :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
-                             :compiler {:output-to     "resources/public/js/app.js"
-                                        :output-dir    "resources/public/js/out"
-                                        :source-map    "resources/public/js/out.js.map"
-                                        :preamble      ["react/react.min.js"]
-                                        :externs       ["react/externs/react.js"]
-                                        :optimizations :none
-                                        :pretty-print  true}}}}
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
@@ -80,12 +65,7 @@
                     :env {:is-dev true}
                     :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]}}}}
 
-             :uberjar {:hooks [leiningen.cljsbuild]
+             :uberjar {
                        :env {:production true}
                        :omit-source true
-                       :aot :all
-                       :cljsbuild {:builds {:app
-                                            {:source-paths ["env/prod/cljs"]
-                                             :compiler
-                                             {:optimizations :advanced
-                                              :pretty-print false}}}}}})
+                       :aot :all}})

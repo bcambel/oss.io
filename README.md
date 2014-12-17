@@ -18,21 +18,19 @@ CIDER is up to date).
 In the REPL do
 
 ```clojure
-(startup {})
-(browser-repl)
+(def sys (startup {}))
 ```
 
+Which will return the system map. It's based on Stuart Sierra's amazing Component lib.
+
+In order to access db session component do a 
+
+```clojure
+(:connection (:db sys))
+``` 
+
 The call to `(startup {})` does two things, it starts the webserver at port
-10554, and also the Figwheel server which takes care of live reloading
-ClojureScript code and CSS. Give them some time to start.
-
-Running `(browser-repl)` starts the Weasel REPL server, and drops you
-into a ClojureScript REPL. Evaluating expressions here will only work
-once you've loaded the page, so the browser can connect to Weasel.
-
-When you see the line `Successfully compiled "resources/public/app.js"
-in 21.36 seconds.`, you're ready to go. Browse to
-`http://localhost:10554` and enjoy.
+10554, . Give them some time to start.
 
 
 ## Trying it out
@@ -57,15 +55,36 @@ Notice again how the browser updates.
 
 
 Docker
-==============
+---------------
+
+A sample clojure docker container could be used.
 
 ```bash
 docker pull clojure
 docker run -i -t --entrypoint /bin/bash <imageID>
 ```
+
+Cassandra 
+==========
+
+Using the following [Spotify Cassandra Container](https://github.com/spotify/docker-cassandra)
+
+
+Runs a command inside the given container ID. 
+since image runs with [cassandra -f option](https://github.com/spotify/docker-cassandra/blob/master/cassandra/scripts/cassandra-singlenode.sh#L33), you wont get any interaction
+
+```
+docker pull spotify/cassandra
+# 
+docker run spotify/cassandra -d --ip=172.17.0.48
+# fetch the IP of the image
+docker inspect <image_id> 
+# modify your /etc/hosts file to add the cassandra host
+docker exec -it <container_id> cqlsh < schema.cql
+```
+
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Bahadir Cambel
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the MIT License.

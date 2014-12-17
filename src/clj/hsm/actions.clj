@@ -13,16 +13,26 @@
   (let [conn (:connection db)]
     (cql/atomic-batch conn
           (dbq/queries
-            (hs/insert :user_follower (dbq/values {:user_id user :follower_id current-user :created_at (now->ep)}))
-            (hs/insert :user_following (dbq/values {:user_id current-user :following_id user :created_at (now->ep)}))))))
+            (hs/insert :user_follower 
+                (dbq/values {:user_id user 
+                             :follower_id current-user 
+                             :created_at (now->ep)}))
+            (hs/insert :user_following 
+                (dbq/values {:user_id current-user 
+                             :following_id user 
+                             :created_at (now->ep)}))))))
 
 (defn unfollow-user
   [db user current-user]
   (let [conn (:connection db)]
     (cql/atomic-batch conn
           (dbq/queries
-            (hs/delete :user_follower (dbq/values {:user_id user :follower_id current-user }))
-            (hs/delete :user_following (dbq/values {:user_id current-user :following_id user }))))))
+            (hs/delete :user_follower 
+                (dbq/values {:user_id user 
+                             :follower_id current-user }))
+            (hs/delete :user_following 
+                (dbq/values {:user_id current-user 
+                             :following_id user }))))))
 
 (defn load-user
   [db user-id]
@@ -84,10 +94,13 @@
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
-    (cql/update conn :post_counter (dbq/values {
-                              :karma (dbq/increment-by 1)
-                              :upvotes (dbq/increment-by 1)
-                              :views (dbq/increment-by 1)} ) (dbq/where {:id (:id post-info)}))
+    ;; add this update into the atomic-batch as well
+    (cql/update conn :post_counter 
+      (dbq/values {
+        :karma (dbq/increment-by 1)
+        :upvotes (dbq/increment-by 1)
+        :views (dbq/increment-by 1)})
+      (dbq/where {:id (:id post-info)}))
     additional))
 
 (def Post {:text s/Str})
@@ -101,7 +114,9 @@
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
-        (hs/update :post_counter (dbq/values {:karma 0 :upvotes (0) :views 1 }) (dbq/where {:id post-id}))
+        (hs/update :post_counter
+            (dbq/values {:karma 0 :upvotes (0) :views 1 })
+            (dbq/where {:id post-id}))
         (hs/insert :discussion_post
           (dbq/values { :post_id post-id
                         :user_id user

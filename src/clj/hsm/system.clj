@@ -4,6 +4,7 @@
         [cheshire.core :refer :all]
         [clojurewerkz.cassaforte.client :as cc]
         [clojurewerkz.cassaforte.cql    :as cql]
+        [clojurewerkz.cassaforte.query :as dbq]
         [clojure.tools.logging :as log]
         [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
         [hsm.controllers.user :as cont-user]
@@ -114,7 +115,15 @@
   (start [component]
     (log/info "Starting Cassandra database")
     (let [conn (cc/connect [host])]
-        (cql/use-keyspace conn keyspace)
+        (try 
+          (cql/create-keyspace conn (keyword keyspace)
+                   (dbq/with {:replication
+                          {:class "SimpleStrategy"
+                           :replication_factor 1}}))
+          (catch Throwable t (log/warn t)))
+
+      (cql/use-keyspace conn keyspace)
+        
       ;; Return an updated version of the component with
       ;; the run-time state assoc'd in.
       (assoc component :connection conn)))
