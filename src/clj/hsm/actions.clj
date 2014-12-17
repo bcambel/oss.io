@@ -1,5 +1,5 @@
 (ns hsm.actions
-  (:require 
+  (:require
     [clojure.tools.logging :as log]
     [schema.core :as s]
     [clojurewerkz.cassaforte.cql  :as cql]
@@ -72,16 +72,15 @@
 
 (defn create-discussion
   [db platform user data]
-  (s/validate Discussion data)  
+  (s/validate Discussion data)
   (let [conn (:connection db)
         post (:post data)
         post-info {:id (id-generate) :user_id user :text post}
-        additional {:id (id-generate) :published_at (now->ep) 
+        additional {:id (id-generate) :published_at (now->ep)
                     :user_id user :platform_id platform
                     :post_id (:id post-info)}
-        
         discussion-info (merge additional (dissoc data :post))]
-    (cql/atomic-batch conn 
+    (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
@@ -147,18 +146,18 @@
       {:user_id user-id
         :disc_id disc-id})))
 
-(defn load-discussion-posts 
+(defn load-discussion-posts
   [db disc-id]
   (let [conn (:connection db)]
-    (when-let [post-ids (mapv :post_id 
-                          (cql/select conn :discussion_post 
+    (when-let [post-ids (mapv :post_id
+                          (cql/select conn :discussion_post
                             (dbq/where [[= :disc_id disc-id]])))]
     (log/warn "Found " post-ids)
       (cql/select conn :post (dbq/where [[:in :id post-ids]])))))
 
 (defn delete-discussion [id])
 
-;; POST Related 
+;; POST Related
 
 (defn new-post [data])
 
@@ -166,10 +165,10 @@
 
 (defn upvote-post [db post user]
   (let [conn (:connection db)]
-    (cql/insert conn :post_vote { 
-      :post_id post 
+    (cql/insert conn :post_vote {
+      :post_id post
       :user_id user
-      :created_at (now->ep) 
+      :created_at (now->ep)
       :positive true})))
 
 (defn delete-post [post user])
@@ -183,12 +182,12 @@
         :submit_by user
         :created_at (now->ep)}))))
 
-(defn get-link 
+(defn get-link
   [db link-id user]
     (let [conn (:connection db)]
-      (when-let [link (first 
+      (when-let [link (first
                         (cql/select conn :link (dbq/where [[= :id link-id]])))]
         (when-not (empty? link)
-          (merge link 
-            (first (cql/select conn :post_counter 
+          (merge link
+            (first (cql/select conn :post_counter
                       (dbq/where [[= :id link-id]]))))))))

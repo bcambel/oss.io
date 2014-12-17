@@ -1,5 +1,5 @@
 (ns hsm.system
-     (:require 
+     (:require
         [clojure.java.io :as io]
         [cheshire.core :refer :all]
         [clojurewerkz.cassaforte.client :as cc]
@@ -32,24 +32,27 @@
          (resp/response e)
          (resp/status 400)))
       (catch Throwable e
-        (do 
+        (do
           (log/error (.getMessage e))
           (clojure.stacktrace/print-stack-trace e)
         (->
          (resp/response (.getMessage e))
          (resp/status 500)))))))
 
-(defn generate-response [data & [status]]
+(defn generate-response
+  [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/edn"}
    :body (pr-str data)})
 
-(defn generate-json-resp [data & [status]]
+(defn generate-json-resp
+  [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/json"}
    :body (generate-string data)})
 
-(defn sample-conn [db request]
+(defn sample-conn
+  [db request]
   (let [conn (:connection db)]
     (generate-json-resp (cql/select conn :user))))
 
@@ -126,7 +129,7 @@
     ;; dissoc one of a record's base fields, you get a plain map.
     (assoc component :connection nil)))
 
-(defn cassandra-db 
+(defn cassandra-db
   [host port keyspace]
   (map->CassandraDB {:host host :port port :keyspace keyspace}))
 
@@ -134,8 +137,7 @@
   (let [{:keys [host port keyspace server-port]} config-options]
     (-> (component/system-map
           :db (cassandra-db host port keyspace)
-          :app (component/using 
+          :app (component/using
             (http-server server-port)
             [:db]
-            )
-          ))))
+            )))))

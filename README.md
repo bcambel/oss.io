@@ -56,7 +56,13 @@ In the REPL, type
 Notice again how the browser updates.
 
 
+Docker
+==============
 
+```bash
+docker pull clojure
+docker run -i -t --entrypoint /bin/bash <imageID>
+```
 ## License
 
 Copyright © 2014 FIXME

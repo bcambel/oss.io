@@ -4,8 +4,14 @@
     [com.brainbot.iniconfig :as iniconfig]
     [me.raynes.fs :refer [exists?]]))
 
+(defn when-not-key
+  "Weirdest function of all times."
+  [key rez]
+  (when-not (= "default" key) rez))
+
 (defn transform
-  "Converts a nested dict(2nd level max) into a flat format with keywords as keys. Default key's values are applied as they are
+  "Converts a nested dict(2nd level max) into a flat format with keywords as keys.
+  Default key's values are applied as they are
   Given { \"default\" { \"a\" 1 \"b\" 2} \"email\" { \"host\" \"gmail.com\" \"port\" 587} }
   transform into
   {:email-port 587, :a 1, :b 2, :email-host \"gmail.com\"}
@@ -16,7 +22,7 @@
                        (fn[key]
                          (map
                            #(hash-map
-                             (keyword (str (when-not (= "default" key) key) (when-not (= "default" key) "-") %))
+                             (keyword (str (when-not-key key key) (when-not-key key "-") %))
                              (get (get configs key) %))
                            (keys (get configs key))))
                        (keys configs))]
