@@ -12,11 +12,19 @@
   243975551163827208
   )
 
+(defn host-of
+  [request]
+  (get-in request [:headers "host"]))
+
+(defn body-of
+  [request]
+  (parse-string (utils/body-as-string request)))
+
 (defn create-link
   [db request] 
   (log/warn request)
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         user (whois request)
         link-data (utils/mapkeyw body)]
     (actions/create-link db link-data user)
@@ -24,8 +32,8 @@
 
 (defn upvote-link
   [db request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         link-id (BigInteger. (get-in request [:route-params :id]))
         user (whois request)]
         (actions/upvote-post db link-id user)
@@ -34,8 +42,18 @@
 
 (defn show-link
   [db request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         link-id (BigInteger. (get-in request [:route-params :id]))
         user (whois request)]
     (json-resp (actions/get-link db link-id user))))
+
+
+(defn list-links
+  [db request]
+  (let [host  (host-of request)
+    body (body-of request)
+    time-filter (get-in request [:route-params :date])
+    user (whois request)]
+    (json-resp (actions/list-links db time-filter user))
+    ))

@@ -11,6 +11,21 @@ A Combination of multiple portals
 
 ## Development
 
+Create a profiles.clj file in the root folder of the project with the following settings
+
+```clojure
+{:dev  {:env {
+			;;twitter settings
+			:app-consumer-key ""
+			:app-consumer-secret ""
+			:user-access-token ""
+			:user-access-token-secret ""
+			;;github settings
+			:client-id "" 
+			:client-secret ""
+}}}
+```
+
 Start a REPL (in a terminal: `lein repl`, or from Emacs: open a
 clj/cljs file in the project, then do `M-x cider-jack-in`. Make sure
 CIDER is up to date).

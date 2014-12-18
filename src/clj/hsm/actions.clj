@@ -27,12 +27,12 @@
   (let [conn (:connection db)]
     (cql/atomic-batch conn
           (dbq/queries
-            (hs/delete :user_follower 
-                (dbq/values {:user_id user 
+            (hs/delete :user_follower
+                (dbq/values {:user_id user
                              :follower_id current-user }))
-            (hs/delete :user_following 
-                (dbq/values {:user_id current-user 
-                             :following_id user }))))))
+            (hs/delete :user_following
+                (dbq/values {:user_id current-user
+                             :following_id user}))))))
 
 (defn load-user
   [db user-id]
@@ -201,8 +201,14 @@
   [db link-id user]
     (let [conn (:connection db)]
       (when-let [link (first
-                        (cql/select conn :link (dbq/where [[= :id link-id]])))]
+                        (cql/select conn :link 
+                          (dbq/where [[= :id link-id]])))]
         (when-not (empty? link)
           (merge link
             (first (cql/select conn :post_counter
                       (dbq/where [[= :id link-id]]))))))))
+(defn list-links 
+  [db time-filter user]
+  (let [conn (:connection db)]
+    (cql/select conn :link)
+  ))

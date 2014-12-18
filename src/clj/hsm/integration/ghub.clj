@@ -19,19 +19,24 @@
           (map #(hash-map (get % "login") %)  
                 (map #(select-keys (get % "owner") ["id" "login" "type"]) coll)))))
 
+(def ghub-fields [:name :fork :watchers :open_issues :language :description :full_name])
+
 (defn insert-records
   [conn coll]
   (log/info (format "Inserting %d projects" (count coll)))
   (cql/insert-batch conn :github_project 
-    (doall (map (fn[item] (merge {:id (id-generate)}
-      (select-keys item 
-        (map name [:name :fork :watchers :open_issues :language :description :full_name])))) coll)))
+    (doall (map (fn[item] 
+                  (merge {:id (id-generate)}
+                    (select-keys item 
+                      (map name ghub-fields)))) 
+            coll)))
   (cql/insert-batch conn :github_user
     (find-users coll)))
 
 (defn find-next-url
   "Figure out the next url to call
-  <https://api.github.com/search/repositories?q=...&page=2>; rel=\"next\", <https://api.github.com/search/repositories?q=+...&page=34>; rel=\"last\"
+  <https://api.github.com/search/repositories?q=...&page=2>; 
+  rel=\"next\", <https://api.github.com/search/repositories?q=+...&page=34>; rel=\"last\"
   "
   [stupid-header]
   (let [[next-s last-s] (.split stupid-header ",")
@@ -69,13 +74,16 @@
 
 (defn import-repos
   [db language]
-  (let [conn (:connection db)]
-    (loop [url (format ghub-url language)]
-      (log/warn url)
+  (let [max-iter 10000
+        conn (:connection db)]
+    (loop [url (format ghub-url language) 
+           looped 1]
+      (log/warn (format "Loop %d. %s" looped url))
       (let [{:keys [success next-url repos]} (fetch-url url)]
         (insert-records conn repos)
-        (when next-url
-          (recur next-url))))))
+        (when (and next-url (< looped max-iter))
+          (recur next-url (inc looped)))))
+    1))
 
 ; (defn import-repos*
 ;   [db]

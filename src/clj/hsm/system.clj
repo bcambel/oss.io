@@ -83,7 +83,8 @@
       (POST "/link/create" request (cont-post/create-link db request))
       (POST "/link/:id/upvote" request (cont-post/upvote-link db request))
       (GET  "/link/:id" request (cont-post/show-link db request))
-      (GET  "/import/:language" [language] (ghub/import-repos db language))
+      (GET  "/links/:date" request (cont-post/list-links db request))
+      (GET  "/import/:language" [language] (generate-json-resp (ghub/import-repos db language)))
 
       (route/not-found "Page not found")
       )
