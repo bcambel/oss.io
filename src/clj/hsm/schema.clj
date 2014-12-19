@@ -1,5 +1,6 @@
 (ns hsm.schema
-  (:require 
+  (:require
+    [clojure.tools.logging :as log]
     [clojurewerkz.cassaforte.cql  :as cql]
     [clojurewerkz.cassaforte.query :as cq]
     [qbits.hayt.dsl.statement :as hs]))
