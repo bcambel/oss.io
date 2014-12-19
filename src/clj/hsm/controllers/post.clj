@@ -4,21 +4,7 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
-            [hsm.utils :as utils :refer [json-resp]]))
-
-(defn whois 
-  [req]
-  (log/debug (get-in req [:headers "x-auth-token"]))
-  243975551163827208
-  )
-
-(defn host-of
-  [request]
-  (get-in request [:headers "host"]))
-
-(defn body-of
-  [request]
-  (parse-string (utils/body-as-string request)))
+            [hsm.utils :as utils :refer [json-resp host-of body-of whois]]))
 
 (defn create-link
   [db request] 

@@ -48,7 +48,7 @@
 (defn fetch-url
   [url]
   (try 
-    (let [response (client/get url) 
+    (let [response (client/get url {:socket-timeout 10000 :conn-timeout 10000}) 
           ; /repositories call returns result in root
           ; /search/repositories returns under items
           repos (parse-string (:body response)) ;(get  "items")

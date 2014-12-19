@@ -76,6 +76,7 @@
       (POST "/discussion/:id/follow" [id request] (cont-disc/follow-discussion db id request))
       (POST "/discussion/:id/unfollow" [id request] (cont-disc/unfollow-discussion db id request))
       (GET  "/user/:id" [id request] (cont-user/get-user db id request))
+      (GET  "/user/:id/activity" [id request] (cont-user/get-user-activity db id request))
       (POST "/user/:id/follow" request (cont-user/follow-user db request))
       (POST "/user/:id/unfollow" request (cont-user/unfollow-user db request))
       (GET  "/user/:id/followers" request (cont-user/get-user-followers db request))

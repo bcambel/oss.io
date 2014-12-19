@@ -4,7 +4,7 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
-            [hsm.utils :as utils :refer [json-resp]]))
+            [hsm.utils :as utils :refer [json-resp body-of host-of whois]]))
 
 (defn get-user
   [db id request] 
@@ -22,8 +22,8 @@
 
 (defn ^:private follow-user-actions
   [func db request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         current-user 243975551163827208
         id (BigInteger. (get-in request [:route-params :id]))]
     (func db id current-user)
@@ -34,12 +34,20 @@
 
 (defn ^:private get-user-detail
   [func db request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
-        current-user 243975551163827208
+  (let [host  (host-of request)
+        body (body-of request)
+        current-user (whois request)
         user-id (BigInteger. (get-in request [:route-params :id]))]
         (json-resp (func db user-id))
         ))
 
 (def get-user-following (partial get-user-detail actions/load-user-following))
 (def get-user-followers (partial get-user-detail actions/load-user-followers))
+
+(defn get-user-activity
+  [db request]
+  (let [host  (host-of request)
+        body (body-of request)]
+
+        )
+  )
