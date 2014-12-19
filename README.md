@@ -130,6 +130,9 @@ docker exec -it daf936345971 kafka-topics.sh --create --topic test --replication
 docker exec -it daf936345971 kafka-console-producer.sh --topic test --broker-list $KAFKA_IP:9092
 ```
 
+a more complex kafka installation could be done via the following docker image
+https://registry.hub.docker.com/u/wurstmeister/kafka/
+
 ## License
 
 Copyright © 2014 Bahadir Cambel
