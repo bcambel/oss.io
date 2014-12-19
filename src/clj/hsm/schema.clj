@@ -7,10 +7,11 @@
 (def table-definitions {
   :link {   :id :bigint
             :title :text
-            :user-id :bigint
-            :created-at :bigint
-            :submit-by :bigint
-            :url :text 
+            :user_id :bigint
+            :created_at :bigint
+            :submit_by :bigint
+            :url :text
+            :domain :text
             :primary-key [:id]}
 
   :platform {
@@ -21,152 +22,152 @@
             :primary-key [:id]}
 
   :channel {
-            :platform-id :int
+            :platform_id :int
             :id :bigint
             :name :text
             :slug :text
-            :primary-key [:platform-id :id] }
+            :primary-key [:platform_id :id] }
 
-  ;;index on channel -> slug
+  ;;index on channel _> slug
 
-  :channel-follower {
-            :channel-id :bigint
-            :user-id :bigint
-            :created-at :bigint
-            :primary-key [:channel-id :user-id]}
+  :channel_follower {
+            :channel_id :bigint
+            :user_id :bigint
+            :created_at :bigint
+            :primary-key [:channel_id :user_id]}
 
-  :channel-timeline {
-            :channel-id :bigint
-            :post-id :bigint
-            :primary-key [:channel-id :post-id]}
+  :channel_timeline {
+            :channel_id :bigint
+            :post_id :bigint
+            :primary-key [:channel_id :post_id]}
 
   :discussion {
-            :platform-id :int
+            :platform_id :int
             :id :bigint
-            :last-message :bigint
-            :post-id :bigint
-            :published-at :bigint
+            :last_message :bigint
+            :post_id :bigint
+            :published_at :bigint
             :slug :text
             :title :text
-            :topic-id :int
-            :user-id :bigint
+            :topic_id :int
+            :user_id :bigint
             :users (cq/set-type :int)
-            :primary-key [:platform-id :id]}
+            :primary-key [:platform_id :id]}
 
-  :discussion-counter {
+  :discussion_counter {
             :id :bigint
-            :follower-count :counter
-            :message-count :counter
-            :user-count :counter
-            :view-count :counter
+            :follower_count :counter
+            :message_count :counter
+            :user_count :counter
+            :view_count :counter
             :primary-key [:id]}
 
-  :discussion-follower {
-            :disc-id :bigint
-            :user-id :bigint
-            :created-at :bigint
-            :primary-key [:disc-id :user-id]}
+  :discussion_follower {
+            :disc_id :bigint
+            :user_id :bigint
+            :created_at :bigint
+            :primary-key [:disc_id :user_id]}
 
-  :discussion-post {
-            :disc-id :bigint
-            :post-id :bigint
-            :user-id :bigint
-            :primary-key [:disc-id :post-id :user-id]}
+  :discussion_post {
+            :disc_id :bigint
+            :post_id :bigint
+            :user_id :bigint
+            :primary-key [:disc_id :post_id :user_id]}
 
   :post {
-            :user-id :bigint
+            :user_id :bigint
             :id :bigint
-            :channel-id :int
-            :created-at :bigint
+            :channel_id :int
+            :created_at :bigint
             :deleted :boolean
-            :discussion-id :bigint
-            :ext-id :text
+            :discussion_id :bigint
+            :ext_id :text
             :flagged :boolean
-            :has-channel :boolean
-            :has-url :boolean
+            :has_channel :boolean
+            :has_url :boolean
             :html :text
-            :reply-to-id :bigint
-            :reply-to-nick :text
-            :reply-to-uid :int
+            :reply_to_id :bigint
+            :reply_to_nick :text
+            :reply_to_uid :int
             :spam :boolean
             :stats (cq/map-type :ascii :int)
             :text :text
-            :user-nick :text
+            :user_nick :text
             :primary-key [:id]}
 
-  :post-counter {
+  :post_counter {
             :id :bigint
-            :down-votes :counter
+            :down_votes :counter
             :karma :counter
             :replies :counter
-            :up-votes :counter
+            :up_votes :counter
             :views :counter
             :primary-key [:id]}
 
   ;; do we really need a post follower ? 
   ;; Maybe notification about replies ?
-  :post-follower {
-            :post-id :bigint
-            :user-id :bigint
-            :created-at :bigint
-            :primary-key [:post-id :user-id]}
+  :post_follower {
+            :post_id :bigint
+            :user_id :bigint
+            :created_at :bigint
+            :primary-key [:post_id :user_id]}
 
-  :post-reply {
-            :post-id :bigint
-            :reply-post-id :bigint
-            :primary-key [:post-id :reply-post-id]}
+  :post_reply {
+            :post_id :bigint
+            :reply_post_id :bigint
+            :primary-key [:post_id :reply_post_id]}
 
-  :post-vote {
-            :post-id :bigint
-            :user-id :bigint
-            :created-at :bigint
+  :post_vote {
+            :post_id :bigint
+            :user_id :bigint
+            :created_at :bigint
             :positive :boolean
-            :primary-key [:post-id :user-id]}
+            :primary-key [:post_id :user_id]}
 
   :project {
-            :platform-id :int
+            :platform_id :int
             :id :int
             :name :text
-            :primary-key [:platform-id :id]}
+            :primary-key [:platform_id :id]}
 
-  :project-follower {
-            :project-id :int
-            :user-id :bigint
-            :created-at :bigint
-            :primary-key [:project-id :user-id]}
+  :project_follower {
+            :project_id :int
+            :user_id :bigint
+            :created_at :bigint
+            :primary-key [:project_id :user_id]}
 
-  :project-timeline {
-            :project-id :int
-            :post-id :bigint
-            :primary-key [:project-id :post-id]}
+  :project_timeline {
+            :project_id :int
+            :post_id :bigint
+            :primary-key [:project_id :post_id]}
 
   :topic {
-            :platform-id :int
+            :platform_id :int
             :id :bigint
             :description :text
-            :last-message-id :bigint
-            :last-message-time :bigint
-            :main-topic :boolean
+            :last_message_id :bigint
+            :last_message_time :bigint
+            :main_topic :boolean
             :name :text
-            :parent-topic :bigint
+            :parent_topic :bigint
             :slug :text
             :subtopics (cq/set-type :int)
-            :primary-key [:platform-id :id]}
+            :primary-key [:platform_id :id]}
 
-  :topic-counter {
+  :topic_counter {
             :id :bigint
             :discussions :counter
             :messages :counter
             :views :counter
             :primary-key [:id]}
 
-  :topic-discussion {
-            :topic-id :bigint
-            :discussion-id :bigint
-            :primary-key [:topic-id :discussion-id]}
+  :topic_discussion {
+            :topic_id :bigint
+            :discussion_id :bigint
+            :primary-key [:topic_id :discussion_id]}
   :user {
             :id :bigint
-            :created-at :bigint
+            :created_at :bigint
             :nick :text
             :email :text
             :password :text
@@ -175,72 +176,72 @@
             :following :int
             :roles (cq/set-type :text)
             :picture :text
-            :registered-at :bigint
+            :registered_at :bigint
             :extended (cq/map-type :text :text)
             :primary-key [:id]}
 
-  :user-counter {
+  :user_counter {
             :id :bigint
-            :down-vote-given :counter
-            :down-vote-taken :counter
-            :follower-count :counter
-            :following-count :counter
+            :down_vote_given :counter
+            :down_vote_taken :counter
+            :follower_count :counter
+            :following_count :counter
             :karma :counter
             :messages :counter
-            :up-vote-given :counter
-            :up-vote-received :counter
+            :up_vote_given :counter
+            :up_vote_received :counter
             :primary-key [:id]}
 
-  :user-discussion {
-            :user-id :bigint
-            :discussion-id :bigint
-            :primary-key [:user-id :discussion-id]}
+  :user_discussion {
+            :user_id :bigint
+            :discussion_id :bigint
+            :primary-key [:user_id :discussion_id]}
 
-  :user-follower {
-            :user-id :bigint
-            :follower-id :bigint
-            :created-at :bigint
-            :primary-key [:user-id :follower-id]}
+  :user_follower {
+            :user_id :bigint
+            :follower_id :bigint
+            :created_at :bigint
+            :primary-key [:user_id :follower_id]}
 
-  :user-following {
-            :user-id :bigint
-            :following-id :bigint
-            :created-at :bigint
-            :primary-key [:user-id :following-id]}
+  :user_following {
+            :user_id :bigint
+            :following_id :bigint
+            :created_at :bigint
+            :primary-key [:user_id :following_id]}
 
-  :user-post {
-            :user-id :bigint
-            :post-id :bigint
-            :primary-key [:user-id :post-id]}
+  :user_post {
+            :user_id :bigint
+            :post_id :bigint
+            :primary-key [:user_id :post_id]}
 
-  :user-project {
-            :user-id :bigint
-            :project-id :int
-            :primary-key [:user-id :project-id]}
+  :user_project {
+            :user_id :bigint
+            :project_id :int
+            :primary-key [:user_id :project_id]}
 
-  :user-timeline {
-            :user-id :bigint
-            :post-id :bigint
-            :primary-key [:user-id :post-id]}
+  :user_timeline {
+            :user_id :bigint
+            :post_id :bigint
+            :primary-key [:user_id :post_id]}
 
-  :github-project {
+  :github_project {
             :id :bigint
             :description :text
             :fork :boolean
             :forks :int
-            :full-name :text
+            :full_name :text
             :homepage :text
             :language :text
-            :master-branch :text
+            :master_branch :text
             :name :text
-            :network-count :int
-            :open-issues :int
+            :network_count :int
+            :open_issues :int
             :owner :text
             :url :text
             :watchers :int
             :primary-key [:id]}
 
-  :github-user {
+  :github_user {
             :login :text
             :bio :text
             :blog :text
@@ -248,21 +249,44 @@
             :email :text
             :followers :int
             :following :int
-            :full-profile :boolean
+            :full_profile :boolean
             :id :int
             :image :text
             :location :text
             :name :text
-            :public-gists :int
-            :public-repos :int
+            :public_gists :int
+            :public_repos :int
             :url :text
             :type :text
             :primary-key [:login]}
 
-  :github-user-list {
+  :github_user_list {
             :user :text
             :followers (cq/set-type :text)
             :following (cq/set-type :text)
             :starred (cq/set-type :text)
             :primary-key [:user]}
 })
+
+(defn create-or-use-keyspace
+  [conn keyspace]
+  (try
+    ;; in production, should never create keyspace like this!
+    (cql/create-keyspace conn (keyword keyspace)
+             (cq/with {:replication
+                    {:class "SimpleStrategy"
+                     :replication_factor 1}}))
+    (catch Throwable t
+      (log/warn t)))
+  (cql/use-keyspace conn keyspace))
+
+(defn create-db-space
+  [db]
+  (let [conn (-> db :connection)]
+    (cql/use-keyspace conn "hackersome")
+    (map
+      (fn [table]
+        (cql/create-table conn
+          (name table)
+          (cq/column-definitions (table table-definitions))))
+      (keys table-definitions))))

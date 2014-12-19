@@ -117,15 +117,7 @@
   (start [component]
     (log/info "Starting Cassandra database")
     (let [conn (cc/connect [host])]
-        (try 
-          (cql/create-keyspace conn (keyword keyspace)
-                   (dbq/with {:replication
-                          {:class "SimpleStrategy"
-                           :replication_factor 1}}))
-          (catch Throwable t (log/warn t)))
-
-      (cql/use-keyspace conn keyspace)
-        
+      (db/create-or-use-keyspace conn keyspace)
       ;; Return an updated version of the component with
       ;; the run-time state assoc'd in.
       (assoc component :connection conn)))
