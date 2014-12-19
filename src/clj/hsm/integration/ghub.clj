@@ -14,6 +14,8 @@
       ))
 
 (defn find-users
+  "Given all the projects which contains `owner` field, 
+  extract those and construct a hash-map by login id."
   [coll]
   (vals (apply merge 
           (map #(hash-map (get % "login") %)  
@@ -73,7 +75,7 @@
 
 
 (defn import-repos
-  [db language]
+  [db language since]
   (let [max-iter 10000
         conn (:connection db)]
     (loop [url (format ghub-url language) 
