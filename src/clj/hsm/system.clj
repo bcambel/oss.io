@@ -11,6 +11,7 @@
         [hsm.controllers.post :as cont-post]
         [hsm.controllers.discussion :as cont-disc]
         [hsm.integration.ghub :as ghub]
+        [hsm.schema :as db]
         [compojure.handler :as handler :refer [api]]
         [compojure.route :as route :refer [resources]]
         [ring.middleware.reload :as reload]
