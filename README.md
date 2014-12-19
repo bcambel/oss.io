@@ -36,7 +36,7 @@ In the REPL do
 (def sys (startup {}))
 ```
 
-Which will return the system map. It's based on Stuart Sierra's amazing Component lib.
+Which will return the system map. It's based on Stuart Sierra's amazing [Component lib](https://github.com/stuartsierra/component).
 
 In order to access db session component do a 
 
@@ -72,7 +72,23 @@ Notice again how the browser updates.
 Docker
 ---------------
 
-A sample clojure docker container could be used.
+Install docker via the [lxc-docker package](https://gist.github.com/bcambel/ba55a02124831388c4bc) in Ubuntu.
+If you're in MacOS use the [Boot2Docker image](http://boot2docker.io/). Don't forget to install ```fig``` as well. If you have python & pip already you may install via ```pip install fig```
+
+Modify the ```/etc/default/docker``` and add/enable the following lines
+
+```
+DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4"
+DOCKER_OPTS="-H tcp://127.0.0.1:4243 -H unix:///var/run/docker.sock"
+```
+
+and check if the docker service is running via
+
+```
+service docker status
+```
+
+A sample clojure docker container could be used to play around, get used to.
 
 ```bash
 docker pull clojure
@@ -96,6 +112,22 @@ docker run spotify/cassandra -d --ip=172.17.0.48
 docker inspect <image_id> 
 # modify your /etc/hosts file to add the cassandra host
 docker exec -it <container_id> cqlsh < schema.cql
+```
+
+Kafka
+==========
+
+Using [Ches/Kafka](https://registry.hub.docker.com/u/ches/kafka/) as the base image. It's very simple to 
+setup and use. Kafka requires ZooKeeper to keep track of it's client markers, nodes, etc..
+
+```shell
+docker run -d --name zookeeper jplock/zookeeper:3.4.6
+docker run -d --name kafka --link zookeeper:zookeeper ches/kafka
+ZK_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' zookeeper)
+KAFKA_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' kafka)
+
+docker exec -it daf936345971 kafka-topics.sh --create --topic test --replication-factor 1 --partitions 1 --zookeeper $ZK_IP:2181
+docker exec -it daf936345971 kafka-console-producer.sh --topic test --broker-list $KAFKA_IP:9092
 ```
 
 ## License

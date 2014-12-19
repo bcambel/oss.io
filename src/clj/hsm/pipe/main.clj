@@ -5,7 +5,7 @@
     [clj-kafka.zk :as zk]
     [clj-kafka.consumer.zk :as consumer.zk]
     [clj-kafka.producer :as kfk.prod]
-    [clojure.core.async :as async :refer :all]
+    [clojure.core.async :as async :refer [alts! go]]
     [environ.core :refer [env]]
     ))
 

@@ -2,13 +2,12 @@
   (:use
    [twitter.oauth]
    [twitter.callbacks]
-   [twitter.callbacks.handlers]
-   )
+   [twitter.callbacks.handlers])
   (:require
    [cheshire.core :refer :all]
    [clojure.tools.logging :as log]
    [twitter-streaming-client.core :as twt-strm-cli]
-   [clojure.core.async :as async :refer :all]
+   [clojure.core.async :as async :refer [go >! chan]]
    [environ.core :refer [env]]
    [hsm.pipe.main :as pipe]
    [http.async.client :as ac]
@@ -39,6 +38,7 @@
   [keywords]
   (let [tweet-chan (chan) 
         kafka-pipe (pipe/init tweet-chan "test")]
+        (log/warn "Start vacuum")
     (vacuum-twttr keywords (fn[tweets]
                                 (mapv #(go (>! tweet-chan %)) tweets)))))
 
