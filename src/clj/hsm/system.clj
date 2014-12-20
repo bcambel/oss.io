@@ -2,16 +2,15 @@
      (:require
         [clojure.java.io :as io]
         [cheshire.core :refer :all]
-        [clojurewerkz.cassaforte.client :as cc]
-        [clojurewerkz.cassaforte.cql    :as cql]
-        [clojurewerkz.cassaforte.query :as dbq]
+        [clojurewerkz.cassaforte.cql    :as cql   ]
         [clojure.tools.logging :as log]
         [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
         [hsm.controllers.user :as cont-user]
         [hsm.controllers.post :as cont-post]
         [hsm.controllers.discussion :as cont-disc]
         [hsm.integration.ghub :as ghub]
-        [hsm.schema :as db]
+        [hsm.system.kafka :as sys.kafka]
+        [hsm.system.cassandra :as sys.cassandra]
         [compojure.handler :as handler :refer [api]]
         [compojure.route :as route :refer [resources]]
         [ring.middleware.reload :as reload]
@@ -58,7 +57,7 @@
   (let [conn (:connection db)]
     (generate-json-resp (cql/select conn :user))))
 
-(defrecord HTTP [port db server]
+(defrecord HTTP [port db kafka-producer server]
   component/Lifecycle
 
   (start [this]
@@ -109,39 +108,16 @@
     (log/warn "Stopping HTTP Server")
     (.stop server)))
 
-(defn http-server [port]
+(defn http-server
+  [port]
   (map->HTTP {:port port}))
 
-(defrecord CassandraDB [host port keyspace connection]
-  component/Lifecycle
-
-  (start [component]
-    (log/info "Starting Cassandra database")
-    (let [conn (cc/connect [host])]
-      (db/create-or-use-keyspace conn keyspace)
-      ;; Return an updated version of the component with
-      ;; the run-time state assoc'd in.
-      (assoc component :connection conn)))
-
-  (stop [component]
-    (log/info "Stopping database")
-    ;; In the 'stop' method, shut down the running
-    ;; component and release any external resources it has
-    ;; acquired.
-    (.close connection)
-    ;; Return the component, optionally modified. Remember that if you
-    ;; dissoc one of a record's base fields, you get a plain map.
-    (assoc component :connection nil)))
-
-(defn cassandra-db
-  [host port keyspace]
-  (map->CassandraDB {:host host :port port :keyspace keyspace}))
-
 (defn front-end-system [config-options]
-  (let [{:keys [host port keyspace server-port]} config-options]
+  (let [{:keys [host port keyspace server-port zookeeper]} config-options]
     (-> (component/system-map
-          :db (cassandra-db host port keyspace)
+          :db (sys.cassandra/cassandra-db host port keyspace)
+          :kafka-producer (sys.kafka/kafka-producer zookeeper)
           :app (component/using
             (http-server server-port)
-            [:db]
+            [:db :kafka-producer]
             )))))

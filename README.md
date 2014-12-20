@@ -125,9 +125,11 @@ docker run -d --name zookeeper jplock/zookeeper:3.4.6
 docker run -d --name kafka --link zookeeper:zookeeper ches/kafka
 ZK_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' zookeeper)
 KAFKA_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' kafka)
-
-docker exec -it daf936345971 kafka-topics.sh --create --topic test --replication-factor 1 --partitions 1 --zookeeper $ZK_IP:2181
-docker exec -it daf936345971 kafka-console-producer.sh --topic test --broker-list $KAFKA_IP:9092
+# learn the image ID. 
+# "q" switch for quiet(returns only ID). "f" for filtering
+KAFKA_CONT_ID=$(docker ps -fq name=kafka)
+docker exec -it $KAFKA_CONT_ID kafka-topics.sh --create --topic test --replication-factor 1 --partitions 1 --zookeeper $ZK_IP:2181
+docker exec -it $KAFKA_CONT_ID kafka-console-producer.sh --topic test --broker-list $KAFKA_IP:9092
 ```
 
 a more complex kafka installation could be done via the following docker image

@@ -270,6 +270,7 @@
 })
 
 (defn create-or-use-keyspace
+  "Given connection"
   [conn keyspace]
   (try
     ;; in production, should never create keyspace like this!
@@ -282,6 +283,7 @@
   (cql/use-keyspace conn keyspace))
 
 (defn create-db-space
+  "Given db connection creates all the necessary tables"
   [db]
   (let [conn (-> db :connection)]
     (cql/use-keyspace conn "hackersome")

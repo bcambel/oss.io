@@ -44,6 +44,7 @@
         (log/warn "Parsed config")
         (let [sys (system/front-end-system {
                                     :server-port (:port c)
+                                    :zookeeper (:zookeeper-host c)
                                     :host (:db-host c) 
                                     :port (:db-port c) 
                                     :keyspace (:db-keyspace c)})

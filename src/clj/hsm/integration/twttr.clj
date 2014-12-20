@@ -37,10 +37,10 @@
 (defn start-listen
   [keywords]
   (let [tweet-chan (chan) 
-        kafka-pipe (pipe/init tweet-chan "test")]
+        kafka-pipe (pipe/init tweet-chan)]
         (log/warn "Start vacuum")
     (vacuum-twttr keywords (fn[tweets]
-                                (mapv #(go (>! tweet-chan %)) tweets)))))
+                                (mapv #(go (>! tweet-chan ["test" %])) tweets)))))
 
 (defn -main
   [& args]
