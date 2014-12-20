@@ -4,9 +4,8 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
-            [hsm.utils :as utils :refer [json-resp]]))
-
-
+            [hsm.pipe.event :as event-pipe]
+            [hsm.utils :as utils :refer [json-resp body-of host-of]]))
 
 (defn get-discussion 
   [[db event-chan] id request]
@@ -15,23 +14,24 @@
     (json-resp discussion)))
 
 (defn ^:private following-discussion
-  [f [db event-chan] id request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  [f act-name [db event-chan] id request]
+  (let [host  (host-of request)
+        body (body-of request)
         platform 1
         user 243975551163827208
         discussion-id (BigInteger. id)]
     (let [result (f db discussion-id user)]
+      (event-pipe/follow-discussion act-name event-chan {:user user :id discussion-id})
       (json-resp result))))
 
-(def follow-discussion (partial following-discussion actions/follow-discussion))
-(def unfollow-discussion (partial following-discussion actions/unfollow-discussion))
+(def follow-discussion (partial following-discussion actions/follow-discussion :follow-discussion))
+(def unfollow-discussion (partial following-discussion actions/unfollow-discussion :unfollow-discussion))
 
 
 (defn get-discussion-posts
   [[db event-chan] id request]
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         platform 1
         user 243975551163827208
         discussion-id (BigInteger. id)
@@ -42,8 +42,8 @@
 (defn post-discussion
   [[db event-chan] request]
   (log/warn request)
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         platform 1
         id (get-in request [:route-params :id])
         user 243975551163827208
@@ -56,8 +56,8 @@
 (defn create-discussion
   [[db event-chan] request] 
   (log/warn request)
-  (let [host  (get-in request [:headers "host"])
-        body (parse-string (utils/body-as-string request))
+  (let [host  (host-of request)
+        body (body-of request)
         platform 1
         user 243975551163827208
         data (utils/mapkeyw body)]

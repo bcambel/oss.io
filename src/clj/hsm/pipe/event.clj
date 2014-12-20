@@ -18,12 +18,17 @@
 	[event-type channel user-data]
 	(go 
 		(>! channel 
-			["test" (generate-string {:type :create-user 
+			["test" (generate-string {:type event-type
 																:data user-data})])))
 
 (def create-user (partial create-event :create-user))
-(def follow-user (partial create-event :follow-user))
-(def unfollow-user (partial create-event :unfollow-user))
+
+(defn follow-user-event 
+	"Beware! Used both for follow and unfollow user actions."
+	[act-name event-chan data] 
+	(create-event act-name event-chan data))
+
+; (def unfollow-user (partial create-event :unfollow-user))
 
 (def create-discussion (partial create-event :create-discussion))
-(def follow-discussion (partial create-event :follow-discussion))
+(def follow-discussion (partial create-event))

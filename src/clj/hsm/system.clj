@@ -40,12 +40,6 @@
          (resp/response (.getMessage e))
          (resp/status 500)))))))
 
-(defn generate-response
-  [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/edn"}
-   :body (pr-str data)})
-
 (defn generate-json-resp
   [data & [status]]
   {:status (or status 200)
@@ -138,7 +132,7 @@
 
 (defn worker-system [config-options]
   (let [{:keys [zookeeper]} config-options]
-    (-> (component/system-map
+    (-> (component/system-map 
       :kafka-producer (sys.kafka/kafka-producer zookeeper)
       :app (component/using 
         (worker)

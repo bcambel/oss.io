@@ -23,16 +23,17 @@
     (json-resp { :ok body })))
 
 (defn ^:private follow-user-actions
-  [func [db event-chan] request]
+  [func act-name [db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         current-user 243975551163827208
         id (BigInteger. (get-in request [:route-params :id]))]
     (func db id current-user)
+    (event-pipe/follow-user-event act-name event-chan {:current-user current-user :user id})
     (json-resp {:ok 1})))
 
-(def follow-user (partial follow-user-actions actions/follow-user))
-(def unfollow-user (partial follow-user-actions actions/unfollow-user))
+(def follow-user (partial follow-user-actions actions/follow-user :follow-user))
+(def unfollow-user (partial follow-user-actions actions/unfollow-user :unfollow-user))
 
 (defn ^:private get-user-detail
   [func [db event-chan] request]
