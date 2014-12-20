@@ -7,7 +7,7 @@
             [hsm.utils :as utils :refer [json-resp host-of body-of whois]]))
 
 (defn create-link
-  [db request] 
+  [[db event-chan] request] 
   (log/warn request)
   (let [host  (host-of request)
         body (body-of request)
@@ -17,7 +17,7 @@
     (json-resp { :ok body })))
 
 (defn upvote-link
-  [db request]
+  [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         link-id (BigInteger. (get-in request [:route-params :id]))
@@ -27,7 +27,7 @@
         ))
 
 (defn show-link
-  [db request]
+  [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         link-id (BigInteger. (get-in request [:route-params :id]))
@@ -36,7 +36,7 @@
 
 
 (defn list-links
-  [db request]
+  [[db event-chan] request]
   (let [host  (host-of request)
     body (body-of request)
     time-filter (get-in request [:route-params :date])

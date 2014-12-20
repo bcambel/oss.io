@@ -96,3 +96,8 @@
   [request]
   (log/debug (get-in request [:headers "x-auth-token"]))
   243975551163827208)
+
+(defn byte-array->str
+  "Convert byte array into String"
+  [bytes]
+  (apply str (map char bytes)))

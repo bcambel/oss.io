@@ -9,8 +9,10 @@
    [twitter-streaming-client.core :as twt-strm-cli]
    [clojure.core.async :as async :refer [go >! chan]]
    [environ.core :refer [env]]
-   [hsm.pipe.main :as pipe]
-   [http.async.client :as ac]
+   [hsm.conf :as conf]
+   [hsm.system :as system]
+   ; [http.async.client :as ac]
+   [com.stuartsierra.component :as component]
    [twitter.api.streaming :as twt-stream])
   (:gen-class))
 
@@ -35,13 +37,18 @@
       (recur))))
 
 (defn start-listen
-  [keywords]
-  (let [tweet-chan (chan) 
-        kafka-pipe (pipe/init tweet-chan)]
+  [keywords tweet-chan]
+  (let []
         (log/warn "Start vacuum")
     (vacuum-twttr keywords (fn[tweets]
                                 (mapv #(go (>! tweet-chan ["test" %])) tweets)))))
 
 (defn -main
   [& args]
-  (start-listen (first args)))
+  (let [{:keys [conf] :or {conf "app.ini"}} {:conf "app.ini"}
+        c (conf/parse-conf conf true)
+        sys (component/start (system/worker-system { :zookeeper (:zookeeper-host c)}))
+        keywords (first args)]
+    (start-listen keywords (-> sys :kafka-producer))
+    )
+  )

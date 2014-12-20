@@ -9,13 +9,13 @@
 
 
 (defn get-discussion 
-  [db id request]
+  [[db event-chan] id request]
   (let [discussion (actions/load-discussion db (BigInteger. id))]
     (log/info "[DISC]Loading " id discussion)
     (json-resp discussion)))
 
 (defn ^:private following-discussion
-  [f db id request]
+  [f [db event-chan] id request]
   (let [host  (get-in request [:headers "host"])
         body (parse-string (utils/body-as-string request))
         platform 1
@@ -29,7 +29,7 @@
 
 
 (defn get-discussion-posts
-  [db id request]
+  [[db event-chan] id request]
   (let [host  (get-in request [:headers "host"])
         body (parse-string (utils/body-as-string request))
         platform 1
@@ -40,7 +40,7 @@
       (json-resp result))))
 
 (defn post-discussion
-  [db request]
+  [[db event-chan] request]
   (log/warn request)
   (let [host  (get-in request [:headers "host"])
         body (parse-string (utils/body-as-string request))
@@ -54,7 +54,7 @@
       (json-resp result))))
 
 (defn create-discussion
-  [db request] 
+  [[db event-chan] request] 
   (log/warn request)
   (let [host  (get-in request [:headers "host"])
         body (parse-string (utils/body-as-string request))

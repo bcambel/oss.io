@@ -19,20 +19,20 @@
   (kfk.prod/send-message producer
               (kfk.prod/message topic (.getBytes msg))))
 
-(defrecord KafkaProducer [zookeeper prod-chan kafka-prod-chan]
+(defrecord KafkaProducer [zookeeper prod-chan channel]
   component/Lifecycle
 
   (start [component]
-    (let [channel (or prod-chan (chan))
+    (let [producing-channel (or prod-chan (chan))
     			brokers (get-broker-list zookeeper)
           producer-config {"metadata.broker.list" brokers
                          "serializer.class" "kafka.serializer.DefaultEncoder"
                          "partitioner.class" "kafka.producer.DefaultPartitioner"}
           producer (kfk.prod/producer producer-config)]
 			(go (while true
-				(let [[[topic msg] ch] (alts! [channel])]
+				(let [[[topic msg] ch] (alts! [producing-channel])]
 					(send! producer topic msg))))
-			(assoc component :kafka-prod-chan channel)
+			(assoc component :channel producing-channel)
     ))
   (stop [component]
 

@@ -4,6 +4,7 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
+            [hsm.pipe.event :as event-pipe]
             [hsm.utils :as utils :refer [json-resp body-of host-of whois]]))
 
 (defn get-user
@@ -12,16 +13,17 @@
     (json-resp user)))
 
 (defn create-user
-  [db request] 
+  [[db event-chan] request] 
   (log/warn request)
   (let [host  (get-in request [:headers "host"])
     body (parse-string (utils/body-as-string request))
     user-data (utils/mapkeyw body)]
     (actions/create-user db user-data)
+    (event-pipe/create-user event-chan user-data)
     (json-resp { :ok body })))
 
 (defn ^:private follow-user-actions
-  [func db request]
+  [func [db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         current-user 243975551163827208
@@ -33,7 +35,7 @@
 (def unfollow-user (partial follow-user-actions actions/unfollow-user))
 
 (defn ^:private get-user-detail
-  [func db request]
+  [func [db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         current-user (whois request)
@@ -45,9 +47,9 @@
 (def get-user-followers (partial get-user-detail actions/load-user-followers))
 
 (defn get-user-activity
-  [db request]
+  [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)]
-    
+
         )
   )

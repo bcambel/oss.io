@@ -61,34 +61,37 @@
   component/Lifecycle
 
   (start [this]
+    "In the near future find a nice macro/solution 
+    to refactor route definitions"
+
     (log/info "Starting HTTP Server on " port)
+    (let [event-chan (:channel kafka-producer)]
+      (defroutes routes
+        (resources "/")
+        (resources "/react" {:root "react"})
+        (GET  "/" req (defaultpage))
+        (GET  "/test" request (sample-conn db request))
+        (POST "/user/create" request (cont-user/create-user [db event-chan] request))
+        (POST "/discussion/create" request (cont-disc/create-discussion [db event-chan] request))
+        (GET  "/discussion/:id" [id request] (cont-disc/get-discussion [db event-chan] id request))
+        (GET  "/discussion/:id/posts" [id request] (cont-disc/get-discussion-posts [db event-chan] id request))
+        (POST "/discussion/:id/post/create" request (cont-disc/post-discussion [db event-chan] request))
+        (POST "/discussion/:id/follow" [id request] (cont-disc/follow-discussion [db event-chan] id request))
+        (POST "/discussion/:id/unfollow" [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
+        (GET  "/user/:id" [id request] (cont-user/get-user [db event-chan] id request))
+        (GET  "/user/:id/activity" [id request] (cont-user/get-user-activity [db event-chan] id request))
+        (POST "/user/:id/follow" request (cont-user/follow-user [db event-chan] request))
+        (POST "/user/:id/unfollow" request (cont-user/unfollow-user [db event-chan] request))
+        (GET  "/user/:id/followers" request (cont-user/get-user-followers [db event-chan] request))
+        (GET  "/user/:id/following" request (cont-user/get-user-following [db event-chan] request))
+        (POST "/link/create" request (cont-post/create-link [db event-chan] request))
+        (POST "/link/:id/upvote" request (cont-post/upvote-link [db event-chan] request))
+        (GET  "/link/:id" request (cont-post/show-link [db event-chan] request))
+        (GET  "/links/:date" request (cont-post/list-links [db event-chan] request))
+        (GET  "/import/:language" [language] (generate-json-resp (ghub/import-repos [db event-chan] language)))
 
-    (defroutes routes
-      (resources "/")
-      (resources "/react" {:root "react"})
-      (GET  "/" req (defaultpage))
-      (GET  "/test" request (sample-conn db request))
-      (POST "/user/create" request (cont-user/create-user db request))
-      (POST "/discussion/create" request (cont-disc/create-discussion db request))
-      (GET  "/discussion/:id" [id request] (cont-disc/get-discussion db id request))
-      (GET  "/discussion/:id/posts" [id request] (cont-disc/get-discussion-posts db id request))
-      (POST "/discussion/:id/post/create" request (cont-disc/post-discussion db request))
-      (POST "/discussion/:id/follow" [id request] (cont-disc/follow-discussion db id request))
-      (POST "/discussion/:id/unfollow" [id request] (cont-disc/unfollow-discussion db id request))
-      (GET  "/user/:id" [id request] (cont-user/get-user db id request))
-      (GET  "/user/:id/activity" [id request] (cont-user/get-user-activity db id request))
-      (POST "/user/:id/follow" request (cont-user/follow-user db request))
-      (POST "/user/:id/unfollow" request (cont-user/unfollow-user db request))
-      (GET  "/user/:id/followers" request (cont-user/get-user-followers db request))
-      (GET  "/user/:id/following" request (cont-user/get-user-following db request))
-      (POST "/link/create" request (cont-post/create-link db request))
-      (POST "/link/:id/upvote" request (cont-post/upvote-link db request))
-      (GET  "/link/:id" request (cont-post/show-link db request))
-      (GET  "/links/:date" request (cont-post/list-links db request))
-      (GET  "/import/:language" [language] (generate-json-resp (ghub/import-repos db language)))
-
-      (route/not-found "Page not found")
-      )
+        (route/not-found "Page not found")
+        ))
 
     (def http-handler
       (if is-dev?
@@ -121,3 +124,26 @@
             (http-server server-port)
             [:db :kafka-producer]
             )))))
+
+(defrecord Worker [kafka-producer]
+   component/Lifecycle
+
+  (start [this]
+    (assoc this :kafka-producer kafka-producer))
+  (stop [this]))
+
+(defn worker 
+  []
+  (map->Worker {}))
+
+(defn worker-system [config-options]
+  (let [{:keys [zookeeper]} config-options]
+    (-> (component/system-map
+      :kafka-producer (sys.kafka/kafka-producer zookeeper)
+      :app (component/using 
+        (worker)
+        [:kafka-producer]
+        )
+      )
+    )
+  ))
