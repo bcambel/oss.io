@@ -32,3 +32,6 @@
 (def create-discussion (partial create-event :create-discussion))
 (def post-discussion (partial create-event :post-discussion))
 (def follow-discussion (partial create-event))
+
+(def create-link (partial create-event :create-link))
+(def upvote-link (partial create-event :upvote-link))

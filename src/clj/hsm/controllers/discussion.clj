@@ -27,7 +27,6 @@
 (def follow-discussion (partial following-discussion actions/follow-discussion :follow-discussion))
 (def unfollow-discussion (partial following-discussion actions/unfollow-discussion :unfollow-discussion))
 
-
 (defn get-discussion-posts
   [[db event-chan] id request]
   (let [host  (host-of request)

@@ -4,6 +4,7 @@
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [hsm.actions :as actions]
+            [hsm.pipe.event :as event-pipe]
             [hsm.utils :as utils :refer [json-resp host-of body-of whois]]))
 
 (defn create-link
@@ -14,6 +15,7 @@
         user (whois request)
         link-data (utils/mapkeyw body)]
     (actions/create-link db link-data user)
+    (event-pipe/create-link event-chan (apply merge {:user user} link-data))
     (json-resp { :ok body })))
 
 (defn upvote-link
@@ -23,6 +25,7 @@
         link-id (BigInteger. (get-in request [:route-params :id]))
         user (whois request)]
         (actions/upvote-post db link-id user)
+        (event-pipe/upvote-link event-chan {:user user :id link-id})
         (json-resp {:ok 1})
         ))
 
