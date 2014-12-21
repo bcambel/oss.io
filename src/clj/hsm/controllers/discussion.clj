@@ -5,7 +5,7 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.utils :as utils :refer [json-resp body-of host-of]]))
+            [hsm.utils :as utils :refer [json-resp body-of host-of whois]]))
 
 (defn get-discussion 
   [[db event-chan] id request]
@@ -51,6 +51,7 @@
         data (utils/mapkeyw body)]
         (log/warn host body)
     (let [result (actions/new-discussion-post db user discussion-id data)]
+      (event-pipe/post-discussion event-chan {:post result :discussion-id discussion-id :current-user user})
       (json-resp result))))
 
 (defn create-discussion
@@ -59,7 +60,8 @@
   (let [host  (host-of request)
         body (body-of request)
         platform 1
-        user 243975551163827208
+        user (whois request)
         data (utils/mapkeyw body)]
     (let [res (actions/create-discussion db platform user data)]
+      (event-pipe/create-discussion event-chan {:discussion res  :current-user user})
       (json-resp res))))

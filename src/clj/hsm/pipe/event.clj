@@ -8,9 +8,8 @@
 	{
 		:create-user identity
 		:follow-user identity
-
-		:create-discussion
-		:follow-discussion
+		:create-discussion identity
+		:follow-discussion identity
 	})
 
 
@@ -31,4 +30,5 @@
 ; (def unfollow-user (partial create-event :unfollow-user))
 
 (def create-discussion (partial create-event :create-discussion))
+(def post-discussion (partial create-event :post-discussion))
 (def follow-discussion (partial create-event))
