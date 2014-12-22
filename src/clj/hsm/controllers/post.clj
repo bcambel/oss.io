@@ -5,11 +5,20 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.utils :as utils :refer [json-resp host-of body-of whois]]))
+            [hsm.utils :as utils :refer [json-resp host-of body-of whois id-of]]))
+
+(defn create-post
+  [[db event-chan] request]
+  (let [host  (host-of request)
+        body (body-of request)
+        user (whois request)
+        data (utils/mapkeyw body)]
+        (when-let [post-id (actions/create-post db data user)]
+          (event-pipe/create-post event-chan (apply merge {:user user} data))
+          (json-resp {:id post-id}))))
 
 (defn create-link
-  [[db event-chan] request] 
-  (log/warn request)
+  [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
         user (whois request)
@@ -22,21 +31,19 @@
   [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
-        link-id (BigInteger. (get-in request [:route-params :id]))
+        link-id (BigInteger. (id-of request))
         user (whois request)]
-        (actions/upvote-post db link-id user)
-        (event-pipe/upvote-link event-chan {:user user :id link-id})
-        (json-resp {:ok 1})
-        ))
+    (actions/upvote-post db link-id user)
+    (event-pipe/upvote-link event-chan {:user user :id link-id})
+    (json-resp {:ok 1})))
 
 (defn show-link
   [[db event-chan] request]
   (let [host  (host-of request)
         body (body-of request)
-        link-id (BigInteger. (get-in request [:route-params :id]))
+        link-id (BigInteger. (id-of request))
         user (whois request)]
     (json-resp (actions/get-link db link-id user))))
-
 
 (defn list-links
   [[db event-chan] request]

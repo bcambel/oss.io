@@ -85,6 +85,14 @@
   [request]
   (get-in request [:headers "host"]))
 
+(defn id-of
+  "Finds the ID of the request. E.g
+  - /link/:id
+  - /post/:id
+  - /user/:id"
+  [request]
+  (get-in request [:route-params :id]))
+
 (defn body-of
   "Reads the JSON body of the request"
   [request]

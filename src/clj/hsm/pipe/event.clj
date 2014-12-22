@@ -35,3 +35,5 @@
 
 (def create-link (partial create-event :create-link))
 (def upvote-link (partial create-event :upvote-link))
+
+(def create-post (partial create-event :create-post))

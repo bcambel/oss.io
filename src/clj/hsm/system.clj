@@ -66,6 +66,7 @@
         (GET  "/" req (defaultpage))
         (GET  "/test" request (sample-conn db request))
         (POST "/user/create" request (cont-user/create-user [db event-chan] request))
+        (POST "/post/create" request (cont-post/create-post [db event-chan] request))
         (POST "/discussion/create" request (cont-disc/create-discussion [db event-chan] request))
         (GET  "/discussion/:id" [id request] (cont-disc/get-discussion [db event-chan] id request))
         (GET  "/discussion/:id/posts" [id request] (cont-disc/get-discussion-posts [db event-chan] id request))

@@ -174,9 +174,24 @@
 
 ;; POST Related
 
-(defn new-post [data])
+(defn create-post
+  [db post user]
+  (s/validate Post post)
+  (let [conn (:connection db)
+        post-id (id-generate)
+        post-data (merge post {:id post-id 
+                               :user_id user 
+                               :created_at (now->ep) })]
+    (cql/atomic-batch conn
+      (dbq/queries
+        (hs/insert :post (dbq/values post-data))
+        (hs/update :post_counter
+            (dbq/values {:karma 0 :upvotes 0 :views (dbq/increment-by 1) })
+            (dbq/where {:id post-id}))))
+    post-id
+    ))
 
-(defn edit-post [data])
+(defn edit-post [db data])
 
 (defn upvote-post [db post user]
   (let [conn (:connection db)]
