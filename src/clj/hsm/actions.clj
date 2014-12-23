@@ -4,6 +4,7 @@
     [schema.core :as s]
     [clojurewerkz.cassaforte.cql  :as cql]
     [clojurewerkz.cassaforte.query :as dbq]
+    [qbits.hayt :as hayt]
     [qbits.hayt.dsl.statement :as hs]
     [hsm.utils :refer [id-generate now->ep]]))
 
@@ -182,12 +183,15 @@
         post-data (merge post {:id post-id 
                                :user_id user 
                                :created_at (now->ep) })]
-    (cql/atomic-batch conn
-      (dbq/queries
-        (hs/insert :post (dbq/values post-data))
-        (hs/update :post_counter
-            (dbq/values {:karma 0 :upvotes 0 :views (dbq/increment-by 1) })
-            (dbq/where {:id post-id}))))
+      ;; counter column updates cannot be batched with normal statements
+      ;; we have to execute 2 queries to satisfy our req.
+      ;; might throw the counter update task into a Worker Queue
+      (cql/insert conn :post post-data)
+      (cql/update conn :post_counter
+         {:karma (dbq/increment-by 1)
+          :up_votes (dbq/increment-by 1)
+          :views (dbq/increment-by 1)}
+        (dbq/where {:id post-id}))
     post-id
     ))
 

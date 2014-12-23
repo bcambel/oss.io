@@ -14,7 +14,9 @@
         user (whois request)
         data (utils/mapkeyw body)]
         (when-let [post-id (actions/create-post db data user)]
-          (event-pipe/create-post event-chan (apply merge {:user user} data))
+          (event-pipe/create-post event-chan
+                                  (apply merge {:user (str user)
+                                                :id (str post-id)} data))
           (json-resp {:id post-id}))))
 
 (defn create-link
