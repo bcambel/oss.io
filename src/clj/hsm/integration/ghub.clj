@@ -14,7 +14,7 @@
       ))
 
 (defn find-users
-  "Given all the projects which contains `owner` field, 
+  "Given all the projects which contains **`owner`** field, 
   extract those and construct a hash-map by login id."
   [coll]
   (vals (apply merge 

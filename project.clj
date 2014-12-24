@@ -36,6 +36,8 @@
                 [commons-logging "1.1.3"]
                 [raven-clj "1.2.0"]
                 [twitter-api "0.7.7"]
+                [metrics-clojure "2.4.0"]
+                [slingshot "0.12.1"]
                 [twitter-streaming-client/twitter-streaming-client "0.3.2"]
                 [ch.qos.logback/logback-classic "1.1.2"]
                 [org.clojure/tools.logging "0.3.1"]
@@ -43,7 +45,9 @@
                 [leiningen "2.5.0"]]
 
   :plugins [[lein-environ "1.0.0"]]
-
+  :codox {:defaults {:doc/format :markdown}
+          :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
+          :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
 
   :uberjar-name "hsm.jar"
