@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bcambel/hackersome.svg?branch=development)](https://travis-ci.org/bcambel/hackersome)
 
-A Combination of multiple portals
+A Community project for developers, entreprenuers, hustlers. Hackersome is the umbrella project name, and includes the following portals
 
 - [Python Hackers](http://pythonhackers.com)
 - [Clojure Hackers](http://clojurehackers.com)
