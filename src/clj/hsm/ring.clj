@@ -1,5 +1,6 @@
 (ns hsm.ring
 	(:require 
+		[clojure.tools.logging :as log]
 		[ring.util.response :as resp]
 		[cheshire.core :refer :all]))
 
