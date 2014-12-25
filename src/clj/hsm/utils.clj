@@ -70,15 +70,7 @@
         (if (> sequence 4095) (swap! idseq zero))
         (bit-or time worker sequence)))
 
-(defn json-resp
-  "Generates JSON resp of given object, 
-  constructs a RING 200 Response.
-  TODO: Optionable status code.."
-  [data]
-  (-> (generate-string data)
-        (resp/response)
-        (resp/header "Content-Type" "application/json")
-        (resp/status 200)))
+
 
 (defn host-of
   "Finds the host header of the request"

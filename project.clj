@@ -5,7 +5,7 @@
             :url "http://raw.github.com/bcambel/hackersome/blob/master/LICENCE"}
 
   :source-paths ["src/clj" "src/cljs"]
-
+  :lein-release {:deploy-via :clojars :scm :git}
   :dependencies [[org.clojure/clojure "1.6.0"]
                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                 [ring "1.3.2"]
@@ -44,7 +44,8 @@
                 [weasel "0.4.0-SNAPSHOT"]
                 [leiningen "2.5.0"]]
 
-  :plugins [[lein-environ "1.0.0"]]
+  :plugins [[lein-environ "1.0.0"]
+            [lein-release "1.0.5"]]
   :codox {:defaults {:doc/format :markdown}
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}

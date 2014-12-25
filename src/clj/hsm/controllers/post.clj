@@ -5,7 +5,8 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.utils :as utils :refer [json-resp host-of body-of whois id-of]]))
+            [hsm.ring :refer [json-resp]]
+            [hsm.utils :as utils :refer [host-of body-of whois id-of]]))
 
 (defn create-post
   [[db event-chan] request]

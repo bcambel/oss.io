@@ -5,7 +5,8 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.utils :as utils :refer [json-resp body-of host-of whois]]))
+            [hsm.ring :refer [json-resp]]
+            [hsm.utils :as utils :refer [body-of host-of whois]]))
 
 (defn get-user
   [db id request] 
@@ -41,8 +42,7 @@
         body (body-of request)
         current-user (whois request)
         user-id (BigInteger. (get-in request [:route-params :id]))]
-        (json-resp (func db user-id))
-        ))
+        (json-resp (func db user-id))))
 
 (def get-user-following (partial get-user-detail actions/load-user-following))
 (def get-user-followers (partial get-user-detail actions/load-user-followers))

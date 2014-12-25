@@ -5,7 +5,8 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.utils :as utils :refer [json-resp body-of host-of whois]]))
+            [hsm.ring :refer [json-resp]]
+            [hsm.utils :as utils :refer [body-of host-of whois]]))
 
 (defn get-discussion 
   [[db event-chan] id request]

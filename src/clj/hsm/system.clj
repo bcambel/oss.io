@@ -9,6 +9,7 @@
         [hsm.controllers.post :as cont-post]
         [hsm.controllers.discussion :as cont-disc]
         [hsm.integration.ghub :as ghub]
+        [hsm.ring :as ringing :refer [json-resp wrap-exception-handler]]
         [hsm.system.kafka :as sys.kafka]
         [hsm.system.cassandra :as sys.cassandra]
         [compojure.handler :as handler :refer [api]]
@@ -23,33 +24,10 @@
 (deftemplate defaultpage
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
 
-(defn wrap-exception-handler
-  [handler]
-  (fn [req]
-    (try
-      (handler req)
-      (catch IllegalArgumentException e
-        (->
-         (resp/response e)
-         (resp/status 400)))
-      (catch Throwable e
-        (do
-          (log/error (.getMessage e))
-          (clojure.stacktrace/print-stack-trace e)
-        (->
-         (resp/response (.getMessage e))
-         (resp/status 500)))))))
-
-(defn generate-json-resp
-  [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/json"}
-   :body (generate-string data)})
-
 (defn sample-conn
   [db request]
   (let [conn (:connection db)]
-    (generate-json-resp (cql/select conn :user))))
+    (json-resp (cql/select conn :user))))
 
 (defrecord HTTP [port db kafka-producer server]
   component/Lifecycle
@@ -83,7 +61,7 @@
         (POST "/link/:id/upvote" request (cont-post/upvote-link [db event-chan] request))
         (GET  "/link/:id" request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date" request (cont-post/list-links [db event-chan] request))
-        (GET  "/import/:language" [language] (generate-json-resp (ghub/import-repos [db event-chan] language)))
+        (GET  "/import/:language" [language] (json-resp (ghub/import-repos [db event-chan] language)))
 
         (route/not-found "Page not found")
         ))
