@@ -6,7 +6,7 @@
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
             [hsm.ring :refer [json-resp]]
-            [hsm.utils :as utils :refer [body-of host-of whois]]))
+            [hsm.utils :as utils :refer [body-of host-of whois id-of]]))
 
 (defn get-user
   [db id request] 
@@ -15,7 +15,6 @@
 
 (defn create-user
   [[db event-chan] request] 
-  (log/warn request)
   (let [host  (get-in request [:headers "host"])
     body (parse-string (utils/body-as-string request))
     user-data (utils/mapkeyw body)]
@@ -28,7 +27,7 @@
   (let [host  (host-of request)
         body (body-of request)
         current-user 243975551163827208
-        id (BigInteger. (get-in request [:route-params :id]))]
+        id (BigInteger. (id-of request))]
     (func db id current-user)
     (event-pipe/follow-user-event act-name event-chan {:current-user current-user :user id})
     (json-resp {:ok 1})))

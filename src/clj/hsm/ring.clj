@@ -6,6 +6,8 @@
 
 
 (defn wrap-exception-handler
+	"Development only exception handler.
+	In the near future plug in sentry"
   [handler]
   (fn [req]
     (try
