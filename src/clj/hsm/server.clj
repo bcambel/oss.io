@@ -6,12 +6,9 @@
             [liberator.core :refer [resource defresource]]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :as route :refer [resources]]
-            
             [ring.util.response :as resp]
             [ring.util.codec :as codec]
             [net.cgrand.enlive-html :refer [deftemplate]]
-            
-            [cognitect.transit :as t]
             [cemerick.friend :as friend]
             [hsm.users :as users :refer (users)]
             [hsm.github :as ghub :refer [render-repos-page]]
@@ -26,17 +23,6 @@
             [ring.adapter.jetty :refer [run-jetty]])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
-(defn respond [data & [status]]
-  (let [out (ByteArrayOutputStream. 4096)
-        writer (t/writer out :json)]
-    (t/write writer data)
-    { :status (or status 200)
-     :headers { "Content-Type" "application/json" }
-     :body
-     (generate-string data)
-     ;(.toString out)
-     }
-))
 
 (defn startup 
   [{:keys [conf] :or {conf "app.ini"}} ]
@@ -53,5 +39,4 @@
     )))
 
 (defn -main [& args]
-  (startup {})
-  )
+  (startup {}))

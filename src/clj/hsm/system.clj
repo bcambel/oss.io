@@ -7,6 +7,7 @@
         [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
         [hsm.controllers.user :as cont-user]
         [hsm.controllers.post :as cont-post]
+        [hsm.controllers.project :as cont-project]
         [hsm.controllers.discussion :as cont-disc]
         [hsm.integration.ghub :as ghub]
         [hsm.ring :as ringing :refer [json-resp wrap-exception-handler]]
@@ -61,8 +62,9 @@
         (POST "/link/:id/upvote" request (cont-post/upvote-link [db event-chan] request))
         (GET  "/link/:id" request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date" request (cont-post/list-links [db event-chan] request))
+        (GET "/top-projects" request (cont-project/list-top-proj [db event-chan] request))
+        (GET "/:platform/top-projects" request (cont-project/list-top-proj [db event-chan] request))
         (GET  "/import/:language" [language] (json-resp (ghub/import-repos [db event-chan] language)))
-
         (route/not-found "Page not found")
         ))
 
@@ -115,8 +117,4 @@
       :kafka-producer (sys.kafka/kafka-producer zookeeper)
       :app (component/using 
         (worker)
-        [:kafka-producer]
-        )
-      )
-    )
-  ))
+        [:kafka-producer])))))

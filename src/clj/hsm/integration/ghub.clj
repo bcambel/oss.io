@@ -53,7 +53,7 @@
     (let [response (client/get url {:socket-timeout 10000 :conn-timeout 10000}) 
           ; /repositories call returns result in root
           ; /search/repositories returns under items
-          repos (parse-string (:body response)) ;(get  "items")
+          repos (get (parse-string (:body response)) "items")
           next-url (find-next-url 
                       (-> response :headers (get "link")))]
       (log/debug (:headers response))
@@ -75,10 +75,10 @@
 
 
 (defn import-repos
-  [db language since]
-  (let [max-iter 10000
+  [db language max-iter]
+  (let [max-iter (or max-iter 10000)
         conn (:connection db)]
-    (loop [url (format ghub-url language) 
+    (loop [url (format ghub-url* language) 
            looped 1]
       (log/warn (format "Loop %d. %s" looped url))
       (let [{:keys [success next-url repos]} (fetch-url url)]

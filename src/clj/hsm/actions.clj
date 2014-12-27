@@ -229,5 +229,11 @@
 (defn list-links 
   [db time-filter user]
   (let [conn (:connection db)]
-    (cql/select conn :link)
+    (cql/select conn :link)))
+
+(defn list-top-proj
+  [db platform]
+  (let [conn (:connection db)]
+    (cql/select conn :github_project
+      (dbq/where [[= :lang "clojure"]]))
   ))

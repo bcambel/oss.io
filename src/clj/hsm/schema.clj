@@ -284,9 +284,9 @@
 
 (defn create-db-space
   "Given db connection creates all the necessary tables"
-  [db]
+  [db keyspace]
   (let [conn (-> db :connection)]
-    (cql/use-keyspace conn "hackersome")
+    (cql/use-keyspace conn keyspace)
     (map
       (fn [table]
         (cql/create-table conn

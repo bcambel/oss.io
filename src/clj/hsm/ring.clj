@@ -1,9 +1,11 @@
 (ns hsm.ring
 	(:require 
-		[clojure.tools.logging :as log]
-		[ring.util.response :as resp]
-		[cheshire.core :refer :all]))
-
+		[clojure.tools.logging  :as log]
+		[ring.util.response 		:as resp]
+		[cognitect.transit 			:as t]
+		[cheshire.core 					:refer :all])
+	(:import 
+		[java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn wrap-exception-handler
 	"Development only exception handler.
@@ -13,8 +15,8 @@
     (try
       (handler req)
       (catch IllegalArgumentException e
-        (->
-         (resp/response e)
+        (-> e
+         (resp/response)
          (resp/status 400)))
       (catch Throwable e
         (do
@@ -33,3 +35,15 @@
         (resp/response)
         (resp/header "Content-Type" "application/json")
         (resp/status (or status 200))))
+
+(defn trans-resp
+	"Generate Transit-JSON based response. 
+	Default Status 200"
+	[data & [status]]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (t/writer out :json)]
+    (t/write writer data)
+    (-> (.toString out)
+	    	(resp/response)
+	    	(resp/header "Content-Type" "application/transit+json")
+	    	(resp/status (or status 200)))))
