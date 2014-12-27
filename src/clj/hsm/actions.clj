@@ -232,8 +232,11 @@
     (cql/select conn :link)))
 
 (defn list-top-proj
-  [db platform]
-  (let [conn (:connection db)]
-    (cql/select conn :github_project
-      (dbq/where [[= :lang "clojure"]]))
-  ))
+  "Given platform/language returns top n projects"
+  [db platform limit-by]
+  (let [conn (:connection db)
+        limit-by (if (> limit-by 100) 100 limit-by)]
+    (when-let [projects (cql/select conn :github_project
+                          (dbq/where [[= :language platform]]))]
+      (take limit-by (reverse
+                        (sort-by :watchers projects))))))
