@@ -1,15 +1,15 @@
 (ns hsm.ring
-	(:require 
-		[clojure.tools.logging  :as log]
-		[ring.util.response 		:as resp]
-		[cognitect.transit 			:as t]
-		[cheshire.core 					:refer :all])
-	(:import 
-		[java.io ByteArrayInputStream ByteArrayOutputStream]))
+  (:require
+    [clojure.tools.logging  :as log]
+    [ring.util.response     :as resp]
+    [cognitect.transit       :as t]
+    [cheshire.core           :refer :all])
+  (:import
+    [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn wrap-exception-handler
-	"Development only exception handler.
-	In the near future plug in sentry"
+  "Development only exception handler.
+  In the near future plug in sentry"
   [handler]
   (fn [req]
     (try
@@ -36,14 +36,25 @@
         (resp/header "Content-Type" "application/json")
         (resp/status (or status 200))))
 
+(defn html-resp
+  "Generates Text/HTML resp of given object,
+  constructs a RING 200 Response.
+  TODO: Optionable status code.."
+  [data & [status]]
+  (-> (generate-string data)
+        (resp/response)
+        (resp/header "Content-Type" "text/html")
+        (resp/status (or status 200))))
+
+
 (defn trans-resp
-	"Generate Transit-JSON based response. 
-	Default Status 200"
-	[data & [status]]
+  "Generate Transit-JSON based response.
+  Default Status 200"
+  [data & [status]]
   (let [out (ByteArrayOutputStream. 4096)
         writer (t/writer out :json)]
     (t/write writer data)
     (-> (.toString out)
-	    	(resp/response)
-	    	(resp/header "Content-Type" "application/transit+json")
-	    	(resp/status (or status 200)))))
+        (resp/response)
+        (resp/header "Content-Type" "application/transit+json")
+        (resp/status (or status 200)))))
