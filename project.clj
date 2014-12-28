@@ -12,7 +12,7 @@
                 [compojure "1.3.1"]
                 [enlive "1.1.5"]
                 [clj-http "1.0.1"]              
-                [clj-time "0.7.0"]
+                [clj-time "0.8.0"]
                 [figwheel "0.1.4-SNAPSHOT"]
                 [environ "1.0.0"]
                 [com.cognitect/transit-clj "0.8.259"]
@@ -42,6 +42,7 @@
                 [ch.qos.logback/logback-classic "1.1.2"]
                 [org.clojure/tools.logging "0.3.1"]
                 [weasel "0.4.0-SNAPSHOT"]
+                [midje "1.7.0-SNAPSHOT"]
                 [leiningen "2.5.0"]]
 
   :plugins [[lein-environ "1.0.0"]
@@ -50,7 +51,6 @@
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
-
   :uberjar-name "hsm.jar"
   :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
@@ -60,10 +60,13 @@
               :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :dev {
                     :repl-options {:init-ns hsm.server
-                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
-                    :plugins [[lein-figwheel "0.1.4-SNAPSHOT"]
-                              [lein-midje "3.1.3"]]
-                    :dependencies [[midje "1.6.3"] [org.xerial.snappy/snappy-java "1.0.5"]]
+                                  ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
+                                }
+                    :plugins [[lein-midje "3.1.3"]
+                                [lein-figwheel "0.1.4-SNAPSHOT"]
+                              ]
+                    :dependencies [[midje "1.7.0-SNAPSHOT"] 
+                                   [org.xerial.snappy/snappy-java "1.0.5"]]
                     :figwheel {:http-server-root "public"
                               :port 3449
                               :css-dirs ["resources/public/css"]}

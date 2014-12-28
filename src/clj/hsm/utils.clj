@@ -12,7 +12,8 @@
     [clj-time.core :as t]
     [clj-time.format :as f]
     [clj-time.local :as l]
-    [clj-time.coerce :as c]))
+    [clj-time.coerce :as c])
+  (:import [com.google.common.net InternetDomainName]))
 
 (defn select-values
   "clojure.core contains select-keys 
@@ -76,6 +77,11 @@
   "Finds the host header of the request"
   [request]
   (get-in request [:headers "host"]))
+
+(defn domain-of
+  [request]
+  (let [domain (InternetDomainName/from (host-of request))]
+    (.parts domain)))
 
 (defn id-of
   "Finds the ID of the request. E.g
