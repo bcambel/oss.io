@@ -65,3 +65,12 @@
 		{1 2 3 4} 		{nil 4}
 		{"1" 2 "3" 4} {:1 2 :3 4}
 	)
+
+(tabular 
+	(fact "FQDN"
+		(fqdn {:headers {"host" ?request}}) => ?result)
+		?request ?result
+		"dev.pythonhackers.com" "dev.pythonhackers.com"
+		"pythonhackers.com" "www.pythonhackers.com"
+
+	)

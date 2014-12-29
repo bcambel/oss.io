@@ -41,9 +41,10 @@
   constructs a RING 200 Response.
   TODO: Optionable status code.."
   [data & [status]]
-  (-> (generate-string data)
+  (-> data
         (resp/response)
-        (resp/header "Content-Type" "text/html")
+        (resp/content-type "text/html")
+        (resp/charset "UTF-8")
         (resp/status (or status 200))))
 
 

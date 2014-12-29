@@ -78,10 +78,24 @@
   [request]
   (get-in request [:headers "host"]))
 
+(def domains ["pythonhackers.com" "hackersome.com" "sweet.io"])
+
 (defn domain-of
   [request]
   (let [domain (InternetDomainName/from (host-of request))]
     (.parts domain)))
+
+(defn ^:private connect-parts
+  [parts]
+  (clojure.string/join "." parts)
+  )
+
+(defn fqdn
+  [request]
+  (let [parts (domain-of request)]
+    (if (= (count parts) 3)
+      (connect-parts parts)    
+      (connect-parts (concat ["www"] (vec parts))))))
 
 (defn id-of
   "Finds the ID of the request. E.g
