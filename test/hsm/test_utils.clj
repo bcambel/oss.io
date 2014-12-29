@@ -14,15 +14,16 @@
 	(fact "Find Host of the Request"
 		(host-of {:headers { "host" ?host }} ) => ?result)
 		?host ?result
-		 "dev.pythonhackers.com" "dev.pythonhackers.com"
-		 "clojurehackers.com" "clojurehackers.com")
+		 "dev.pythonhackers.com" 		"dev.pythonhackers.com"
+		 "clojurehackers.com" 			"clojurehackers.com")
 
 (tabular
 	(fact "Empty Host Request with falsy hash-map "
 		(host-of ?request ) => ?result)
 		?request ?result
-		 {:headers { "TEST" 1}} nil
-		 {:headers2 "test"} nil)
+		 {:headers { "TEST" 1}} 		nil
+		 {:headers2 "test"} 				nil
+		 )
 
 ; Well Token fetcher always returns the same ID for right now! Very effective!! :)
 (tabular
@@ -37,9 +38,9 @@
 		(select-values ?hashmap ?keys) => ?result)
 		?hashmap ?keys ?result
 		{:a 1 :b 2} [:a :b] [1 2]
-		{:a 1 :b 2} [:a] [1]
-		{:a 1 :b 2} [] []
-		{:a 1 :b 2} nil []
+		{:a 1 :b 2} [:a] 		[1]
+		{:a 1 :b 2} [] 			[]
+		{:a 1 :b 2} nil 		[]
 		)
 
 (let [temp-file (java.io.File/createTempFile (str "body-test" (now->ep)) ".txt")]
@@ -53,3 +54,14 @@
 			"test" "test"
 			temp-file "testing")
 	(.delete temp-file))
+
+(tabular
+	(fact "Convert maps into keyword keyed hashmaps"
+		(mapkeyw ?hashmap) => ?result)
+		?hashmap ?result
+		{"a" 1 "b" 2} {:a 1 :b 2}
+		{:a 1 :b 2} 	{:a 1 :b 2}
+		{1 2} 				{nil 2}
+		{1 2 3 4} 		{nil 4}
+		{"1" 2 "3" 4} {:1 2 :3 4}
+	)
