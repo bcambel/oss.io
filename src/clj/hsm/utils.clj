@@ -132,5 +132,5 @@
 (defn vec2? [x] (nvec? 2 x))
 (defn vec3? [x] (nvec? 3 x))
 (defn nnil=
-  ([x y]        (and (nnil? x) (= x y)))
-  ([x y & more] (and (nnil? x) (apply = x y more))))
+  ([x y]        (and (!nil? x) (= x y)))
+  ([x y & more] (and (!nil? x) (apply = x y more))))
