@@ -51,7 +51,8 @@
         is-json false
         view (get-in request [:params :view])
         view-fn (if (= view "grid") grid-view list-view)
-        limit-by (or (Integer/parseInt (get-in request [:params :limit])) 20)]
+        limit (or (get-in request [:params :limit]) (str 20))
+        limit-by (or (Integer/parseInt limit) 20)]
     (let [top-projects (actions/list-top-proj db platform limit-by)
     			keyset (keys (first top-projects))]
       (if is-json

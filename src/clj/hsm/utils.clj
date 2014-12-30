@@ -79,6 +79,7 @@
   [request]
   (get-in request [:headers "host"]))
 
+;; TODO: must be placed into a config file.
 (def domains ["pythonhackers.com" "hackersome.com" "sweet.io"])
 
 (defn domain-of
@@ -92,6 +93,13 @@
   )
 
 (defn fqdn
+  "Fully Qualified Domain Name; Parts of domain as vec
+  (fqdn \"www.pythonhackers.com\") => 
+    [\"www\" \"pythonhackers\" \"com\"]
+  Adds www. if necessary
+  TODO: Normally www.domain.com is not equal to 
+  domain.com but in our scenario, its same. Find a 
+  better name!"
   [request]
   (let [parts (domain-of request)]
     (if (= (count parts) 3)
@@ -103,8 +111,9 @@
   - /link/:id
   - /post/:id
   - /user/:id"
-  [request]
-  (get-in request [:route-params :id]))
+  ([request] (id-of request :id))
+  ([request kw]
+    (get-in request [:route-params kw])))
 
 (defn body-of
   "Reads the JSON body of the request"
@@ -123,6 +132,9 @@
   [bytes]
   (apply str (map char bytes)))
 
+;; Following functions borrowed+modified slightly from 
+;; Peter Taoussanis <https://www.taoensso.com>
+;; https://github.com/ptaoussanis/encore
 (defn !nil? [x] (not (nil? x)))
 (defn   !blank? [x] (not (str/blank? x)))
 (defn     !neg? [x] (not (neg? x)))
