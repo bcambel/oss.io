@@ -95,3 +95,77 @@
 		:1		(throws ClassCastException)
 		1			(throws ClassCastException)
 	)
+
+(tabular
+	(fact "Vecof 2"
+		(vec2? ?vec) => ?bool)
+		?vec ?bool
+		nil 			false
+		[1 2]			true
+		[1 [1 2]] true
+		[nil nil] true
+	)
+
+(tabular
+	(fact "Vecof N"
+		(nvec? ?n ?vec) => ?bool)
+		?vec ?n ?bool
+		nil 				1		false
+		[1 2]				2	true
+		[1 [1 2]] 	2 true
+		[nil nil] 	2 true
+		[nil nil 1] 3 true
+	)
+
+(fact "Has 1" (vec1? [nil]) => true)
+(fact "Has 3" (vec3? [nil nil 0]) => true)
+(fact "Not Negative Num" (!neg? 123) => true)
+(fact "Not Negative Num" (!neg? -123) => false)
+(fact "Not Negative Num" (!neg? 0) => true)
+(fact "0 is not Positive" (pos-int? 0) => false)
+(fact "1 is Positive" (pos-int? 1) => true)
+(fact "Max VALUE is Positive" (pos-int? Integer/MAX_VALUE) => true)
+(fact "MAX VALUE + 1 is Positive" (pos-int? (+ 1 Integer/MAX_VALUE)) => true)
+(fact "MIN VALUE - 1 is Positive" (pos-int? (- 1 Integer/MIN_VALUE)) => true)
+
+(tabular
+	(fact "Vectorize"
+		(vec* ?coll) => ?res)
+		?coll ?res
+		#{1}	[1]
+		nil 		[]
+		[1]			[1]
+		[nil]		[nil]
+		{:a 1}	[[:a 1]]
+		#{:a 1} [1 :a]
+	)
+
+(tabular
+	(fact "Setify"
+		(set* ?coll) => ?res)
+		?coll ?res
+		#{1}		#{1}
+		nil 		#{}
+		[1]			#{1}
+		[nil]		#{nil}
+		{:a 1}	#{[:a 1]}
+		#{:a 1} #{:a 1}
+	)
+
+(tabular
+	(fact "Not NIL but Equal"
+		(!nil= ?o1 ?o2) => ?res)
+		?o1 			?o2 			?res
+		1 				2 				false
+		1 				nil 			false
+		nil 			1 				false
+		1 				[1]				false
+		1 				1/1 			true
+		[1] 			[[1]]			false
+		[1] 			#{1}			false
+		[]				nil 			false
+		[]				#{}				false
+		[] 				'()				true
+		[1]				'(1)			true
+		[1 [1]]		'(1 [1])	true
+	)

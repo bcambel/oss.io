@@ -22,7 +22,7 @@
     [:meta {:charset "UTF-8"}]
     [:meta {:content "IE=edge,chrome=1"
             :http-equiv "X-UA-Compatible"}]
-    [:title "riemann grid"]
+    [:title "Hackersome"]
     (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/sandstone/bootstrap.min.css")
    ]
    [:body

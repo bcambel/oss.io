@@ -129,8 +129,17 @@
 (defn  pos-int? [x] (and (integer? x) (pos? x)))
 (defn !neg-int? [x] (and (integer? x) (!neg? x)))
 (defn   nvec? [n x] (and (vector?  x) (= (count x) n)))
-(defn vec2? [x] (nvec? 2 x))
+(def vec1? (partial nvec? 1))
+(defn vec2?
+  "Vector of 2 or not. Based on (nvec? n)"
+  [x]
+  (nvec? 2 x))
 (defn vec3? [x] (nvec? 3 x))
-(defn nnil=
+(defn !nil=
   ([x y]        (and (!nil? x) (= x y)))
   ([x y & more] (and (!nil? x) (apply = x y more))))
+
+(defn vec* [x] (if (vector? x) x (vec x)))
+(defn set* [x] (if (set?    x) x (set x)))
+(defn !nil-set  [x] (disj (set* x) nil))
+(defn conj-some [coll ?x] (if (!nil? ?x) (conj coll ?x) coll))
