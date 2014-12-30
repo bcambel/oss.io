@@ -74,3 +74,24 @@
 		"pythonhackers.com" "www.pythonhackers.com"
 
 	)
+
+(tabular 
+	(fact "Not NIL"
+		(!nil? ?obj) => ?bool)
+		?obj ?bool
+		1			true
+		nil   false
+		[]		true
+		[nil] true
+		0			true
+	)	
+
+(tabular 
+	(fact "NOT BLank" 
+		(!blank? ?str) => ?bool)
+		?str ?bool
+		""		false
+		"a"		true
+		:1		(throws ClassCastException)
+		1			(throws ClassCastException)
+	)

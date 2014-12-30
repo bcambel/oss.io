@@ -6,6 +6,7 @@
   and would be pretty much self documenting."
   (:require 
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [clojure.tools.logging :as log]
     [cheshire.core :refer :all]
     [ring.util.response :as resp]
@@ -121,3 +122,15 @@
   "Convert byte array into String"
   [bytes]
   (apply str (map char bytes)))
+
+(defn !nil? [x] (not (nil? x)))
+(defn   !blank? [x] (not (str/blank? x)))
+(defn     !neg? [x] (not (neg? x)))
+(defn  pos-int? [x] (and (integer? x) (pos? x)))
+(defn !neg-int? [x] (and (integer? x) (!neg? x)))
+(defn   nvec? [n x] (and (vector?  x) (= (count x) n)))
+(defn vec2? [x] (nvec? 2 x))
+(defn vec3? [x] (nvec? 3 x))
+(defn nnil=
+  ([x y]        (and (nnil? x) (= x y)))
+  ([x y & more] (and (nnil? x) (apply = x y more))))
