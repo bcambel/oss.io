@@ -4,7 +4,7 @@
 		[hsm.views 		:refer :all]
 		[hsm.utils 		:refer [host-of id-of cutoff]]
 		[hsm.helpers  :refer [pl->lang]]
-		[hsm.actions 	:refer [list-top-proj]]))
+		[hsm.actions 	:refer [list-top-proj list-top-disc]]))
 
 (defn homepage
 	[[db event-chan] request]
@@ -27,6 +27,7 @@
 	[[db event-chan] request]
 	(let [host (host-of request)
 				pl   (pl->lang (id-of request :platform))
+				top-disc (list-top-disc db pl 5)
 				top-projects (list-top-proj db pl 10)]
 		(html-resp 
 			(layout host
@@ -37,15 +38,17 @@
 							[:div.panel.panel-primary
 								[:div.panel-heading "Latest discussions"]
 								[:div.panel-body 
-									[:ul
-										(for [x (range 10)]
-											[:li (str "Discussion " x)]
+									[:ul {:style "list-style-type:none;padding-left:1px;" }
+										(for [x top-disc]
+											[:li 
+												[:a {:href (str "/discussion/" (:id x))} (:title x) 
+													[:p {:style "color:gray" } (get-in x [:post :text])]]]
 											)]]]]
 						[:div.col-lg-4
 							[:div.panel.panel-warning
 								[:div.panel-heading "Latest members"]
 								[:div.panel-body 
-									[:ul
+									[:ul {:style "list-style-type:none;padding-left:1px;" }
 										(for [x (range 10)]
 											[:li (str "Member " x)]
 											)]]]]
@@ -60,4 +63,5 @@
 												[:a {:href (str "/p/"(:full_name x))} (:full_name x)
 												[:p {:style "color:gray"} (cutoff (:description x) 50)]]
 												]
-											)]]]]]]))))
+											)]]]]
+										]]))))

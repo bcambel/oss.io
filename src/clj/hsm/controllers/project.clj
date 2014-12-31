@@ -11,7 +11,7 @@
     [hsm.ring :refer [json-resp html-resp]]
     [hsm.views :as views]
     [hsm.helpers :refer [pl->lang]]
-    [hsm.utils :as utils :refer [host-of body-of whois id-of]]))
+    [hsm.utils :as utils :refer [host-of body-of whois id-of cutoff]]))
 
 (def platforms {
   "pythonhackers.com" {:lang "Python" :id 1}
@@ -66,7 +66,8 @@
 	[[db event-chan] request]
 	(let [host  (host-of request)
 				is-json false
-				id (format "%s/%s" (id-of request :user) (id-of request :project))]
+				id (format "%s/%s" (id-of request :user) (id-of request :project))
+				related-projects []]
 		(when-let [proj (first (actions/load-project db id))]
 			(if is-json 
 				(json-resp proj)
@@ -84,8 +85,20 @@
 								[:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
 								[:p.lead (:description proj)]
 								]
-
-						; (str id (generate-string proj))
 						]
+
 						[:hr]
+						[:div.row
+							[:div.col-lg-4
+							[:div.panel.panel-default
+								[:div.panel-heading "Related Projects"]
+								[:div.panel-body 
+									[:ul {:style "list-style-type:none;padding-left:1px;" }
+										(for [x related-projects]
+											[:li 
+												[:a {:href (str "/p/"(:full_name x))} (:full_name x)
+												[:p {:style "color:gray"} (cutoff (:description x) 50)]]
+												]
+											)]]]]
+						]
 						))))))

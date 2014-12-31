@@ -2,7 +2,8 @@
 	(:require 
 		[hiccup.core :refer [html]]
     [hiccup.page :refer [doctype include-css include-js]]
-		[hiccup.def  :refer [defhtml]]))
+		[hiccup.def  :refer [defhtml]]
+		[hsm.conf 	 :refer [languages]]))
 
 (defhtml row-fluid
   [& content]
@@ -13,9 +14,6 @@
   [& content]
   [:div.container-fluid
   	content])
-
-(def languages [ "Clojure" "Python" "JavaScript" "Go" "C" "PHP" "Erlang" "Rust" "Lisp" "Elixir" "Csharp" "CSS" "D" "Dart"
-	"Scala" "Groovy" "Haskell" "R" "Julia"])
 
 (defhtml layout
   [website & content]

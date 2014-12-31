@@ -247,10 +247,19 @@
         (take limit-by (reverse
                           (sort-by :watchers projects)))))))
 
-
 (defn load-project
   [db proj]
   (let [conn (:connection db)]
     (cql/select conn :github_project
       (dbq/limit 1)
       (dbq/where [[= :full_name proj]]))))
+
+
+(defn list-top-disc
+  [db platform limit-by]
+  (let [conn (:connection db)
+        limit-by (if (> limit-by 100) 100 limit-by)]
+    (when-let [discussions (cql/select conn :discussion 
+      (dbq/limit limit-by))]
+      (doall (map #(load-discussion db (:id %)) discussions)
+    ))))

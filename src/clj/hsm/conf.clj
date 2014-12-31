@@ -39,3 +39,8 @@
       (if apply-transform
         (transform settings)
         settings))))
+
+(def languages 
+  [ "Clojure" "Python" "JavaScript" "Go" "C" "PHP" 
+    "Erlang" "Rust" "Lisp" "Elixir" "Csharp" "CSS" "D" "Dart"
+    "Scala" "Groovy" "Haskell" "R" "Julia" "Lua"])
