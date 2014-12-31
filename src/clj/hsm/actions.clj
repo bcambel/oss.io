@@ -246,3 +246,11 @@
         stringify-id
         (take limit-by (reverse
                           (sort-by :watchers projects)))))))
+
+
+(defn load-project
+  [db proj]
+  (let [conn (:connection db)]
+    (cql/select conn :github_project
+      (dbq/limit 1)
+      (dbq/where [[= :full_name proj]]))))

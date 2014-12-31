@@ -11,18 +11,53 @@
 			(layout host 
 				[:div 
 					[:a {:href "/Clojure/top-projects"} "Clojure"]
-					[:a {:href "/Python/top-projects"} "Python"]]
+					[:a {:href "/Python/top-projects"} "Python"]
+					[:a {:href "/Erlang/top-projects"} "Erlang"]
+					[:a {:href "/JavaScript/top-projects"} "Javascript"]
+					[:a {:href "/C/top-projects"} "C"]
+					[:a {:href "/Rust/top-projects"} "Rust"]
+					[:a {:href "/Lisp/top-projects"} "LISP"]
+					]
 					))))
 
 
 (defn platform
 	[[db event-chan] request]
 	(let [host (host-of request)
-				pl   (id-of request :platform)]
+				pl   (hsm.helpers/pl->lang (id-of request :platform))
+				top-projects (hsm.actions/list-top-proj db pl 10)]
 		(html-resp 
 			(layout host
 				[:div 
-					[:p (str "Welcome to " pl)]
-					[:a {:href "/Clojure/top-projects"} "Clojure"]
-					[:a {:href "/Python/top-projects"} "Python"]]
-					))))
+					[:h1 (str "Welcome to " pl)]
+					[:div.row
+						[:div.col-lg-4
+							[:div.panel.panel-primary
+								[:div.panel-heading "Latest discussions"]
+								[:div.panel-body 
+									[:ul
+										(for [x (range 10)]
+											[:li (str "Discussion " x)]
+											)]]]]
+						[:div.col-lg-4
+							[:div.panel.panel-warning
+								[:div.panel-heading "Latest members"]
+								[:div.panel-body 
+									[:ul
+										(for [x (range 10)]
+											[:li (str "Member " x)]
+											)]]]]
+						[:div.col-lg-4
+							[:div.panel.panel-default
+								[:div.panel-heading 
+									[:a {:href (format "/%s/top-projects" pl)} "Top Projects"]]
+								[:div.panel-body 
+									[:ul {:style "list-style-type:none;padding-left:1px;" }
+										(for [x top-projects]
+											[:li 
+												[:a {:href (str "/p/"(:full_name x))} (:full_name x)
+												[:p {:style "color:gray"} (hsm.utils/cutoff (:description x) 50)]]
+												]
+											)]
+									
+								]]]]]))))

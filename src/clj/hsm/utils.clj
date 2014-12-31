@@ -132,6 +132,11 @@
   [bytes]
   (apply str (map char bytes)))
 
+(defn cutoff
+  [s maxlen] 
+  (if (> (count s) maxlen) 
+    (str (subs s 0 maxlen) "...")
+    s))
 ;; Following functions borrowed+modified slightly from 
 ;; Peter Taoussanis <https://www.taoensso.com>
 ;; https://github.com/ptaoussanis/encore

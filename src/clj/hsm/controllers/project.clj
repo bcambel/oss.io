@@ -10,6 +10,7 @@
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp]]
     [hsm.views :as views]
+    [hsm.helpers :refer [pl->lang]]
     [hsm.utils :as utils :refer [host-of body-of whois id-of]]))
 
 (def platforms {
@@ -36,23 +37,23 @@
 				[:tr
 					[:td (get x :watchers)]
 					[:td  
-						[:a {:target "_blank" :href (format "https://github.com/%s" (get x :full_name))} (get x :full_name)
+						[:a {:target "_blank" :href (format "/p/%s" (get x :full_name))} (get x :full_name)
 						[:p {:style "color:gray"} (get x :description)]]]
 				])]])
 
 (defn list-top-proj
   [[db event-chan] request]
   (log/warn request)
-  (let [host  (host-of request)
-        body (body-of request)
-        user (whois request)
-        data (utils/mapkeyw body)
-        platform (get-in request [:route-params :platform])
-        is-json false
-        view (get-in request [:params :view])
-        view-fn (if (= view "grid") grid-view list-view)
-        limit (or (get-in request [:params :limit]) (str 20))
-        limit-by (or (Integer/parseInt limit) 20)]
+  (let [host  			(host-of request)
+        body 				(body-of request)
+        user 				(whois request)
+        data 				(utils/mapkeyw body)
+        platform 	 	(pl->lang (id-of request :platform))
+        is-json 		false
+        view 				(get-in request [:params :view])
+        view-fn 		(if (= view "grid") grid-view list-view)
+        limit 			(or (get-in request [:params :limit]) (str 20))
+        limit-by 		(or (Integer/parseInt limit) 20)]
     (let [top-projects (actions/list-top-proj db platform limit-by)
     			keyset (keys (first top-projects))]
       (if is-json
@@ -60,3 +61,31 @@
         (html-resp
           (views/layout host
             (view-fn top-projects keyset)))))))
+
+(defn get-proj
+	[[db event-chan] request]
+	(let [host  (host-of request)
+				is-json false
+				id (format "%s/%s" (id-of request :user) (id-of request :project))]
+		(when-let [proj (first (actions/load-project db id))]
+			(if is-json 
+				(json-resp proj)
+				(html-resp 
+					(views/layout host 
+						[:div.row 
+							[:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
+								[:h3 (:watchers proj)]
+								[:form {:action "/ajax/project/follow" :method "POST"}
+									[:input {:type "hidden" :value (:id proj)}]
+									[:button.btn.btn-primary {:type "submit"} "Love It"]
+								]]
+							[:div.col-lg-8 
+								[:h1 (:name proj)]
+								[:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+								[:p.lead (:description proj)]
+								]
+
+						; (str id (generate-string proj))
+						]
+						[:hr]
+						))))))

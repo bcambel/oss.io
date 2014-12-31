@@ -64,6 +64,8 @@
         (POST "/link/:id/upvote"          request (cont-post/upvote-link [db event-chan] request))
         (GET  "/link/:id"                 request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date"              request (cont-post/list-links [db event-chan] request))
+        ; (GET "/project/:id"               request (cont-project/get-proj [db event-chan] request))
+        (GET "/p/:user/:project"    request (cont-project/get-proj [db event-chan] request))
         (GET "/top-projects"              request (cont-project/list-top-proj [db event-chan] request))
         (GET "/:platform/index"                 request (c.main/platform [db event-chan] request))
         (GET "/:platform/top-projects"    request (cont-project/list-top-proj [db event-chan] request))
