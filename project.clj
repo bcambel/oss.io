@@ -10,6 +10,7 @@
                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                 [ring "1.3.2"]
                 [compojure "1.3.1"]
+                [bidi "1.12.0"]
                 [enlive "1.1.5"]
                 [clj-http "1.0.1"]              
                 [clj-time "0.8.0"]
