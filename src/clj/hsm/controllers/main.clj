@@ -4,7 +4,7 @@
 		[hsm.views 		:refer :all]
 		[hsm.utils 		:refer [host-of id-of cutoff]]
 		[hsm.helpers  :refer [pl->lang]]
-		[hsm.actions 	:refer [list-top-proj list-top-disc]]))
+		[hsm.actions 	:refer [list-top-proj list-top-disc list-top-user]]))
 
 (defn homepage
 	[[db event-chan] request]
@@ -28,6 +28,7 @@
 	(let [host (host-of request)
 				pl   (pl->lang (id-of request :platform))
 				top-disc (list-top-disc db pl 5)
+				top-members (list-top-user db pl 5)
 				top-projects (list-top-proj db pl 10)]
 		(html-resp 
 			(layout host
@@ -49,8 +50,8 @@
 								[:div.panel-heading "Latest members"]
 								[:div.panel-body 
 									[:ul {:style "list-style-type:none;padding-left:1px;" }
-										(for [x (range 10)]
-											[:li (str "Member " x)]
+										(for [x top-members]
+											[:li [:a {:href (str "/user2/"(:login x))} (:login x)]]
 											)]]]]
 						[:div.col-lg-4
 							[:div.panel.panel-default

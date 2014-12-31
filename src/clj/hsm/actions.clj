@@ -261,5 +261,23 @@
         limit-by (if (> limit-by 100) 100 limit-by)]
     (when-let [discussions (cql/select conn :discussion 
       (dbq/limit limit-by))]
+      ; TODO: horrible to do this way. 
+      ; Cache these top project IDs by platform
+      ; and do a quick load
       (doall (map #(load-discussion db (:id %)) discussions)
     ))))
+
+(defn list-top-user
+  [db platform limit-by]
+  (let [conn (:connection db)
+        limit-by (if (> limit-by 100) 100 limit-by)]
+    (cql/select conn :github_user
+      (dbq/limit limit-by))
+  ))
+
+(defn load-user2
+  [db user-id]
+  (let [conn (:connection db)]
+      (first (cql/select conn :github_user
+        (dbq/where [[= :login user-id]])))))
+  

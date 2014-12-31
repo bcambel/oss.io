@@ -9,8 +9,15 @@
             [hsm.utils :as utils :refer [body-of host-of whois id-of]]))
 
 (defn get-user
-  [db id request] 
-  (let [user (actions/load-user db id)]
+  [[db event-chan] request] 
+  (let [id (id-of request)
+        user (actions/load-user db id)]
+    (json-resp user)))
+
+(defn get-user2
+  [[db event-chan] request] 
+  (let [id (id-of request)
+        user (actions/load-user2 db id)]
     (json-resp user)))
 
 (defn create-user

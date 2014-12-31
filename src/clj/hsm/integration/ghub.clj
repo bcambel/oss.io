@@ -26,6 +26,7 @@
 (defn insert-records
   [conn coll]
   (log/info (format "Inserting %d projects" (count coll)))
+  ;; extend the owner field into proper structure :owner => login_name
   (cql/insert-batch conn :github_project 
     (doall (map (fn[item] 
                   (merge {:id (id-generate)}
@@ -87,10 +88,15 @@
           (recur next-url (inc looped)))))
     1))
 
-; (defn import-repos*
-;   [db]
-;   (let [repos (gh-search/search-repos "a" 
-;                 {:language "clojure"} 
-;                 {:sort "stars" :order "desc"})
-;         conn (:connection db)]
-;             (doall (map #(partial insert-project conn %) repos ))))
+(def user-fields
+  [:id :login :type :name :company :blog :location :email :public_repos :public_gists
+  :followers :following] )
+
+(defn expand-user
+  "Fetch latest user information from github"
+  [user-login]
+  (let [url (format "https://api.github.com/users/%s?client_id=%s&client_secret=%s" 
+                      user-login (env :client-id) (env :client-secret))
+          response (client/get url {:socket-timeout 10000 :conn-timeout 10000}) 
+          user-data (parse-string (:body response))]
+    (select-keys user-data (map name user-fields))))
