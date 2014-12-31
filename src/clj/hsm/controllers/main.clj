@@ -2,7 +2,9 @@
 	(:require 
 		[hsm.ring 		:refer [html-resp]]
 		[hsm.views 		:refer :all]
-		[hsm.utils 		:refer [host-of id-of]]))
+		[hsm.utils 		:refer [host-of id-of cutoff]]
+		[hsm.helpers  :refer [pl->lang]]
+		[hsm.actions 	:refer [list-top-proj]]))
 
 (defn homepage
 	[[db event-chan] request]
@@ -24,8 +26,8 @@
 (defn platform
 	[[db event-chan] request]
 	(let [host (host-of request)
-				pl   (hsm.helpers/pl->lang (id-of request :platform))
-				top-projects (hsm.actions/list-top-proj db pl 10)]
+				pl   (pl->lang (id-of request :platform))
+				top-projects (list-top-proj db pl 10)]
 		(html-resp 
 			(layout host
 				[:div 
@@ -56,8 +58,6 @@
 										(for [x top-projects]
 											[:li 
 												[:a {:href (str "/p/"(:full_name x))} (:full_name x)
-												[:p {:style "color:gray"} (hsm.utils/cutoff (:description x) 50)]]
+												[:p {:style "color:gray"} (cutoff (:description x) 50)]]
 												]
-											)]
-									
-								]]]]]))))
+											)]]]]]]))))
