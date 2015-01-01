@@ -35,7 +35,7 @@
   component/Lifecycle
 
   (start [this]
-    "In the near future find a nice macro/solution 
+    "In the near future find a nice macro/solution
     to refactor route definitions"
 
     (log/info "Starting HTTP Server on " port)
@@ -56,7 +56,7 @@
         (POST "/discussion/:id/unfollow"  [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
         (GET  "/user2/:id"                request (cont-user/get-user2 [db event-chan] request))
         (GET  "/user/:id"                 request (cont-user/get-user [db event-chan] request))
-        (GET  "/user/:id/activity"        [id request] (cont-user/get-user-activity [db event-chan] id request))
+        (GET  "/user/:id/activity"        request (cont-user/get-user-activity [db event-chan] request))
         (POST "/user/:id/follow"          request (cont-user/follow-user [db event-chan] request))
         (POST "/user/:id/unfollow"        request (cont-user/unfollow-user [db event-chan] request))
         (GET  "/user/:id/followers"       request (cont-user/get-user-followers [db event-chan] request))
@@ -65,11 +65,11 @@
         (POST "/link/:id/upvote"          request (cont-post/upvote-link [db event-chan] request))
         (GET  "/link/:id"                 request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date"              request (cont-post/list-links [db event-chan] request))
-        ; (GET "/project/:id"               request (cont-project/get-proj [db event-chan] request))
-        (GET "/p/:user/:project"    request (cont-project/get-proj [db event-chan] request))
-        (GET "/top-projects"              request (cont-project/list-top-proj [db event-chan] request))
-        (GET "/:platform/index"                 request (c.main/platform [db event-chan] request))
-        (GET "/:platform/top-projects"    request (cont-project/list-top-proj [db event-chan] request))
+        (GET  "/p/:user/:project"         request (cont-project/get-proj [db event-chan] request))
+        (GET  "/top-projects"             request (cont-project/list-top-proj [db event-chan] request))
+        (GET  "/:platform/index"          request (c.main/platform [db event-chan] request))
+        (GET  "/:platform/top-projects"   request (cont-project/list-top-proj [db event-chan] request))
+        (GET  "/:platform/discussions"    request (cont-disc/discussions [db event-chan] request))
         (GET  "/import/:language"         [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (route/not-found "Page not found")
         ))
@@ -96,7 +96,8 @@
   [port]
   (map->HTTP {:port port}))
 
-(defn front-end-system [config-options]
+(defn front-end-system
+  [config-options]
   (let [{:keys [host port keyspace server-port zookeeper]} config-options]
     (-> (component/system-map
           :db (sys.cassandra/cassandra-db host port keyspace)
@@ -113,14 +114,32 @@
     (assoc this :kafka-producer kafka-producer))
   (stop [this]))
 
-(defn worker 
+(defn worker
   []
   (map->Worker {}))
 
 (defn worker-system [config-options]
   (let [{:keys [zookeeper]} config-options]
-    (-> (component/system-map 
+    (-> (component/system-map
       :kafka-producer (sys.kafka/kafka-producer zookeeper)
-      :app (component/using 
+      :app (component/using
         (worker)
         [:kafka-producer])))))
+
+(defrecord Integration [db]
+  component/Lifecycle
+
+  (start [this]
+    (assoc this :db db))
+  (stop [this]
+    (dissoc this :db)))
+
+(defn db-system
+  [config-options]
+  (let [{:keys [host port keyspace]} config-options]
+    (-> (component/system-map
+          :db (sys.cassandra/cassandra-db host port keyspace)
+          :app (component/using
+            (map->Integration {})
+            [:db]
+            )))))

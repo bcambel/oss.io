@@ -15,6 +15,12 @@
   [:div.container-fluid
   	content])
 
+(defhtml panel
+  [header & content ]
+  [:div.panel.panel-default
+                [:div.panel-heading header]
+                [:div.panel-body content]])
+
 (defhtml layout
   [website & content]
   (:html5 doctype)

@@ -10,7 +10,7 @@
       [clj-http.client :as client]
       [cheshire.core :refer :all]
       [environ.core :refer [env]]
-      [hsm.utils :refer [id-generate]]
+      [hsm.utils :refer [id-generate mapkeyw]]
       ))
 
 (defn find-users
@@ -99,4 +99,35 @@
                       user-login (env :client-id) (env :client-secret))
           response (client/get url {:socket-timeout 10000 :conn-timeout 10000}) 
           user-data (parse-string (:body response))]
-    (select-keys user-data (map name user-fields))))
+    
+    (when-let [user-info (select-keys user-data (map name user-fields))]
+      (log/warn (format "%s -> %s" user-login user-info))
+      user-info)))
+
+
+(defn find-user [user-login] 
+  (dissoc 
+    (assoc 
+      (mapkeyw (expand-user user-login)) 
+      :full_profile true) 
+    :login))
+
+(defn user-list
+  [conn n] 
+  (mapv :login 
+    (cql/select conn :github_user 
+      (dbq/columns :login)
+      (dbq/limit n) 
+      (dbq/where [[:= :full_profile false]]))))
+
+(defn sync-users
+  [db n]
+  (log/warn "Find users: " n db)
+  (let [conn (:connection db)
+    users (user-list conn n)]
+    (log/warn (format "Found %d users" (count users)))
+    (doall (map (fn[x] 
+      (cql/update conn :github_user 
+        (find-user x) 
+        (dbq/where [[= :login x]]))) 
+      users ))))

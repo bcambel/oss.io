@@ -2,7 +2,10 @@
 
 (defn pl->lang
 	[platform]
-	(condp = platform
+	(condp = (clojure.string/lower-case platform)
 		"cpp" "C++"
-		"CSharp" "C#"
+		"csharp" "C#"
+    "python" "Python"
+    "clojure" "Clojure"
+    "clj" "Clojure"
 		platform))

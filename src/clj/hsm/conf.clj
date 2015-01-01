@@ -8,7 +8,7 @@
   "Weirdest function of all times."
   [key rez]
   (when-not (= "default" key) rez))
-
+  
 (defn transform
   "Converts a nested dict(2nd level max) into a flat format with keywords as keys.
   Default key's values are applied as they are
@@ -40,7 +40,7 @@
         (transform settings)
         settings))))
 
-(def languages 
-  [ "Clojure" "Python" "JavaScript" "Go" "C" "PHP" 
+(def languages
+  [ "Clojure" "Python" "JavaScript" "Go" "C" "PHP"
     "Erlang" "Rust" "Lisp" "Elixir" "Csharp" "CSS" "D" "Dart"
     "Scala" "Groovy" "Haskell" "R" "Julia" "Lua" "Racket"])

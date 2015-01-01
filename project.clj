@@ -59,6 +59,7 @@
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
               :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
+              :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :dev {
                     :repl-options {:init-ns hsm.server
                                   ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
@@ -77,4 +78,7 @@
              :uberjar {
                        :env {:production true}
                        :omit-source true
-                       :aot :all}})
+                       :aot :all}}
+
+  :aliases { "dev-git-sync" ["trampoline" "with-profile" "dev,gsync" "run"]}
+                       )

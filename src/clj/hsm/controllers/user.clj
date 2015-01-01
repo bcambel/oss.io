@@ -47,7 +47,7 @@
   (let [host  (host-of request)
         body (body-of request)
         current-user (whois request)
-        user-id (BigInteger. (get-in request [:route-params :id]))]
+        user-id (BigInteger. (id-of request))]
         (json-resp (func db user-id))))
 
 (def get-user-following (partial get-user-detail actions/load-user-following))
