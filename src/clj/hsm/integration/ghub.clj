@@ -10,8 +10,9 @@
       [clj-http.client :as client]
       [cheshire.core :refer :all]
       [environ.core :refer [env]]
-      [hsm.utils :refer [id-generate mapkeyw]]
-      ))
+      [hsm.utils :refer [id-generate mapkeyw !nil?]]
+      )
+    (:use [slingshot.slingshot :only [throw+ try+]]))
 
 (defn find-users
   "Given all the projects which contains **`owner`** field, 
@@ -92,25 +93,37 @@
   [:id :login :type :name :company :blog :location :email :public_repos :public_gists
   :followers :following] )
 
+(def header-settings
+  {:socket-timeout 10000 :conn-timeout 10000})
+
 (defn expand-user
   "Fetch latest user information from github"
   [user-login]
   (let [url (format "https://api.github.com/users/%s?client_id=%s&client_secret=%s" 
                       user-login (env :client-id) (env :client-secret))
-          response (client/get url {:socket-timeout 10000 :conn-timeout 10000}) 
-          user-data (parse-string (:body response))]
-    
-    (when-let [user-info (select-keys user-data (map name user-fields))]
-      (log/warn (format "%s -> %s" user-login user-info))
-      user-info)))
+        response (try+ 
+                    (client/get url header-settings) 
+                    (catch [:status 403] {:keys [request-time headers body]}
+                      (log/warn "403" request-time headers))
+                    (catch [:status 404] {:keys [request-time headers body]}
+                      (log/warn "NOT FOUND" user-login request-time headers body))
+                    (catch Object _
+                      (log/error (:throwable &throw-context) "unexpected error")
+                      (throw+)))]
+      (when (!nil? response)
+        (let [user-data (parse-string (:body response))]
+          (when-let [user-info (select-keys user-data (map name user-fields))]
+            (log/warn (format "%s -> %s" user-login user-info))
+            user-info)))))
 
 
-(defn find-user [user-login] 
-  (dissoc 
-    (assoc 
-      (mapkeyw (expand-user user-login)) 
-      :full_profile true) 
-    :login))
+(defn find-user [user-login]
+  (when-let [user-data (expand-user user-login)]
+    (dissoc 
+      (assoc 
+        (mapkeyw user-data) 
+        :full_profile true) 
+      :login)))
 
 (defn user-list
   [conn n] 
@@ -120,14 +133,18 @@
       (dbq/limit n) 
       (dbq/where [[:= :full_profile false]]))))
 
+(defn find-n-update
+  [conn x]
+    (when-let [user (find-user x)]
+      (cql/update conn :github_user
+        user 
+        (dbq/where [[= :login x]]))))
+
 (defn sync-users
   [db n]
   (log/warn "Find users: " n db)
   (let [conn (:connection db)
     users (user-list conn n)]
     (log/warn (format "Found %d users" (count users)))
-    (doall (map (fn[x] 
-      (cql/update conn :github_user 
-        (find-user x) 
-        (dbq/where [[= :login x]]))) 
-      users ))))
+    (doall 
+      (map #(find-n-update conn %) users ))))

@@ -54,6 +54,7 @@
         (POST "/discussion/:id/post/create" request (cont-disc/post-discussion [db event-chan] request))
         (POST "/discussion/:id/follow"    [id request] (cont-disc/follow-discussion [db event-chan] id request))
         (POST "/discussion/:id/unfollow"  [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
+        (GET  "/users"                    request (cont-user/some-user [db event-chan] request))
         (GET  "/user2/:id"                request (cont-user/get-user2 [db event-chan] request))
         (GET  "/user/:id"                 request (cont-user/get-user [db event-chan] request))
         (GET  "/user/:id/activity"        request (cont-user/get-user-activity [db event-chan] request))

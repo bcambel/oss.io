@@ -281,3 +281,10 @@
       (first (cql/select conn :github_user
         (dbq/where [[= :login user-id]])))))
   
+(defn load-users
+  [db limit-by]
+  (let [conn (:connection db)]
+    (when-let [users (cql/select conn :github_user
+                      (dbq/where [[= :full_profile true]]))]
+      (mapv #(select-keys % [:login :followers :name :email :blog]) (take limit-by (reverse (sort-by :followers users)))
+    ))))

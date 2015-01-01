@@ -225,6 +225,17 @@
             :post_id :bigint
             :primary-key [:user_id :post_id]}
 
+  :collection {
+            :id           :bigint
+            :platform     :int
+            :user_id      :bigint
+            :name         :varchar
+            :description  :text
+            :items        (cq/map-type :varchar :varchar)
+            :updated      :bigint
+            :primary-key  [:id]
+  }
+
   :github_project {
             :id :bigint
             :description :text
@@ -293,3 +304,10 @@
           (name table)
           (cq/column-definitions (table table-definitions))))
       (keys table-definitions))))
+
+(defn create-table
+  [db keyspace table table-definition]
+   (let [conn (-> db :connection)]
+    (cql/use-keyspace conn keyspace)
+    (cql/create-table conn table 
+      (cq/column-definitions table-definition))))

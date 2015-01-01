@@ -5,8 +5,9 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.ring :refer [json-resp]]
-            [hsm.utils :as utils :refer [body-of host-of whois id-of]]))
+            [hsm.views :refer [layout]]
+            [hsm.ring :refer [json-resp html-resp]]
+            [hsm.utils :as utils :refer [body-of host-of whois id-of type-of]]))
 
 (defn get-user
   [[db event-chan] request] 
@@ -60,3 +61,28 @@
 
         )
   )
+
+(defn some-user
+  [[db event-chan] request]
+  (let [host (host-of request)
+        limit-by 1000
+        users (actions/load-users db limit-by)
+        is-json (type-of request :json)]
+    (if is-json 
+      (json-resp users)
+      (html-resp 
+        (layout host
+          [:div
+            [:table.table
+            (for [x users]
+                [:tr   
+                  [:td (:followers x)]
+                  [:td 
+                    [:a {:href (str "/user2/" (:login x))} (:login x)]
+                    [:nbsp]
+                    (:name x)
+                    
+                    [:p 
+                      [:a {:href (:blog x)} (:blog x)]
+                      (:email x)]]])]
+          ])))))
