@@ -122,13 +122,14 @@
     (body-as-string request)))
 
 (def mime-types
-  {:json "application/json" :html "text/html"})
+  {:json "application/json" 
+   :html "text/html"})
 
 (defn type-of
   "Request Type check"
   [request mode]
   (= (get mime-types mode) 
-      (get-in request [:headers "Accept"])))
+      (get-in request [:headers "accept"])))
 
 (defn whois
   "Temporary user finder.. Returns a static User ID"
