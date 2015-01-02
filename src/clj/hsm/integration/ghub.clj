@@ -173,6 +173,44 @@
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
+(defn project-starred
+  [db project-name max-iter]
+  (let [conn (:connection db)
+        max-iter (or max-iter 10000)
+        start-url (format "%s/repos/%s/stargazers?per_page=100&client_id=%s&client_secret=%s" 
+                      ghub-root project-name (env :client-id) (env :client-secret))]
+    (loop [url start-url
+           looped 1]
+      (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
+      (let [{:keys [success next-url data]} (fetch-url url)
+            users data]
+        (when (and (!nil? users) (> (count users) 0))
+          (cql/update conn :github_project_list
+            {:starred [+ (set (mapv #(get % "login") users))]}
+            (dbq/where [[:= :proj project-name]]))
+          (insert-users conn users)
+          (when (and next-url (< looped max-iter))
+            (recur next-url (inc looped))))))))
+
+(defn project-watchers
+  [db project-name max-iter]
+  (let [conn (:connection db)
+        max-iter (or max-iter 10000)
+        start-url (format "%s/repos/%s/watchers?per_page=100&client_id=%s&client_secret=%s" 
+                      ghub-root project-name (env :client-id) (env :client-secret))]
+    (loop [url start-url
+           looped 1]
+      (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
+      (let [{:keys [success next-url data]} (fetch-url url)
+            users data]
+        (when (and (!nil? users) (> (count users) 0))
+          (cql/update conn :github_project_list
+            {:watchers [+ (set (mapv #(get % "login") users))]}
+            (dbq/where [[:= :proj project-name]]))
+          (insert-users conn users)
+          (when (and next-url (< looped max-iter))
+            (recur next-url (inc looped))))))))
+
 (defn user-followers
   [db user-login max-iter]
   (let [conn (:connection db)
@@ -198,7 +236,6 @@
         max-iter (or max-iter 10000)
         start-url (format "%s/users/%s/following?per_page=100&client_id=%s&client_secret=%s" 
                       ghub-root user-login (env :client-id) (env :client-secret))]
-
     (loop [url start-url
            looped 1]
       (log/warn (format "[FOLLOWING]Loop %d. %s" looped url))
@@ -227,7 +264,7 @@
 
 (defn user-list
   [conn n] 
-  (mapv :login 
+  (mapv :login
     (cql/select conn :github_user 
       (dbq/columns :login)
       (dbq/limit n) 

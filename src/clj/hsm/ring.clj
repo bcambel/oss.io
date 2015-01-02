@@ -20,7 +20,7 @@
          (resp/status 400)))
       (catch Throwable e
         (do
-          (log/error (.getMessage e))
+          (log/error e)
           (clojure.stacktrace/print-stack-trace e)
         (->
          (resp/response (.getMessage e))

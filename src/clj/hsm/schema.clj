@@ -278,6 +278,13 @@
             :following (cq/set-type :text)
             :starred (cq/set-type :text)
             :primary-key [:user]}
+
+  :github_project_list {
+            :proj :text
+            :watchers (cq/set-type :text)
+            :starred (cq/set-type :text)
+            :primary-key [:proj]
+  }
 })
 
 (defn create-or-use-keyspace
