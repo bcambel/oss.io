@@ -29,10 +29,17 @@
 (def header-settings
   {:socket-timeout 10000 :conn-timeout 10000})
 
+(def ghub-proj-fields [:name :fork :watchers :open_issues :language :description :full_name])
+
+(def user-fields
+  [:id :login :type :name :company :blog 
+  :location :email :public_repos :public_gists
+  :followers :following] )
+
 (defn get-url
   [url headers]
-  (try+ 
-    (client/get url headers) 
+  (try+
+    (client/get url headers)
     (catch [:status 403] {:keys [request-time headers body]}
       (log/warn "403" request-time headers))
     (catch [:status 404] {:keys [request-time headers body]}
@@ -45,7 +52,7 @@
 
 (defn user-data
   [m]
-  (assoc 
+  (assoc
     (select-keys (get m "owner") base-user-fields)
     :full_profile false))
 
@@ -69,8 +76,6 @@
     (vals (select-keys users not-in-db))
   ))
 
-(def ghub-proj-fields [:name :fork :watchers :open_issues :language :description :full_name])
-
 (defn insert-users
   [conn coll]
   (when-let [users (mapv #(assoc % :full_profile false) (find-users conn coll))]
@@ -79,7 +84,6 @@
 (defn insert-records
   [conn coll]
   (log/info (format "Inserting %d projects" (count coll)))
-  ;; extend the owner field into proper structure :owner => login_name
   (cql/insert-batch conn :github_project 
     (doall (map (fn[item] 
                   (merge {:id (id-generate)}
@@ -113,7 +117,6 @@
         (if (nil? response)
           {:success false :next-url nil :data nil :reason "Empty Response"}
           (do 
-            ; (log/warn "Start processing" (:headers response))
             (let [repos (parse-string (:body response))
                   next-url (find-next-url 
                       (-> response :headers (get "link")))]
@@ -138,15 +141,11 @@
           (recur next-url (inc looped)))))
     1))
 
-(def user-fields
-  [:id :login :type :name :company :blog :location :email :public_repos :public_gists
-  :followers :following] )
-
 (defn expand-user
   "Fetch latest user information from github"
   [user-login]
-  (let [url (format "https://api.github.com/users/%s?client_id=%s&client_secret=%s" 
-                      user-login (env :client-id) (env :client-secret))
+  (let [url (format "%s/users/%s?client_id=%s&client_secret=%s" 
+                     ghub-root user-login (env :client-id) (env :client-secret))
         response (get-url url header-settings)]
       (when (!nil? response)
         (let [user-data (parse-string (:body response))]
@@ -180,7 +179,6 @@
         max-iter (or max-iter 10000)
         start-url (format "%s/users/%s/followers?per_page=100&client_id=%s&client_secret=%s" 
                       ghub-root user-login (env :client-id) (env :client-secret))]
-
     (loop [url start-url
            looped 1]
       (log/warn (format "[FOLLOWERS]Loop %d. %s" looped url))
@@ -218,7 +216,6 @@
   [db user-login max-iter]
   (doall (pmap #(% db user-login max-iter)
     [user-following user-followers user-starred])))
-
 
 (defn find-user [user-login]
   (when-let [user-data (expand-user user-login)]

@@ -286,14 +286,41 @@
   (let [conn (:connection db)]
       (first (cql/select conn :github_user_list
         (dbq/where [[= :user user-id]])))))
-  
+
+(defn top-users-in
+  [users limit-by]
+  (take limit-by 
+    (reverse (sort-by :followers users))))
+
+(defn top-users
+  [db limit-by top-n]
+  (let [conn (:connection db)
+        users (cql/select conn :github_user 
+                (dbq/limit limit-by)
+                (dbq/columns :login :followers))]
+    (top-users-in users top-n)))
+
+(defn load-users-by-id
+  [db user-ids]
+  (let [conn (:connection db)]
+    (cql/select conn :github_user
+        (dbq/where [[:in :login user-ids]]))))
+
+(defn fetch-top-users
+  [db limit-by top-n]
+  (let [toppers (top-users db limit-by top-n)
+        user-ids (mapv :login toppers)]
+    (load-users-by-id db user-ids)))
+
 (defn load-users
   [db limit-by]
   (let [conn (:connection db)]
     (when-let [users (cql/select conn :github_user
+                      (dbq/columns :login :followers :name :email :blog)
+                      (dbq/limit 1000)
                       (dbq/where [[= :full_profile true]]))]
-      (mapv #(select-keys % [:login :followers :name :email :blog]) (take limit-by (reverse (sort-by :followers users)))
-    ))))
+      (mapv #(select-keys % [:login :followers :name :email :blog]) 
+        (top-users-in users limit-by)))))
 
 (defn load-collections
   [db limit-by]

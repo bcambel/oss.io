@@ -1,14 +1,15 @@
 (ns hsm.controllers.user
-  (:require [clojure.tools.logging :as log]
-            [clojure.java.io :as io]
-            [cheshire.core :refer :all]
-            [ring.util.response :as resp]
-            [hsm.actions :as actions]
-            [hsm.pipe.event :as event-pipe]
-            [hsm.views :refer [layout panel]]
-            [hsm.ring :refer [json-resp html-resp]]
-            [hsm.integration.ghub :as gh]
-            [hsm.utils :as utils :refer [body-of host-of whois id-of type-of]]))
+  (:require [clojure.tools.logging        :as log]
+            [clojure.java.io              :as io]
+            [cheshire.core                :refer :all]
+            [ring.util.response           :as resp]
+            [hsm.actions                  :as actions]
+            [hsm.pipe.event               :as event-pipe]
+            [hsm.views                    :refer [layout panel]]
+            [hsm.ring                     :refer [json-resp html-resp]]
+            [hsm.integration.ghub         :as gh]
+            [hsm.cache                    :as cache]
+            [hsm.utils                    :refer :all]))
 
 (defn get-user
   [[db event-chan] request] 
@@ -58,8 +59,8 @@
 (defn create-user
   [[db event-chan] request] 
   (let [host  (get-in request [:headers "host"])
-    body (parse-string (utils/body-as-string request))
-    user-data (utils/mapkeyw body)]
+    body (parse-string (body-as-string request))
+    user-data (mapkeyw body)]
     (actions/create-user db user-data)
     (event-pipe/create-user event-chan user-data)
     (json-resp { :ok body })))
@@ -97,10 +98,11 @@
   )
 
 (defn some-user
-  [[db event-chan] request]
+  [{:keys [db event-chan redis]} request]
   (let [host (host-of request)
         limit-by 100
-        users (actions/load-users db limit-by)
+        users (or (cache/retrieve redis :top-users)
+                  (actions/load-users db limit-by))
         is-json (type-of request :json)]
     (if is-json 
       (json-resp users)
@@ -115,8 +117,6 @@
                     [:a {:href (str "/user2/" (:login x))} (:login x)]
                     [:nbsp]
                     (:name x)
-                    
                     [:p 
                       [:a {:href (:blog x)} (:blog x)]
-                      (:email x)]]])]
-          ])))))
+                      (:email x)]]])]])))))

@@ -21,6 +21,7 @@
                 [com.cemerick/friend "0.2.0" :exclusions [org.clojure/core.cache]]
                 [friend-oauth2 "0.1.1"]
                 [clojurewerkz/cassaforte "2.0.0"]
+                [com.taoensso/carmine "2.9.0"]
                 [net.jpountz.lz4/lz4  "1.2.0"]
                 [prismatic/schema "0.3.3"]
                 [prismatic/plumbing "0.3.5"]

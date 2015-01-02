@@ -32,7 +32,9 @@
                                     :zookeeper (:zookeeper-host c)
                                     :host (:db-host c) 
                                     :port (:db-port c) 
-                                    :keyspace (:db-keyspace c)})
+                                    :keyspace (:db-keyspace c)
+                                    :redis-host (:redis-host c)
+                                    :redis-port (:redis-port c)})
         app-sys (component/start sys)]
         app-sys
     )))
