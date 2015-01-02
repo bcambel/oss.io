@@ -23,9 +23,7 @@
         user (actions/load-user2 db id)
         is-json (type-of request :json)]
     (when-not (:full_profile user)
-      (gh/find-n-update (:connection db) id)
-      ; (gh/enhance-user db id 100)
-      )
+      (gh/find-n-update (:connection db) id))
     (let [user-extras (actions/user-extras db id)
           c-star (count (:starred user-extras))
           c-follow (count (:following user-extras))

@@ -216,8 +216,8 @@
 
 (defn enhance-user
   [db user-login max-iter]
-  (mapv #(% db user-login max-iter) [user-following user-followers user-starred])  
-  )
+  (doall (pmap #(% db user-login max-iter)
+    [user-following user-followers user-starred])))
 
 
 (defn find-user [user-login]
