@@ -5,8 +5,9 @@
             [ring.util.response :as resp]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.views :refer [layout]]
+            [hsm.views :refer [layout panel]]
             [hsm.ring :refer [json-resp html-resp]]
+            [hsm.integration.ghub :as gh]
             [hsm.utils :as utils :refer [body-of host-of whois id-of type-of]]))
 
 (defn get-user
@@ -18,8 +19,43 @@
 (defn get-user2
   [[db event-chan] request] 
   (let [id (id-of request)
-        user (actions/load-user2 db id)]
-    (json-resp user)))
+        host (host-of request)
+        user (actions/load-user2 db id)
+        is-json (type-of request :json)]
+    (when-not (:full_profile user)
+      (gh/find-n-update (:connection db) id)
+      ; (gh/enhance-user db id 100)
+      )
+    (let [user-extras (actions/user-extras db id)
+          c-star (count (:starred user-extras))
+          c-follow (count (:following user-extras))
+          c-followers (count (:followers user-extras))]
+      (if is-json 
+        (json-resp user)
+        (layout host
+            [:div 
+              [:h3 [:span (:login user)]]
+              [:h5 [:span (:name user)]] 
+              [:p [:a {:href (:blog user)}(:blog user)]]
+              [:p (:company user)]
+              [:a {:href (str "mailto://" (:email user))} (:email user)]
+              [:p (format "%s %s %s" c-star c-follow c-followers)]]
+          [:div.col-lg-4
+          (panel (str "Starred " c-star) [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])]
+          [:div.col-lg-4
+          (panel (str "Following " c-follow) [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])]
+          [:div.col-lg-4
+          (panel (str "Followers " c-followers) 
+            [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])])]
+          )))))
+
+(defn sync-user2
+  [[db event-chan] request] 
+  (let [id (id-of request)
+        host (host-of request)]
+    (gh/enhance-user db id 1000)
+    (json-resp (actions/load-user2 db id))
+  ))
 
 (defn create-user
   [[db event-chan] request] 
@@ -65,7 +101,7 @@
 (defn some-user
   [[db event-chan] request]
   (let [host (host-of request)
-        limit-by 1000
+        limit-by 100
         users (actions/load-users db limit-by)
         is-json (type-of request :json)]
     (if is-json 

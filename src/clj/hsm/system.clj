@@ -8,6 +8,7 @@
         [hsm.controllers.user :as cont-user]
         [hsm.controllers.post :as cont-post]
         [hsm.controllers.project :as cont-project]
+        [hsm.controllers.coll :as c.coll]
         [hsm.controllers.discussion :as cont-disc]
         [hsm.controllers.main :as c.main]
         [hsm.integration.ghub :as ghub]
@@ -56,6 +57,7 @@
         (POST "/discussion/:id/unfollow"  [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
         (GET  "/users"                    request (cont-user/some-user [db event-chan] request))
         (GET  "/user2/:id"                request (cont-user/get-user2 [db event-chan] request))
+        (GET  "/user2/:id/sync"           request (cont-user/sync-user2 [db event-chan] request))
         (GET  "/user/:id"                 request (cont-user/get-user [db event-chan] request))
         (GET  "/user/:id/activity"        request (cont-user/get-user-activity [db event-chan] request))
         (POST "/user/:id/follow"          request (cont-user/follow-user [db event-chan] request))
@@ -71,6 +73,7 @@
         (GET  "/:platform/index"          request (c.main/platform [db event-chan] request))
         (GET  "/:platform/top-projects"   request (cont-project/list-top-proj [db event-chan] request))
         (GET  "/:platform/discussions"    request (cont-disc/discussions [db event-chan] request))
+        (GET  "/collections"              request (c.coll/load-coll [db event-chan] request))
         (GET  "/import/:language"         [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (route/not-found "Page not found")
         ))

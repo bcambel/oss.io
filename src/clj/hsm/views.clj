@@ -37,7 +37,9 @@
    		[:div.navbar-header
    			[:a.navbar-brand {:href (format "http://%s" website)} "Hackersome"]]
    			[:div.navbar-collapse.collapse 
-   				[:ul.nav.navbar-nav 
+   				[:ul.nav.navbar-nav
+            [:li [:a {:href "/users"} "Users"]]
+            [:li [:a {:href "/collections"} "Collections"]]
    					[:li.dropdown 
    						[:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Projects" [:span.caret]]
    						[:ul.dropdown-menu 
