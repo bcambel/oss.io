@@ -21,6 +21,12 @@
                 [:div.panel-heading header]
                 [:div.panel-body content]])
 
+(defhtml languages-pane
+  []
+  [:div.list-group
+  (for [lang languages]
+    [:a.list-group-item {:href (format "/%s/top-projects" lang)} lang])])
+
 (defhtml layout
   [website & content]
   (:html5 doctype)
@@ -30,7 +36,8 @@
     [:meta {:content "IE=edge,chrome=1"
             :http-equiv "X-UA-Compatible"}]
     [:title "Hackersome"]
-    (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/readable/bootstrap.min.css")
+    (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+    (include-css "/css/style.css")
    ]
    [:body
    	[:div.nav.navbar-default
@@ -50,8 +57,13 @@
    		; [:form.navbar-form.navbar-left [:input {:type "text" :class "form-control col-lg-8" :placeholder "Search"}]]
    		[:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]
    		]
-    [:div.container
-     content]
+    [:div.container-fluid
+      [:div.col-lg-2.left-panel (languages-pane)]
+      [:div.col-lg-9
+        [:div.row
+          content]]
+      [:div.col-lg-2]
+     ]
     (include-js "//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js")
     (include-js "//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")   
     ]])

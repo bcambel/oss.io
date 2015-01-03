@@ -22,8 +22,9 @@
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
+        force-sync (is-true (get-in request [:params :force-sync]))
         is-json (type-of request :json)]
-    (when-not (:full_profile user)
+    (when (or force-sync (not (:full_profile user)))
       (gh/find-n-update db id))
     (let [user-extras (actions/user-extras db id)
           c-star (count (:starred user-extras))
@@ -32,20 +33,29 @@
       (if is-json 
         (json-resp user)
         (layout host
-            [:div 
-              [:h3 [:span (:login user)]]
-              [:h5 [:span (:name user)]] 
-              [:p [:a {:href (:blog user)}(:blog user)]]
-              [:p (:company user)]
-              [:a {:href (str "mailto://" (:email user))} (:email user)]
-              [:p (format "%s %s %s" c-star c-follow c-followers)]]
-          [:div.col-lg-4
-          (panel (str "Starred " c-star) [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])]
-          [:div.col-lg-4
-          (panel (str "Following " c-follow) [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])]
-          [:div.col-lg-4
-          (panel (str "Followers " c-followers) 
-            [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])])]
+            [:div.col-lg-3 
+              (panel (:login user)
+                [:img.img-responsive.img-rounded {:src (:image user)}]
+                [:h3 [:span (:login user)]]
+                [:h5 [:span (:name user)]] 
+                [:p [:a {:href (:blog user)}(:blog user)]]
+                [:p (:company user)]
+                [:p (:location user)]
+                [:a {:href (str "mailto://" (:email user))} (:email user)]
+                [:p (format "%s %s %s" c-star c-follow c-followers)])
+              (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
+                [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
+              (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
+                [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])])
+              ]
+          [:div.col-lg-9
+            [:div.col-lg-8
+            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+              [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])]
+            ; [:div.col-lg-4]
+            
+            ; [:div.col-lg-4]
+            ]
           )))))
 
 (defn sync-user2
@@ -96,6 +106,21 @@
 
         )
   )
+
+(defn user2-follower
+  [{:keys [db event-chan redis]} request])
+
+(defn user2-following
+  [{:keys [db event-chan redis]} request])
+
+(defn user2-starred
+  [{:keys [db event-chan redis]} request])
+
+(defn user2-contrib
+  [{:keys [db event-chan redis]} request])
+
+(defn user2-activity
+  [{:keys [db event-chan redis]} request])
 
 (defn some-user
   [{:keys [db event-chan redis]} request]

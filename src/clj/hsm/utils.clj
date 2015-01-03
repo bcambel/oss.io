@@ -147,6 +147,20 @@
   (if (> (count s) maxlen) 
     (str (subs s 0 maxlen) "...")
     s))
+
+(defn in? 
+  "true if seq contains elm"
+  [seq el]  
+  (some #(= el %) seq))
+
+; implement a multi-method for different types
+(defn is-true
+  [val]
+  (condp instance? val
+    java.lang.String (or (in? ["true" "1"] val)
+                          (not (in? ["false" "0"] val)))
+    false))
+
 ;; Following functions borrowed+modified slightly from 
 ;; Peter Taoussanis <https://www.taoensso.com>
 ;; https://github.com/ptaoussanis/encore

@@ -1,6 +1,7 @@
 (ns hsm.controllers.project
   (:require 
     [clojure.tools.logging :as log]
+    [clojure.core.memoize :as memo]
     [clojure.java.io :as io]
     [cheshire.core :refer :all]
     [ring.util.response :as resp]
@@ -11,7 +12,9 @@
     [hsm.ring :refer [json-resp html-resp]]
     [hsm.views :as views]
     [hsm.helpers :refer [pl->lang]]
-    [hsm.utils :as utils :refer [host-of body-of whois id-of cutoff]]))
+    [hsm.integration.ghub :as gh]
+    [hsm.cache :as cache]
+    [hsm.utils :as utils :refer :all]))
 
 (def platforms {
   "pythonhackers.com" {:lang "Python" :id 1}
@@ -37,7 +40,7 @@
 				[:tr
 					[:td (get x :watchers)]
 					[:td  
-						[:a {:target "_blank" :href (format "/p/%s" (get x :full_name))} (get x :full_name)
+						[:a { :href (format "/p/%s" (get x :full_name))} (get x :full_name)
 						[:p {:style "color:gray"} (get x :description)]]]
 				])]])
 
@@ -62,8 +65,27 @@
           (views/layout host
             (view-fn top-projects keyset)))))))
 
+(defn get-project-readme*
+  [redis proj]
+  (let [cache-key (str "readme-" proj)
+        cached (cache/retrieve redis cache-key)]
+    (if (!nil? cached)
+      cached
+      (let [readme (gh/project-readme proj)]
+        (cache/setup redis cache-key readme)
+        readme
+        ))))
+
+(defn get-project-readme 
+  [redis proj] 
+  (memo/memo 
+    (fn[] 
+      (get-project-readme redis proj))))
+
+    ; (fn [redis id] (get-project-readme* redis id))))
+
 (defn get-proj
-	[[db event-chan] request]
+	[{:keys [db event-chan redis]} request]
 	(let [host  (host-of request)
 				is-json false
 				id (format "%s/%s" (id-of request :user) (id-of request :project))
@@ -83,12 +105,17 @@
 							[:div.col-lg-8 
 								[:h1 (:name proj)]
 								[:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+                [:a {:href (:homepage proj)}]
 								[:p.lead (:description proj)]
 								]
 						]
 
 						[:hr]
 						[:div.row
+              [:div.col-lg-8
+                (views/panel "READ Me"
+                  (get-project-readme* redis id))
+                ]
 							[:div.col-lg-4
 							[:div.panel.panel-default
 								[:div.panel-heading "Related Projects"]

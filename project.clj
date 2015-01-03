@@ -7,6 +7,7 @@
   :source-paths ["src/clj" "src/cljs"]
   :lein-release {:deploy-via :clojars :scm :git}
   :dependencies [[org.clojure/clojure "1.6.0"]
+                [org.clojure/core.memoize "0.5.6"]
                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                 [ring "1.3.2"]
                 [compojure "1.3.1"]

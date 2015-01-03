@@ -26,6 +26,12 @@
          (resp/response (.getMessage e))
          (resp/status 500)))))))
 
+(defn wrap-nocache
+  [handler]
+  (fn [request]
+     (let [response (handler request)]
+        (assoc-in response [:headers  "Pragma"] "no-cache"))))
+
 (defn json-resp
   "Generates JSON resp of given object, 
   constructs a RING 200 Response.

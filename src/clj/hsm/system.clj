@@ -12,7 +12,7 @@
         [hsm.controllers.discussion   :as cont-disc]
         [hsm.controllers.main         :as c.main]
         [hsm.integration.ghub         :as ghub]
-        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler]]
+        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache]]
         [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
@@ -32,6 +32,7 @@
   [db request]
   (let [conn (:connection db)]
     (json-resp (cql/select conn :user))))
+
 
 (defrecord HTTP [port db kafka-producer redis server]
   component/Lifecycle
@@ -60,6 +61,11 @@
         (GET  "/users"                    request (cont-user/some-user specs request))
         (GET  "/user2/:id"                request (cont-user/get-user2 [db event-chan] request))
         (GET  "/user2/:id/sync"           request (cont-user/sync-user2 [db event-chan] request))
+        (GET  "/user2/:id/followers"      request (cont-user/user2-follower specs request))
+        (GET  "/user2/:id/following"      request (cont-user/user2-following specs request))
+        (GET  "/user2/:id/starred"        request (cont-user/user2-starred specs request))
+        (GET  "/user2/:id/contrib"        request (cont-user/user2-contrib specs request))
+        (GET  "/user2/:id/activity"       request (cont-user/user2-activity specs request))
         (GET  "/user/:id"                 request (cont-user/get-user [db event-chan] request))
         (GET  "/user/:id/activity"        request (cont-user/get-user-activity [db event-chan] request))
         (POST "/user/:id/follow"          request (cont-user/follow-user [db event-chan] request))
@@ -70,7 +76,7 @@
         (POST "/link/:id/upvote"          request (cont-post/upvote-link [db event-chan] request))
         (GET  "/link/:id"                 request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date"              request (cont-post/list-links [db event-chan] request))
-        (GET  "/p/:user/:project"         request (cont-project/get-proj [db event-chan] request))
+        (GET  "/p/:user/:project"         request (cont-project/get-proj specs request))
         (GET  "/top-projects"             request (cont-project/list-top-proj [db event-chan] request))
         (GET  "/:platform/index"          request (c.main/platform [db event-chan] request))
         (GET  "/:platform/top-projects"   request (cont-project/list-top-proj [db event-chan] request))
@@ -87,7 +93,10 @@
 
     (def app
       (-> http-handler
-          (wrap-exception-handler)))
+          (wrap-exception-handler)
+          (wrap-nocache)
+          ; (if is-dev? wrap-nocache identity )
+          ))
 
     (if is-dev? (start-figwheel))
     (let [server (run-jetty app {:port (Integer. port)

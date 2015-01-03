@@ -1,5 +1,6 @@
 (ns hsm.controllers.main
   (:require 
+    [hiccup.def     :refer [defhtml]]
     [hsm.ring       :refer [html-resp]]
     [hsm.views      :refer :all]
     [hsm.utils      :refer [host-of id-of cutoff]]
@@ -7,14 +8,14 @@
     [hsm.conf       :refer [languages]]
     [hsm.actions    :refer [list-top-proj list-top-disc list-top-user]]))
 
+
+
 (defn homepage
   [[db event-chan] request]
   (let [host (host-of request)]
     (html-resp 
-      (layout host 
-        [:div 
-          (for [lang languages]
-              [:a {:href (format "/%s/top-projects" lang)} lang])]))))
+      (layout host (languages-pane)
+        ))))
 
 (defn platform
   [[db event-chan] request]

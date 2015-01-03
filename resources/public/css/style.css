@@ -1,3 +1,20 @@
 h1 {
-  text-decoration: underline;
+  text-decoration: none;
+}
+
+ul {
+  list-style-type: none;
+  padding-left:1px;
+}
+
+a{
+  text-decoration: none !important;
+}
+
+a:hover{
+  font-weight: bold;
+}
+
+.container-fluid,.left-panel{
+  padding-left:0;
 }
