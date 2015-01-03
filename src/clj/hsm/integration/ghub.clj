@@ -193,6 +193,25 @@
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
+(defn user-repos
+  [db user-login max-iter]
+  (let [conn (:connection db)
+        max-iter (or max-iter 10000)
+        start-url (format "%s/users/%s/repos?per_page=100&client_id=%s&client_secret=%s" 
+                      ghub-root user-login (env :client-id) (env :client-secret))]
+    (loop [url start-url
+           looped 1]
+      (log/warn (format "[USER-REPOS]Loop %d. %s" looped url))
+      (let [{:keys [success next-url data]} (fetch-url url)
+            repos data]
+        (when-not (empty? repos)
+          (cql/update conn :github_user_list
+            {:repos [+ (set (mapv #(get % "full_name") repos))]}
+            (dbq/where [[:= :user user-login]]))
+          (insert-records conn repos)
+          (when (and next-url (< looped max-iter))
+            (recur next-url (inc looped))))))))
+
 (defn project-starred
   [db project-name max-iter]
   (let [conn (:connection db)
@@ -282,7 +301,7 @@
   [db user-login max-iter]
   (doall 
     (pmap #(% db user-login max-iter)
-      [user-following user-followers user-starred])))
+      [user-following user-followers user-starred user-repos])))
 
 (defn find-user
   [user-login]

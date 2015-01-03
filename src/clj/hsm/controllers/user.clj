@@ -51,7 +51,11 @@
           [:div.col-lg-9
             [:div.col-lg-8
             (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-              [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])]
+              [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])
+            (panel "User Repos"
+              [:ul (for [star (:repos user-extras)] [:li [:a {:href (str "/p/" star)} star]])]
+              )
+            ]
             ; [:div.col-lg-4]
             
             ; [:div.col-lg-4]

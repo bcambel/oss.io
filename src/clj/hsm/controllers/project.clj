@@ -91,7 +91,8 @@
         id (format "%s/%s" (id-of request :user) (id-of request :project))
         related-projects []]
     (let [proj (first (actions/load-project db id))
-          proj-extras (actions/load-project-extras db id)]
+          proj-extras (actions/load-project-extras db id)
+          owner (first (.split id "/"))]
       (if is-json 
         (json-resp proj)
         (html-resp 
@@ -104,9 +105,12 @@
                   [:button.btn.btn-primary {:type "submit"} "Love It"]
                 ]]
               [:div.col-lg-8 
-                [:h1 (:name proj)]
-                [:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+                [:h1 (:name proj)
+                  [:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+                ]
                 [:a {:href (:homepage proj)}]
+                [:a {:href (str "/user2/" owner)} owner]
+                [:span.badge (:language proj)]
                 [:p.lead (:description proj)]
                 ]
             ]
@@ -119,10 +123,10 @@
                 ]
               [:div.col-lg-4
                 (panel "Watchers" 
-                  [:ul (for [x (:watchers proj-extras)]
+                  [:ul (for [x (take 50 (:watchers proj-extras))]
                     [:li [:a {:href (format "/user2/" x)} x]])])
                 (panel "Starred" 
-                  [:ul (for [x (:starred proj-extras)]
+                  [:ul (for [x (take 50 (:starred proj-extras))]
                     [:li [:a {:href (format "/user2/%s" x)} x]])])
                 (panel "Related Projects"
                   [:ul

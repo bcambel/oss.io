@@ -277,6 +277,7 @@
             :followers (cq/set-type :text)
             :following (cq/set-type :text)
             :starred (cq/set-type :text)
+            :repos (cq/set-type :text)
             :primary-key [:user]}
 
   :github_project_list {

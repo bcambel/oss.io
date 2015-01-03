@@ -60,7 +60,7 @@
     [:div.container-fluid
       [:div.col-lg-2.left-panel (languages-pane)]
       [:div.col-lg-9
-        [:div.row
+        [:div.row {:style "padding-top:20px;"}
           content]]
       [:div.col-lg-2]
      ]
