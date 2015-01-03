@@ -20,7 +20,7 @@
 (def api-params (format "client_id=%s&client_secret=%s" (env :client-id) (env :client-secret)))
 
 (def ghub-url*
-  (str ghub-root "%s/search/repositories"
+  (str ghub-root "/search/repositories"
     "?q=+language:%s&sort=stars&order=desc&per_page=100&" api-params))
 
 (def ghub-url
@@ -29,7 +29,7 @@
 (def header-settings
   {:socket-timeout 10000 :conn-timeout 10000})
 
-(def ghub-proj-fields [:name :fork :watchers :open_issues :language :description :full_name])
+(def ghub-proj-fields [:id :name :fork :watchers :open_issues :language :description :full_name])
 
 (def user-fields
   [:id :login :type :name :company :blog 
@@ -76,21 +76,45 @@
     (vals (select-keys users not-in-db))
   ))
 
+(defn find-existing-projects
+  [conn project-list]
+    (let [projects (mapv :full_name 
+                    (cql/select conn :github_project
+                      (dbq/columns :full_name)
+                      (dbq/where [[:in :full_name project-list]])))]
+      (log/warn "Found projects: %d" (count projects))
+      projects))
+
 (defn insert-users
   [conn coll]
-  (when-let [users (mapv #(assoc % :full_profile false) (find-users conn coll))]
+  (when-let [users (mapv #(assoc % :full_profile false) 
+                      (find-users conn coll))]
     (cql/insert-batch conn :github_user users)))
+
+(defn in? 
+  "true if seq contains elm"
+  [seq elm]  
+  (some #(= elm %) seq))
+
+(defn insert-projects
+  [conn coll]
+  (let [projects (doall (map (fn[item] 
+                          (select-keys item 
+                          (map name ghub-proj-fields))) coll))
+        project-ids (mapv #(get % "full_name") projects)
+        existing-projects (or (find-existing-projects conn project-ids) [])]
+        (log/warn "EXISTING" existing-projects project-ids)
+    (let [[not-in-db _ both-exists] (diff (set project-ids) (set existing-projects))]
+      (log/warn "NOT-DB" not-in-db)
+      (let [missing-projects (filter #(in? not-in-db (get % "full_name")) projects)]
+        (when (> (count missing-projects) 0)
+          (log/info (format "Inserting %d projects" (count missing-projects)))
+          (cql/insert-batch conn :github_project missing-projects))))))
 
 (defn insert-records
   [conn coll]
-  (log/info (format "Inserting %d projects" (count coll)))
-  (cql/insert-batch conn :github_project 
-    (doall (map (fn[item] 
-                  (merge {:id (id-generate)}
-                    (select-keys item 
-                      (map name ghub-proj-fields)))) 
-            coll)))
-   (insert-users conn (map user-data coll)))
+  (insert-projects conn coll) 
+  (insert-users conn (map user-data coll)))
 
 (defn find-next-url
   "Figure out the next url to call
@@ -99,14 +123,14 @@
   "
   [stupid-header]
   (when (!nil? stupid-header)
-  (try 
-    (let [[next-s last-s] (.split stupid-header ",")
-          next-page (vec (.split next-s ";"))
-          is-next (.contains (last next-page) "next")]
-      (when is-next 
-        (s/replace (subs (first next-page) 1) ">" "")))
-    (catch Throwable t
-      (log/warn "FUCK" t stupid-header)))))
+    (try 
+      (let [[next-s last-s] (.split stupid-header ",")
+            next-page (vec (.split next-s ";"))
+            is-next (.contains (last next-page) "next")]
+        (when is-next 
+          (s/replace (subs (first next-page) 1) ">" "")))
+      (catch Throwable t
+        (log/warn "FUCK" t stupid-header)))))
 
 (defn fetch-url
   [url]

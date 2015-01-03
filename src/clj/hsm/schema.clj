@@ -251,7 +251,7 @@
             :owner :text
             :url :text
             :watchers :int
-            :primary-key [:id]}
+            :primary-key [:full_name]}
 
   :github_user {
             :login :text
