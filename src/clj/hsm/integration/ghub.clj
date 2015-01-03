@@ -75,9 +75,9 @@
         existing-users (find-existing-users conn user-list)
         [_ not-in-db both-exists] (diff (set existing-users) (set user-list))]
     (log/warn "already exists" both-exists)
-    (log/warn not-in-db)
-    (vals (select-keys users not-in-db))
-  ))
+    (when-not (empty? not-in-db)
+      (log/warn not-in-db))
+    (vals (select-keys users not-in-db))))
 
 (defn find-existing-projects
   [conn project-list]
@@ -92,7 +92,8 @@
   [conn coll]
   (when-let [users (mapv #(assoc % :full_profile false) 
                       (find-users conn coll))]
-    (cql/insert-batch conn :github_user users)))
+    (when-not (empty? users)
+      (cql/insert-batch conn :github_user users))))
 
 (defn insert-projects
   [conn coll]
@@ -166,7 +167,7 @@
   [user-login]
   (let [url (format "%s/users/%s?client_id=%s&client_secret=%s" 
                      ghub-root user-login (env :client-id) (env :client-secret))
-        response (get-url url header-settings)]
+        response (get-url url :header header-settings)]
       (when (!nil? response)
         (let [user-data (parse-string (:body response))]
           (when-let [user-info (select-keys user-data (map name user-fields))]
@@ -179,7 +180,6 @@
         max-iter (or max-iter 10000)
         start-url (format "%s/users/%s/starred?per_page=100&client_id=%s&client_secret=%s" 
                       ghub-root user-login (env :client-id) (env :client-secret))]
-
     (loop [url start-url
            looped 1]
       (log/warn (format "[STARRED]Loop %d. %s" looped url))
@@ -203,7 +203,7 @@
            looped 1]
       (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
       (let [{:keys [success next-url data]} (fetch-url url)
-            users data]
+            users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
           (cql/update conn :github_project_list
             {:starred [+ (set (mapv #(get % "login") users))]}
@@ -222,7 +222,7 @@
            looped 1]
       (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
       (let [{:keys [success next-url data]} (fetch-url url)
-            users data]
+            users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
           (cql/update conn :github_project_list
             {:watchers [+ (set (mapv #(get % "login") users))]}
@@ -256,7 +256,7 @@
                       ghub-root proj (env :client-id) (env :client-secret))
         req-header (merge {:accept "application/vnd.github.VERSION.html"} header-settings)]
     (when-let [resp (get-url url :header req-header)]
-      (log/warn resp)
+      ; (log/warn resp)
       (:body resp))))
 
 (defn user-following
@@ -280,10 +280,12 @@
 
 (defn enhance-user
   [db user-login max-iter]
-  (doall (pmap #(% db user-login max-iter)
-    [user-following user-followers user-starred])))
+  (doall 
+    (pmap #(% db user-login max-iter)
+      [user-following user-followers user-starred])))
 
-(defn find-user [user-login]
+(defn find-user
+  [user-login]
   (when-let [user-data (mapkeyw (expand-user user-login))]
     (-> user-data
       (assoc :image (:avatar_url user-data))
@@ -306,8 +308,7 @@
       (cql/update (:connection db) :github_user
         user 
         (dbq/where [[= :login x]]))
-      (enhance-user db x 1000)
-      ))
+      (enhance-user db x 1000)))
 
 (defn sync-users
   [db n]

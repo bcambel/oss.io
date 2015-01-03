@@ -254,6 +254,12 @@
       (dbq/limit 1)
       (dbq/where [[= :full_name proj]]))))
 
+(defn load-project-extras
+  [db proj]
+  (let [conn (:connection db)]
+    (first (cql/select conn :github_project_list
+      (dbq/limit 1)
+      (dbq/where [[= :proj proj]])))))
 
 (defn list-top-disc
   [db platform limit-by]
