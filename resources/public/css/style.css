@@ -26,3 +26,7 @@ a:hover{
 .no-pad{
   padding:0;
 }
+
+.pad10{
+  padding:10px;
+}

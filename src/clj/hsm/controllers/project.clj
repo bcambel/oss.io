@@ -103,27 +103,21 @@
                 [:h3 (:watchers proj)]
                 [:form {:action "/ajax/project/follow" :method "POST"}
                   [:input {:type "hidden" :value (:id proj)}]
-                  [:button.btn.btn-primary {:type "submit"} "Love It"]
-                ]]
+                  [:button.btn.btn-primary {:type "submit"} "Love It"]]]
               [:div.col-lg-8 
                 [:h3
                   [:a {:href (str "/user2/" owner)} owner]
                   [:span " / "]
                   (:name proj)
-                ]
-                [:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+                  [:a.pad10 {:href (str "https://github.com/" (:full_name proj)) :title "View on Github"} [:i.fa.fa-github]]]
                 [:a {:href (:homepage proj)}]
-                [:span.badge (:language proj)]
-                [:p.lead (:description proj)]
-                ]
-            ]
-
+                [:span.label.label-warning (:language proj)]
+                [:p.lead (:description proj)]]]
             [:hr]
             [:div.row
               [:div.col-lg-8
-                (views/panel "READ Me"
-                  (get-project-readme* redis id))
-                ]
+                (views/panel "READ ME"
+                  (get-project-readme* redis id))]
               [:div.col-lg-4
                 (panel "Watchers" 
                   [:ul (for [x (take 50 (:watchers proj-extras))]

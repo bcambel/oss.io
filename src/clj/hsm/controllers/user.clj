@@ -22,6 +22,7 @@
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
+        admin? true
         force-sync (is-true (get-in request [:params :force-sync]))
         is-json (type-of request :json)]
     (when (or force-sync (not (:full_profile user)))
@@ -38,14 +39,18 @@
             [:div.col-lg-3 
               (panel (:login user)
                 [:img.img-responsive.img-rounded {:src (:image user)}]
-                [:h3 [:span (:login user)]]
+                [:h3 [:span (:login user)]
+                  [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]]
                 [:h5 [:span (:name user)]] 
                 [:p [:a {:href (:blog user)}(:blog user)]]
                 [:p (:company user)]
                 [:p (:location user)]
                 [:p (:type user)]
                 [:a {:href (str "mailto://" (:email user))} (:email user)]
-                [:p (format "%s %s %s" c-star c-follow c-followers)])
+                [:p (format "%s %s %s" c-star c-follow c-followers)]
+                (when admin?
+                  [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id)} "Synchronize"])
+                )
               (when-not org?
                 (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
                   [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
