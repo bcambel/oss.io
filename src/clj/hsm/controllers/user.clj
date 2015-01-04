@@ -37,7 +37,7 @@
         (layout host
             [:div.col-lg-3 
               (panel (:login user)
-                [:img.img-responsive.img-rounded.col-lg-11 {:src (:image user)}]
+                [:img.img-responsive.img-rounded {:src (:image user)}]
                 [:h3 [:span (:login user)]]
                 [:h5 [:span (:name user)]] 
                 [:p [:a {:href (:blog user)}(:blog user)]]

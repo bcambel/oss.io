@@ -286,6 +286,12 @@
             :starred (cq/set-type :text)
             :primary-key [:proj]
   }
+
+  :github_org_members {
+            :org      :text
+            :members (cq/set-type :text)
+            :primary-key [:org]
+  }
 })
 
 (defn create-or-use-keyspace

@@ -250,6 +250,25 @@
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
+(defn org-members
+  [db org max-iter]
+  (let [conn (:connection db)
+        max-iter (or max-iter 10000)
+        start-url (format "%s/orgs/%s/members?per_page=100&client_id=%s&client_secret=%s" 
+                      ghub-root org (env :client-id) (env :client-secret))]
+    (loop [url start-url
+           looped 1]
+      (log/warn (format "[ORG-MEMBER]Loop %d. %s" looped url))
+      (let [{:keys [success next-url data]} (fetch-url url)
+            users (map #(select-keys % base-user-fields) data)]
+        (when-not (empty? users)
+          (cql/update conn :github_org_members
+            {:members [+ (set (mapv #(get % "login") users))]}
+            (dbq/where [[:= :org org]]))
+          (insert-users conn users)
+          (when (and next-url (< looped max-iter))
+            (recur next-url (inc looped))))))))
+
 (defn user-followers
   [db user-login max-iter]
   (let [conn (:connection db)

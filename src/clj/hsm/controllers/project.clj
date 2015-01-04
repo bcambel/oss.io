@@ -87,15 +87,16 @@
 (defn get-proj
   [{:keys [db event-chan redis]} request]
   (let [host  (host-of request)
-        is-json false
+        is-json (type-of request :json)
         id (format "%s/%s" (id-of request :user) (id-of request :project))
         related-projects []]
     (let [proj (first (actions/load-project db id))
           proj-extras (actions/load-project-extras db id)
-          owner (first (.split id "/"))]
-      (if is-json 
-        (json-resp proj)
-        (html-resp 
+          owner (first (.split id "/"))
+          owner-obj (actions/load-user2 db owner)]
+      (if is-json
+        (json-resp (assoc proj :owner owner-obj))
+        (html-resp
           (views/layout host 
             [:div.row 
               [:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
