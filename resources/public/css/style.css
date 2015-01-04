@@ -18,3 +18,11 @@ a:hover{
 .container-fluid,.left-panel{
   padding-left:0;
 }
+
+.gray{
+  color:gray;
+}
+
+.no-pad{
+  padding:0;
+}

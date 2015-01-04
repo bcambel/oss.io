@@ -105,11 +105,13 @@
                   [:button.btn.btn-primary {:type "submit"} "Love It"]
                 ]]
               [:div.col-lg-8 
-                [:h1 (:name proj)
-                  [:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
+                [:h3
+                  [:a {:href (str "/user2/" owner)} owner]
+                  [:span " / "]
+                  (:name proj)
                 ]
+                [:a {:href (str "https://github.com/" (:full_name proj))} "Github"]
                 [:a {:href (:homepage proj)}]
-                [:a {:href (str "/user2/" owner)} owner]
                 [:span.badge (:language proj)]
                 [:p.lead (:description proj)]
                 ]

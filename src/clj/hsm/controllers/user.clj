@@ -5,7 +5,7 @@
             [ring.util.response           :as resp]
             [hsm.actions                  :as actions]
             [hsm.pipe.event               :as event-pipe]
-            [hsm.views                    :refer [layout panel]]
+            [hsm.views                    :refer [layout panel panelx]]
             [hsm.ring                     :refer [json-resp html-resp]]
             [hsm.integration.ghub         :as gh]
             [hsm.cache                    :as cache]
@@ -27,40 +27,53 @@
     (when (or force-sync (not (:full_profile user)))
       (gh/find-n-update db id))
     (let [user-extras (actions/user-extras db id)
+          user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
           c-star (count (:starred user-extras))
           c-follow (count (:following user-extras))
-          c-followers (count (:followers user-extras))]
+          c-followers (count (:followers user-extras))
+          org? (= (:type user) "Organization")]
       (if is-json 
         (json-resp user)
         (layout host
             [:div.col-lg-3 
               (panel (:login user)
-                [:img.img-responsive.img-rounded {:src (:image user)}]
+                [:img.img-responsive.img-rounded.col-lg-11 {:src (:image user)}]
                 [:h3 [:span (:login user)]]
                 [:h5 [:span (:name user)]] 
                 [:p [:a {:href (:blog user)}(:blog user)]]
                 [:p (:company user)]
                 [:p (:location user)]
+                [:p (:type user)]
                 [:a {:href (str "mailto://" (:email user))} (:email user)]
                 [:p (format "%s %s %s" c-star c-follow c-followers)])
-              (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
-                [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
-              (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
-                [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])])
+              (when-not org?
+                (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
+                  [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
+                (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
+                  [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])]))
               ]
           [:div.col-lg-9
-            [:div.col-lg-8
-            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-              [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])
-            (panel "User Repos"
-              [:ul (for [star (:repos user-extras)] [:li [:a {:href (str "/p/" star)} star]])]
-              )
-            ]
-            ; [:div.col-lg-4]
-            
-            ; [:div.col-lg-4]
-            ]
-          )))))
+            (when-not org?
+              [:div.col-lg-6
+              (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+                [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])])
+            [:div.col-lg-6
+            (panelx "User Repos" ["no-pad"]
+              [:table.table (for [repo user-repos] 
+                [:tbody
+                [:tr 
+                  [:td {:rowspan 2} [:span (:watchers repo)]]
+                  [:td
+                    [:a {:href (str "/p/" (:full_name repo))}
+                    
+                    (:full_name repo)
+                    [:span.label (:stars repo)]
+                    [:span.label (:forks repo)]
+                    ]]]
+                [:tr
+                    [:td
+                    [:p.gray (:description repo)]]]])]
+              )]])))))
 
 (defn sync-user2
   [[db event-chan] request] 

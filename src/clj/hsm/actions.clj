@@ -254,6 +254,12 @@
       (dbq/limit 1)
       (dbq/where [[= :full_name proj]]))))
 
+(defn load-projects-by-id
+  [db proj-list]
+  (let [conn (:connection db)]
+    (cql/select conn :github_project
+      (dbq/where [[:in :full_name proj-list]]))))
+
 (defn load-project-extras
   [db proj]
   (let [conn (:connection db)]

@@ -1,9 +1,10 @@
 (ns hsm.views
 	(:require 
-		[hiccup.core :refer [html]]
-    [hiccup.page :refer [doctype include-css include-js]]
-		[hiccup.def  :refer [defhtml]]
-		[hsm.conf 	 :refer [languages]]))
+    [clojure.string     :as s]
+		[hiccup.core        :refer [html]]
+    [hiccup.page        :refer [doctype include-css include-js]]
+		[hiccup.def         :refer [defhtml]]
+		[hsm.conf 	        :refer [languages]]))
 
 (defhtml row-fluid
   [& content]
@@ -15,11 +16,18 @@
   [:div.container-fluid
   	content])
 
+(defhtml panelx
+  ([header body-css & content ]
+    (let [panel-body-css (s/join " " 
+                            (conj (set body-css) "panel-body"))]
+      [:div.panel.panel-default 
+        [:div.panel-heading header]
+        [:div {:class panel-body-css} 
+          content]])))
+
 (defhtml panel
-  [header & content ]
-  [:div.panel.panel-default
-                [:div.panel-heading header]
-                [:div.panel-body content]])
+  [header & content]
+    (panelx header ["panel-body"] content))
 
 (defhtml languages-pane
   []
