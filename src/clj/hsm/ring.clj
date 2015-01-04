@@ -65,3 +65,5 @@
         (resp/response)
         (resp/header "Content-Type" "application/transit+json")
         (resp/status (or status 200)))))
+
+(def redirect resp/redirect)

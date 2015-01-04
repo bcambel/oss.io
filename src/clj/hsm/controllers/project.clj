@@ -9,7 +9,7 @@
     [hiccup.page :as hic.pg]
     [hiccup.element :as hic.el]
     [hsm.actions :as actions]
-    [hsm.ring :refer [json-resp html-resp]]
+    [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.views :as views :refer [layout panel]]
     [hsm.helpers :refer [pl->lang]]
     [hsm.integration.ghub :as gh]
@@ -89,47 +89,64 @@
   (let [host  (host-of request)
         is-json (type-of request :json)
         id (format "%s/%s" (id-of request :user) (id-of request :project))
-        related-projects []]
-    (let [proj (first (actions/load-project db id))
-          proj-extras (actions/load-project-extras db id)
-          owner (first (.split id "/"))
-          owner-obj (actions/load-user2 db owner)]
-      (if is-json
-        (json-resp (assoc proj :owner owner-obj))
-        (html-resp
-          (views/layout host 
-            [:div.row 
-              [:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
-                [:h3 (:watchers proj)]
-                [:form {:action "/ajax/project/follow" :method "POST"}
-                  [:input {:type "hidden" :value (:id proj)}]
-                  [:button.btn.btn-primary {:type "submit"} "Love It"]]]
-              [:div.col-lg-8 
-                [:h3
-                  [:a {:href (str "/user2/" owner)} owner]
-                  [:span " / "]
-                  (:name proj)
-                  [:a.pad10 {:href (str "https://github.com/" (:full_name proj)) :title "View on Github"} [:i.fa.fa-github]]]
-                [:a {:href (:homepage proj)}]
-                [:span.label.label-warning (:language proj)]
-                [:p.lead (:description proj)]]]
-            [:hr]
-            [:div.row
-              [:div.col-lg-8
-                (views/panel "READ ME"
-                  (get-project-readme* redis id))]
-              [:div.col-lg-4
-                (panel "Watchers" 
-                  [:ul (for [x (take 50 (:watchers proj-extras))]
-                    [:li [:a {:href (format "/user2/" x)} x]])])
-                (panel "Starred" 
-                  [:ul (for [x (take 50 (:starred proj-extras))]
-                    [:li [:a {:href (format "/user2/%s" x)} x]])])
-                (panel "Related Projects"
-                  [:ul
-                    (for [x related-projects]
-                      [:li 
-                        [:a {:href (str "/p/"(:full_name x))} (:full_name x)
-                        [:p {:style "color:gray"} (cutoff (:description x) 50)]]
-                        ]
-                      )])]]))))))
+        force-sync (is-true (get-in request [:params :force-sync]))
+        related-projects []
+        admin? true]
+    (when-let [proj (first (actions/load-project db id))]
+      (if force-sync
+        (do
+          (gh/enhance-proj db id 1000)
+          (redirect (str "/p/" id)))
+        (let [proj-extras (actions/load-project-extras db id)
+              watcher-count (count (:watchers proj-extras))
+              contributor-count (count (:contributors proj-extras))
+              owner (first (.split id "/"))
+              owner-obj (actions/load-user2 db owner)]
+          (if is-json
+            (json-resp (assoc proj :owner owner-obj))
+            (html-resp
+              (views/layout host
+                [:div.row
+                  [:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
+                    [:h3 [:i.fa.fa-star] (:watchers proj)]
+                    [:form {:action "/ajax/project/follow" :method "POST"}
+                      [:input {:type "hidden" :value (:id proj)}]
+                      [:button.btn.btn-primary {:type "submit"} "Love It"]]
+                      (when admin?
+                        [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id)} "Synchronize"])
+                      ]
+                  [:div.col-lg-8
+                    [:h3
+                      [:a {:href (str "/user2/" owner)} owner]
+                      [:span (str " / " (:name proj))]
+                      [:a.pad10 {
+                          :href (str "https://github.com/" (:full_name proj))
+                          :title "View on Github"}
+                        [:i.fa.fa-github]]]
+                    [:a {:href (:homepage proj)}]
+                    [:div [:i.fa.fa-bullhorn] watcher-count [:i.fa.fa-users] contributor-count]
+                    [:span.label.label-warning (:language proj)]
+                    [:p.lead (:description proj)]]]
+                [:hr]
+                [:div.row
+                  [:div.col-lg-8
+                    (views/panel "READ ME"
+                      (get-project-readme* redis id))]
+                  [:div.col-lg-4
+                    (panel [:span [:i.fa.fa-users] " Contributors" ]
+                      [:ul (for [x (take 50 (:contributors proj-extras))]
+                        [:li [:a {:href (format "/user2/%s" x)} x]])])
+                    (panel "Watchers"
+                      [:ul (for [x (take 50 (:watchers proj-extras))]
+                        [:li [:a {:href (format "/user2/%s" x)} x]])])
+                    (panel "Starred"
+                      [:ul (for [x (take 50 (:stargazers proj-extras))]
+                        [:li [:a {:href (format "/user2/%s" x)} x]])])
+                    (panel "Related Projects"
+                      [:ul
+                        (for [x related-projects]
+                          [:li
+                            [:a {:href (str "/p/"(:full_name x))} (:full_name x)
+                            [:p {:style "color:gray"} (cutoff (:description x) 50)]]
+                            ]
+                          )])]]))))))))

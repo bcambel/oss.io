@@ -41,6 +41,6 @@
         settings))))
 
 (def languages
-  [ "Clojure" "Python" "JavaScript" "Go" "C" "PHP"
+  [ "Java" "Clojure" "Python" "JavaScript" "Go" "C" "PHP" "HTML"
     "Erlang" "Rust" "Lisp" "Elixir" "Csharp" "CSS" "D" "Dart"
     "Scala" "Groovy" "Haskell" "R" "Julia" "Lua" "Racket"])

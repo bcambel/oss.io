@@ -165,7 +165,7 @@
 (defn expand-user
   "Fetch latest user information from github"
   [user-login]
-  (let [url (format "%s/users/%s?client_id=%s&client_secret=%s" 
+  (let [url (format "%s/users/%s?client_id=%s&client_secret=%s"
                      ghub-root user-login (env :client-id) (env :client-secret))
         response (get-url url :header header-settings)]
       (when (!nil? response)
@@ -178,7 +178,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/starred?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/users/%s/starred?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -197,7 +197,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/repos?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/users/%s/repos?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -212,11 +212,11 @@
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
-(defn project-starred
+(defn project-stargazers
   [db project-name max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/repos/%s/stargazers?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/repos/%s/stargazers?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -225,7 +225,7 @@
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
           (cql/update conn :github_project_list
-            {:starred [+ (set (mapv #(get % "login") users))]}
+            {:stargazers [+ (set (mapv #(get % "login") users))]}
             (dbq/where [[:= :proj project-name]]))
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -235,7 +235,7 @@
   [db project-name max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/repos/%s/watchers?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/repos/%s/subscribers?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -250,11 +250,30 @@
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
+(defn project-contrib
+  [db project-name max-iter]
+  (let [conn (:connection db)
+        max-iter (or max-iter 10000)
+        start-url (format "%s/repos/%s/contributors?per_page=100&client_id=%s&client_secret=%s"
+                      ghub-root project-name (env :client-id) (env :client-secret))]
+    (loop [url start-url
+           looped 1]
+      (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
+      (let [{:keys [success next-url data]} (fetch-url url)
+            users (map #(select-keys % base-user-fields) data)]
+        (when-not (empty? users)
+          (cql/update conn :github_project_list
+            {:contributors [+ (set (mapv #(get % "login") users))]}
+            (dbq/where [[:= :proj project-name]]))
+          (insert-users conn users)
+          (when (and next-url (< looped max-iter))
+            (recur next-url (inc looped))))))))
+
 (defn org-members
   [db org max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/orgs/%s/members?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/orgs/%s/members?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root org (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -301,7 +320,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/following?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/users/%s/following?per_page=100&client_id=%s&client_secret=%s"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -321,6 +340,12 @@
   (doall 
     (pmap #(% db user-login max-iter)
       [user-following user-followers user-starred user-repos])))
+
+(defn enhance-proj
+  [db proj max-iter]
+  (doall
+    (pmap #(% db proj max-iter)
+      [project-watchers project-stargazers project-contrib])))
 
 (defn find-user
   [user-login]

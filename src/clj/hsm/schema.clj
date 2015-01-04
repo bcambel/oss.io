@@ -283,7 +283,8 @@
   :github_project_list {
             :proj :text
             :watchers (cq/set-type :text)
-            :starred (cq/set-type :text)
+            :stargazers (cq/set-type :text)
+            :contributors (cq/set-type :text)
             :primary-key [:proj]
   }
 
