@@ -17,6 +17,9 @@
   (:import [com.google.common.net InternetDomainName]))
 
 ; implement a multi-method for different types
+
+(declare in?)
+
 (defn is-true
   [val]
   (condp instance? val
