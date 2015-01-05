@@ -24,6 +24,7 @@
 
   (start [component]
     (try
+      (log/warn "Starting KAFKA PROD Component")
       (let [producing-channel (or prod-chan (chan))
             brokers (get-broker-list zookeeper)
             producer-config {"metadata.broker.list" brokers
@@ -34,7 +35,9 @@
           (let [[[topic msg] ch] (alts! [producing-channel])]
             (send! producer topic msg))))
          (assoc component :channel producing-channel))
-      (catch Throwable t (log/error t))))
+      (catch Throwable t 
+        (do (log/warn "[KAFKA-PROD] FAILED")
+        (log/error t)))))
   (stop [component]
 
     )
