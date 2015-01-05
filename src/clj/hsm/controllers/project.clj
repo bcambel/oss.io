@@ -124,7 +124,7 @@
                           :title "View on Github"}
                         [:i.fa.fa-github]]]
                     [:a {:href (:homepage proj)}]
-                    [:div [:i.fa.fa-bullhorn] watcher-count [:i.fa.fa-users] contributor-count]
+                    [:div.icons [:i.fa.fa-bullhorn] [:span watcher-count] [:i.fa.fa-users] [:span contributor-count]]
                     [:span.label.label-warning (:language proj)]
                     [:p.lead (:description proj)]]]
                 [:hr]

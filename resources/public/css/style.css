@@ -30,3 +30,11 @@ a:hover{
 .pad10{
   padding:10px;
 }
+
+i{
+  margin-right:5px;
+}
+
+.icons > * {
+  margin-right: 10px;
+}

@@ -1,4 +1,4 @@
-(defproject hsm "0.1.0-SNAPSHOT"
+(defproject hsm "0.1.1"
   :description "Hackersome"
   :url "http://hackersome.com"
   :license {:name "MIT"

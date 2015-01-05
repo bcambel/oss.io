@@ -12,6 +12,13 @@
             [hsm.cache                    :as cache]
             [hsm.utils                    :refer :all]))
 
+(defhtml render-users
+  [users]
+  [:ul (for [x users]
+    [:li [:a {:href (str "/user2/" x)} x]]
+    )]
+  )
+
 (defn get-user
   [[db event-chan] request] 
   (let [id (id-of request)
@@ -20,7 +27,7 @@
 
 (defhtml user-part
   [id user admin? c-star c-follow c-followers]
-  (panel (:login user)
+  (panel [:a {:href (str "/user2/" id)} (:login user)]
     [:img.img-responsive.img-rounded {:src (:image user)}]
     [:h3 [:span (:login user)]
       [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]]
@@ -72,14 +79,14 @@
         (if is-json
           (json-resp user)
           (layout host
-              [:div.col-lg-3
-                (user-part id user admin? c-star c-follow c-followers)
-                (when-not org?
+            [:div.col-lg-3
+              (user-part id user admin? c-star c-follow c-followers)
+              (when-not org?
+                (do 
                   (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
-                    [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
+                    (render-users (take 10 (:following user-extras))))
                   (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
-                    [:ul (for [star (take 100 (:followers user-extras))] [:li [:a {:href (str "/user2/" star)} star]])]))
-                ]
+                    (render-users (take 10(:followers user-extras))))))]
             [:div.col-lg-9
               (when-not org?
                 [:div.col-lg-6
@@ -140,11 +147,55 @@
         )
   )
 
+
+
 (defn user2-follower
-  [{:keys [db event-chan redis]} request])
+  [{:keys [db event-chan redis]} request]
+  (let [id (id-of request)
+        host (host-of request)
+        user (actions/load-user2 db id)
+        admin? true
+        user-extras (actions/user-extras db id)
+        is-json (type-of request :json)
+        c-star (count (:starred user-extras))
+        c-follow (count (:following user-extras))
+        c-followers (count (:followers user-extras))
+        org? (= (:type user) "Organization")]
+    (if is-json
+      (json-resp (:followers user-extras))
+      (layout host
+          [:div.col-lg-3
+            (user-part id user admin? c-star c-follow c-followers)]
+          [:div.col-lg-9
+          (when-not org?
+            [:div.col-lg-6
+            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
+              (render-users (:followers user-extras))
+              )])]))))
 
 (defn user2-following
-  [{:keys [db event-chan redis]} request])
+  [{:keys [db event-chan redis]} request]
+  (let [id (id-of request)
+        host (host-of request)
+        user (actions/load-user2 db id)
+        admin? true
+        user-extras (actions/user-extras db id)
+        is-json (type-of request :json)
+        c-star (count (:starred user-extras))
+        c-follow (count (:following user-extras))
+        c-followers (count (:followers user-extras))
+        org? (= (:type user) "Organization")]
+    (if is-json
+      (json-resp (:following user-extras))
+      (layout host
+          [:div.col-lg-3
+            (user-part id user admin? c-star c-follow c-followers)]
+          [:div.col-lg-9
+          (when-not org?
+            [:div.col-lg-6
+            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Following " c-follow) ]
+              (render-users (:following user-extras))
+              )])]))))
 
 (defn user2-starred
   [{:keys [db event-chan redis]} request]
@@ -159,7 +210,7 @@
         c-followers (count (:followers user-extras))
         org? (= (:type user) "Organization")]
     (if is-json
-          (json-resp user)
+          (json-resp (:starred user-extras))
           (layout host
               [:div.col-lg-3
                 (user-part id user admin? c-star c-follow c-followers)]

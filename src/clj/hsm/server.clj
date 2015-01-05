@@ -20,7 +20,7 @@
             [hiccup.element :as e]
             [cheshire.core :refer :all]
             [environ.core :refer [env]]
-            ))
+            )(:gen-class))
 
 
 (defn startup 
