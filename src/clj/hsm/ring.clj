@@ -3,6 +3,7 @@
     [clojure.tools.logging  :as log]
     [ring.util.response     :as resp]
     [cognitect.transit       :as t]
+    [clojure.stacktrace     :as clj-stk]
     [cheshire.core           :refer :all])
   (:import
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
@@ -21,7 +22,7 @@
       (catch Throwable e
         (do
           (log/error e)
-          (clojure.stacktrace/print-stack-trace e)
+          (clj-stk/print-stack-trace e)
         (->
          (resp/response (.getMessage e))
          (resp/status 500)))))))
