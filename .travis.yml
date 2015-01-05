@@ -1,10 +1,6 @@
 language: clojure
-#before_install: cd hs_web
-# env:
-#     - TEST_DIR=hsui
-#     - TEST_DIR=hackersome-web
 lein: lein2
-script: lein midje
+script: lein midje && lein uberjar
 jdk:
   - openjdk7
   - oraclejdk7
