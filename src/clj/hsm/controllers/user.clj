@@ -3,6 +3,7 @@
             [clojure.java.io              :as io]
             [cheshire.core                :refer :all]
             [ring.util.response           :as resp]
+            [hiccup.def                   :refer [defhtml]]
             [hsm.actions                  :as actions]
             [hsm.pipe.event               :as event-pipe]
             [hsm.views                    :refer [layout panel panelx]]
@@ -16,6 +17,39 @@
   (let [id (id-of request)
         user (actions/load-user db id)]
     (json-resp user)))
+
+(defhtml user-part
+  [id user admin? c-star c-follow c-followers]
+  (panel (:login user)
+    [:img.img-responsive.img-rounded {:src (:image user)}]
+    [:h3 [:span (:login user)]
+      [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]]
+    [:h5 [:span (:name user)]]
+    [:p [:a {:href (:blog user)}(:blog user)]]
+    [:p (:company user)]
+    [:p (:location user)]
+    [:p (:type user)]
+    [:a {:href (str "mailto://" (:email user))} (:email user)]
+    [:p (format "%s %s %s" c-star c-follow c-followers)]
+    (when admin?
+      [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id)} "Synchronize"])
+    ))
+
+(defhtml render-repos
+  [repos]
+  [:table.table (for [repo repos]
+    [:tbody
+      [:tr
+        [:td {:rowspan 2} [:span (:watchers repo)]]
+        [:td
+          [:a {:href (str "/p/" (:full_name repo))}
+          (:full_name repo)
+          [:span.label (:stars repo)]
+          [:span.label (:forks repo)]
+          ]]]
+      [:tr
+          [:td
+          [:p.gray (:description repo)]]]])])
 
 (defn get-user2
   [[db event-chan] request] 
@@ -39,20 +73,7 @@
           (json-resp user)
           (layout host
               [:div.col-lg-3
-                (panel (:login user)
-                  [:img.img-responsive.img-rounded {:src (:image user)}]
-                  [:h3 [:span (:login user)]
-                    [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]]
-                  [:h5 [:span (:name user)]]
-                  [:p [:a {:href (:blog user)}(:blog user)]]
-                  [:p (:company user)]
-                  [:p (:location user)]
-                  [:p (:type user)]
-                  [:a {:href (str "mailto://" (:email user))} (:email user)]
-                  [:p (format "%s %s %s" c-star c-follow c-followers)]
-                  (when admin?
-                    [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id)} "Synchronize"])
-                  )
+                (user-part id user admin? c-star c-follow c-followers)
                 (when-not org?
                   (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
                     [:ul (for [star (:following user-extras)] [:li [:a {:href (str "/user2/" star)} star]])])
@@ -63,22 +84,11 @@
               (when-not org?
                 [:div.col-lg-6
                 (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-                  [:ul (for [star (:starred user-extras)] [:li [:a {:href (str "/p/" star)} star]])])])
+                  [:ul (for [star (take 10 (:starred user-extras))] 
+                    [:li [:a {:href (str "/p/" star)} star]])])])
               [:div.col-lg-6
               (panelx "User Repos" ["no-pad"]
-                [:table.table (for [repo user-repos]
-                  [:tbody
-                  [:tr
-                    [:td {:rowspan 2} [:span (:watchers repo)]]
-                    [:td
-                      [:a {:href (str "/p/" (:full_name repo))}
-                      (:full_name repo)
-                      [:span.label (:stars repo)]
-                      [:span.label (:forks repo)]
-                      ]]]
-                  [:tr
-                      [:td
-                      [:p.gray (:description repo)]]]])]
+                (render-repos user-repos)
                 )]]))))))
 
 (defn sync-user2
@@ -137,7 +147,28 @@
   [{:keys [db event-chan redis]} request])
 
 (defn user2-starred
-  [{:keys [db event-chan redis]} request])
+  [{:keys [db event-chan redis]} request]
+  (let [id (id-of request)
+        host (host-of request)
+        user (actions/load-user2 db id)
+        user-extras (actions/user-extras db id)
+        admin? true
+        is-json (type-of request :json)
+        c-star (count (:starred user-extras))
+        c-follow (count (:following user-extras))
+        c-followers (count (:followers user-extras))
+        org? (= (:type user) "Organization")]
+    (if is-json
+          (json-resp user)
+          (layout host
+              [:div.col-lg-3
+                (user-part id user admin? c-star c-follow c-followers)]
+              [:div.col-lg-9
+              (when-not org?
+                [:div.col-lg-6
+                (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+                  (render-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:starred user-extras))))))
+                  )])]))))
 
 (defn user2-contrib
   [{:keys [db event-chan redis]} request])
