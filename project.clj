@@ -1,4 +1,4 @@
-(defproject org.clojars.bcambel/hackersome "0.1.1"
+(defproject org.clojars.bcambel/hackersome "0.1.2"
   :description "Hackersome"
   :url "http://hackersome.com"
   :license {:name "MIT"

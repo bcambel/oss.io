@@ -36,8 +36,10 @@
             (send! producer topic msg))))
          (assoc component :channel producing-channel))
       (catch Throwable t 
-        (do (log/warn "[KAFKA-PROD] FAILED")
-        (log/error t)))))
+        (do 
+          (log/warn "[KAFKA-PROD] FAILED")
+          (log/error t)
+          (assoc component :channel nil)))))
   (stop [component]
 
     )

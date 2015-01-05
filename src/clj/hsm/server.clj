@@ -40,4 +40,12 @@
     )))
 
 (defn -main [& args]
-  (startup {}))
+    (try 
+      (log/info "Starting....")  
+      (startup {})
+      (catch Throwable t
+        (do 
+          (log/warn "FAILED!")  
+          (log/error t)
+          (log/warn (.getMessage t))
+          (log/warn (.getCause t))))))
