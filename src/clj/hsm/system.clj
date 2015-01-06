@@ -34,7 +34,7 @@
     (json-resp (cql/select conn :user))))
 
 
-(defrecord HTTP [port db kafka-producer redis server]
+(defrecord HTTP [port db kafka-producer redis conf server]
   component/Lifecycle
 
   (start [this]
@@ -43,7 +43,7 @@
 
     (log/info "Starting HTTP Server on " port)
     (let [event-chan (:channel kafka-producer)
-          specs {:db db :event-chan event-chan :redis redis}]
+          specs {:db db :event-chan event-chan :redis redis :conf conf}]
       (defroutes routes
         (resources "/")
         (resources "/react" {:root "react"})
@@ -59,7 +59,7 @@
         (POST "/discussion/:id/follow"    [id request] (cont-disc/follow-discussion [db event-chan] id request))
         (POST "/discussion/:id/unfollow"  [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
         (GET  "/users"                    request (cont-user/some-user specs request))
-        (GET  "/user2/:id"                request (cont-user/get-user2 [db event-chan] request))
+        (GET  "/user2/:id"                request (cont-user/get-user2 specs request))
         (GET  "/user2/:id/sync"           request (cont-user/sync-user2 [db event-chan] request))
         (GET  "/user2/:id/followers"      request (cont-user/user2-follower specs request))
         (GET  "/user2/:id/following"      request (cont-user/user2-following specs request))
@@ -118,9 +118,10 @@
           :db (sys.cassandra/cassandra-db host port keyspace)
           :redis (sys.redis/redis-db redis-host redis-port)
           :kafka-producer (sys.kafka/kafka-producer zookeeper)
+          :conf config-options
           :app (component/using
             (http-server server-port)
-            [:db :kafka-producer :redis]
+            [:db :kafka-producer :redis :conf]
             )))))
 
 (defrecord Worker [kafka-producer]

@@ -11,6 +11,7 @@
       [cheshire.core                  :refer :all]
       [environ.core                   :refer [env]]
       [hsm.utils                      :refer :all]
+      [hsm.conf                       :as conf]
       )
     (:use [slingshot.slingshot :only [throw+ try+]]
       [clojure.data :only [diff]]))
@@ -21,10 +22,10 @@
 
 (def ghub-url*
   (str ghub-root "/search/repositories"
-    "?q=+language:%s&sort=stars&order=desc&per_page=100&" api-params))
+    "?q=+language:%s&sort=stars&order=desc&per_page=100&"))
 
 (def ghub-url
-  (str ghub-root "/repositories?per_page=100&" api-params))
+  (str ghub-root "/repositories?per_page=100&"))
 
 (def header-settings
   {:socket-timeout 10000 :conn-timeout 10000})
@@ -36,11 +37,16 @@
   :location :email :public_repos :public_gists
   :followers :following :avatar_url] )
 
+(defn get-config
+  []
+  (:data @conf/app-conf))
+
 (defn get-url
   [url & options]
-  (let [{:keys [header safe care] :or {header header-settings safe false care true}} options]
+  (let [{:keys [header safe care conf] :or {header header-settings safe false care true conf (get-config)}} options]
     (try+
-      (client/get url header)
+      (client/get (format "%s&client_id=%s&client_secret=%s" url (:github-client conf) (:github-secret conf)) 
+        header)
       (catch [:status 403] {:keys [request-time headers body]}
         (log/warn "403" request-time headers))
       (catch [:status 404] {:keys [request-time headers body]}
@@ -165,7 +171,7 @@
 (defn expand-user
   "Fetch latest user information from github"
   [user-login]
-  (let [url (format "%s/users/%s?client_id=%s&client_secret=%s"
+  (let [url (format "%s/users/%s?"
                      ghub-root user-login (env :client-id) (env :client-secret))
         response (get-url url :header header-settings)]
       (when (!nil? response)
@@ -178,8 +184,8 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/starred?per_page=100&client_id=%s&client_secret=%s"
-                      ghub-root user-login (env :client-id) (env :client-secret))]
+        start-url (format "%s/users/%s/starred?per_page=100&"
+                      ghub-root user-login)]
     (loop [url start-url
            looped 1]
       (log/warn (format "[STARRED]Loop %d. %s" looped url))
@@ -197,7 +203,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/repos?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/users/%s/repos?per_page=100&"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -216,7 +222,7 @@
   [db project-name max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/repos/%s/stargazers?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/repos/%s/stargazers?per_page=100"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -235,7 +241,7 @@
   [db project-name max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/repos/%s/subscribers?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/repos/%s/subscribers?per_page=100"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -254,7 +260,7 @@
   [db project-name max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/repos/%s/contributors?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/repos/%s/contributors?per_page=100"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -273,7 +279,7 @@
   [db org max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/orgs/%s/members?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/orgs/%s/members?per_page=100"
                       ghub-root org (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -292,7 +298,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/followers?per_page=100&client_id=%s&client_secret=%s" 
+        start-url (format "%s/users/%s/followers?per_page=100" 
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -309,7 +315,7 @@
 
 (defn project-readme
   [proj]
-  (let [url (format "%s/repos/%s/readme?client_id=%s&client_secret=%s" 
+  (let [url (format "%s/repos/%s/readme?" 
                       ghub-root proj (env :client-id) (env :client-secret))
         req-header (merge {:accept "application/vnd.github.VERSION.html"} header-settings)]
     (when-let [resp (get-url url :header req-header)]
@@ -320,7 +326,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/following?per_page=100&client_id=%s&client_secret=%s"
+        start-url (format "%s/users/%s/following?per_page=100"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -365,7 +371,7 @@
       (dbq/where [[:= :full_profile false]]))))
 
 (defn find-n-update
-  [db x]
+  [db x conf]
     (when-let [user (find-user x)]
       (log/warn "USER:" user)
       (cql/update (:connection db) :github_user

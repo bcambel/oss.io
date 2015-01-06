@@ -28,7 +28,7 @@
                        (keys configs))]
     (apply merge (apply concat intermediate))))
 
-(def app-conf (atom {}))
+(def app-conf (atom {:data nil}))
 
 (defn parse-conf
   [config apply-transform]
@@ -36,9 +36,12 @@
     (log/warn "Config file does not exist" config)
     (let [settings (iniconfig/read-ini config)]
       (log/warn settings)
-      (if apply-transform
-        (transform settings)
-        settings))))
+      (let [configuration (if apply-transform
+                            (transform settings)
+                            settings)]
+      (swap! app-conf assoc :data configuration)
+      configuration
+      ))))
 
 (def languages
   [ "Java" "Clojure" "Python" "JavaScript" "Go" "C" "PHP" "HTML"

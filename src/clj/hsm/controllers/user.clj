@@ -59,7 +59,7 @@
           [:p.gray (:description repo)]]]])])
 
 (defn get-user2
-  [[db event-chan] request] 
+  [{:keys [db event-chan redis conf]} request] 
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
@@ -68,7 +68,7 @@
         is-json (type-of request :json)]
     (if (or force-sync (not (:full_profile user)))
       (do 
-        (gh/find-n-update db id)
+        (gh/find-n-update db id conf)
         (redirect (str "/user2/" id)))
       (let [user-extras (actions/user-extras db id)
             user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
