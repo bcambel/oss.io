@@ -54,14 +54,17 @@
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
-  :uberjar-name "hsm.jar"
-  :main hsm.server
+  ; :uberjar-name "hsm.jar"
+  ; :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
               :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
+              :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"} 
+              :main {:main hsm.server :uberjar-name "hsm.jar"}
+              
               :dev {
                     :repl-options {:init-ns hsm.server
                                   ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
