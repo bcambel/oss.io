@@ -45,7 +45,7 @@
     [:meta {:content "IE=edge,chrome=1"
             :http-equiv "X-UA-Compatible"}]
     [:title "Hackersome"]
-    (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+    (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/flatly/bootstrap.min.css")
     (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
     (include-css "/css/style.css")]
    [:body
@@ -64,7 +64,7 @@
                      [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
               [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
     [:div.container-fluid
-      [:div.col-lg-1.left-panel (languages-pane)]
+      [:div.col-lg-1.left-panel ""]
       [:div.col-lg-9.col-lg-offset-1
         [:div.row {:style "padding-top:20px;"}
           content]]

@@ -55,7 +55,7 @@
           :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
   ; :uberjar-name "hsm.jar"
-  ; :main hsm.server
+  :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}

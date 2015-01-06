@@ -77,6 +77,7 @@
         (GET  "/link/:id"                 request (cont-post/show-link [db event-chan] request))
         (GET  "/links/:date"              request (cont-post/list-links [db event-chan] request))
         (GET  "/p/:user/:project"         request (cont-project/get-proj specs request))
+        (GET  "/p/:user/:project/:mod"    request (cont-project/get-proj-module specs request))
         (GET  "/top-projects"             request (cont-project/list-top-proj [db event-chan] request))
         (GET  "/:platform/index"          request (c.main/platform [db event-chan] request))
         (GET  "/:platform/top-projects"   request (cont-project/list-top-proj [db event-chan] request))
