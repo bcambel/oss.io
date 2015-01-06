@@ -1,5 +1,6 @@
 (ns hsm.actions
   (:require
+    [clojure.core.memoize :as memo]
     [clojure.tools.logging :as log]
     [schema.core :as s]
     [clojurewerkz.cassaforte.cql  :as cql]
@@ -235,7 +236,7 @@
   [dict]
   (assoc dict :id (str (:id dict))))
 
-(defn list-top-proj
+(defn list-top-proj*
   "Given platform/language returns top n projects"
   [db platform limit-by]
   (let [conn (:connection db)
@@ -246,6 +247,8 @@
         stringify-id
         (take limit-by (reverse
                           (sort-by :watchers projects)))))))
+
+(def list-top-proj (memo/ttl list-top-proj* :ttl/threshold 60000 ))
 
 (defn load-project
   [db proj]
