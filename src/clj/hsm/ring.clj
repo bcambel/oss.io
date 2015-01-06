@@ -24,7 +24,7 @@
           (log/error e)
           (clj-stk/print-stack-trace e)
         (->
-         (resp/response (.getMessage e))
+         (resp/response "Sorry. An error occured.")
          (resp/status 500)))))))
 
 (defn wrap-nocache
