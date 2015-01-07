@@ -273,6 +273,7 @@
 
 (defn list-top-disc
   [db platform limit-by]
+  (log/warn "[TOP-DISC] Fetching " platform limit-by)
   (let [conn (:connection db)
         limit-by (if (> limit-by 100) 100 limit-by)]
     (when-let [discussions (cql/select conn :discussion 
@@ -285,6 +286,7 @@
 
 (defn list-top-user
   [db platform limit-by]
+  (log/warn "[TOP-USER] Fetching " platform limit-by)
   (let [conn (:connection db)
         limit-by (if (> limit-by 100) 100 limit-by)]
     (cql/select conn :github_user
