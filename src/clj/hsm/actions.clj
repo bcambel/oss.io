@@ -239,6 +239,7 @@
 (defn list-top-proj*
   "Given platform/language returns top n projects"
   [db platform limit-by]
+  (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
   (let [conn (:connection db)
         limit-by (if (> limit-by 100) 100 limit-by)]
     (when-let [projects (cql/select conn :github_project

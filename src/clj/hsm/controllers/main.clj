@@ -23,7 +23,7 @@
         pl   (pl->lang (id-of request :platform))
         top-disc (list-top-disc db pl 5)
         top-members (list-top-user db pl 5)
-        top-projects (list-top-proj db pl 10)]
+        top-projects (list-top-proj db pl 20)]
     (html-resp 
       (layout host
         [:div 

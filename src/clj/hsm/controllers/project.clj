@@ -12,7 +12,7 @@
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.views :as views :refer [layout panel panelx]]
-    [hsm.helpers :refer [pl->lang]]
+    [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.integration.ghub :as gh]
     [hsm.cache :as cache]
     [hsm.utils :as utils :refer :all]))
@@ -33,8 +33,13 @@
         [:tr (for [ky (keys x)]
           [:td (get x ky)])])]])
 
-(defn list-view
+(defhtml list-view
   [top-projects keyset]
+  [:div.btn-toolbar
+  [:div.btn-group.pull-right
+    [:a.btn.btn-info {:href "?limit=20"} "20"]
+    [:a.btn.btn-info {:href "?limit=50"} "50"]
+    [:a.btn.btn-info {:href "?limit=100"} "100"]]]
   [:table.table
     [:tbody
       (for [x top-projects]
@@ -52,19 +57,21 @@
         body         (body-of request)
         user         (whois request)
         data         (utils/mapkeyw body)
-        platform      (pl->lang (id-of request :platform))
+        hosted-pl     (host->pl->lang host)
+        platform      (or hosted-pl (pl->lang (id-of request :platform)))
         is-json     false
         view         (get-in request [:params :view])
         view-fn     (if (= view "grid") grid-view list-view)
         limit       (or (get-in request [:params :limit]) (str 20))
         limit-by     (or (Integer/parseInt limit) 20)]
-    (let [top-projects (actions/list-top-proj db platform limit-by)
-          keyset (keys (first top-projects))]
-      (if is-json
-        (json-resp top-projects)
-        (html-resp
-          (views/layout host
-            (view-fn top-projects keyset)))))))
+    (when platform
+      (let [top-projects (actions/list-top-proj db platform limit-by)
+            keyset (keys (first top-projects))]
+        (if is-json
+          (json-resp top-projects)
+          (html-resp
+            (views/layout host
+              (view-fn top-projects keyset))))))))
 
 (defn get-project-readme*
   [redis proj]

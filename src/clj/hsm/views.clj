@@ -46,7 +46,7 @@
             :http-equiv "X-UA-Compatible"}]
     [:title "Hackersome"]
     (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/flatly/bootstrap.min.css")
-    (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
+    (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")  
     (include-css "/css/style.css")]
    [:body
      [:div.nav.navbar-default
