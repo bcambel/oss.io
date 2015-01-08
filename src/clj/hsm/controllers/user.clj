@@ -6,18 +6,22 @@
             [hiccup.def                   :refer [defhtml]]
             [hsm.actions                  :as actions]
             [hsm.pipe.event               :as event-pipe]
-            [hsm.views                    :refer [layout panel panelx]]
+            [hsm.views                    :refer [layout panel panelx render-user]]
             [hsm.ring                     :refer [json-resp html-resp redirect]]
             [hsm.integration.ghub         :as gh]
             [hsm.cache                    :as cache]
             [hsm.utils                    :refer :all]))
 
+(defn fetch-users
+  [db ppl-list]
+  (let [users (actions/load-users-by-id db (vec ppl-list))]
+    (reverse (sort-by :followers users))))
+
 (defhtml render-users
-  [users]
-  [:ul (for [x users]
-    [:li [:a {:href (str "/user2/" x)} x]]
-    )]
-  )
+  [db ppl-list]
+  (let [users (actions/load-users-by-id db (vec ppl-list))]
+     (for [x (reverse (sort-by :followers users))]
+        [:li (render-user x)])))
 
 (defn get-user
   [[db event-chan] request] 
@@ -37,7 +41,12 @@
     [:p (:location user)]
     [:p (:type user)]
     [:a {:href (str "mailto://" (:email user))} (:email user)]
-    [:p (format "%s %s %s" c-star c-follow c-followers)]
+    [:hr]
+
+    [:h3 [:a {:href (str "/user2/" id "/starred")} c-star ]" starred "]
+    [:h3 [:a {:href (str "/user2/" id "/following")} c-follow ]" following "]
+    [:h3 [:a {:href (str "/user2/" id "/followers")} c-followers ]" followers "]
+    
     (when admin?
       [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id)} "Synchronize"])
     ))
@@ -84,9 +93,11 @@
               (when-not org?
                 (do 
                   (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
-                    (render-users (take 10 (:following user-extras))))
+                    [:ul.user-list
+                      (render-users db (take 10 (:following user-extras)))])
                   (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
-                    (render-users (take 10(:followers user-extras))))))]
+                    [:ul.user-list
+                      (render-users db (take 10(:followers user-extras)))])))]
             [:div.col-lg-9
               (when-not org?
                 [:div.col-lg-6
@@ -147,8 +158,6 @@
         )
   )
 
-
-
 (defn user2-follower
   [{:keys [db event-chan redis]} request]
   (let [id (id-of request)
@@ -168,10 +177,12 @@
             (user-part id user admin? c-star c-follow c-followers)]
           [:div.col-lg-9
           (when-not org?
-            [:div.col-lg-6
+            [:div.col-lg-12
             (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
-              (render-users (:followers user-extras))
-              )])]))))
+              [:div.user-list.row
+                (for [x (fetch-users db (:followers user-extras))]
+                    [:div.col-lg-3.user-thumb
+                      (render-user x)])])])]))))
 
 (defn user2-following
   [{:keys [db event-chan redis]} request]
@@ -192,9 +203,12 @@
             (user-part id user admin? c-star c-follow c-followers)]
           [:div.col-lg-9
           (when-not org?
-            [:div.col-lg-6
+            [:div.col-lg-12
             (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Following " c-follow) ]
-              (render-users (:following user-extras))
+              [:div.user-list.row
+                (for [x (fetch-users db (:following user-extras))]
+                    [:div.col-lg-3.user-thumb
+                      (render-user x)])]
               )])]))))
 
 (defn user2-starred

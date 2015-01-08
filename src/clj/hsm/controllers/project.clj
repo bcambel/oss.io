@@ -11,7 +11,7 @@
     [hiccup.def         :refer [defhtml]]
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
-    [hsm.views :as views :refer [layout panel panelx]]
+    [hsm.views :as views :refer [layout panel panelx render-user]]
     [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.integration.ghub :as gh]
     [hsm.cache :as cache]
@@ -142,14 +142,6 @@
         (views/layout host
           (project-header id proj admin? owner contributor-count watcher-count)
           (mod-fn db id proj proj-extras)))))
-
-
-(defhtml render-user
-  [x]
-  [:a {:href (format "/user2/%s" (:login x)) :title (:name x)} 
-    [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
-    [:span.name (:login x)]]
-    [:span.followers.pull-right (:followers x)])
 
 (defhtml contribs
   [db id proj proj-extras]

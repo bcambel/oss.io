@@ -99,7 +99,7 @@
           ; (if is-dev? wrap-nocache identity )
           ))
 
-    (if is-dev? (start-figwheel))
+    ; (if is-dev? (start-figwheel))
     (let [server (run-jetty app {:port (Integer. port)
                             :join? false})]
       (assoc this :server server)))
