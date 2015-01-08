@@ -167,8 +167,12 @@
 
 (defhtml user-list
   [users]
-  [:ul (for [x users]
-    [:li [:a {:href (format "/user2/%s" x)} x]])])
+  [:ul (for [x (reverse (sort-by :followers users))]
+    [:li [:a {:href (format "/user2/%s" (:login x))} 
+    [:img.img-rounded {:src (:image x) :style "width:24px;height:24px;"}]
+    [:span (:login x)]
+    [:span.badge.badge-default.pull-right (:followers x)]
+     ]])])
 
 (defn get-proj-module
   [spec request]
@@ -199,6 +203,15 @@
               owner-obj (actions/load-user2 db owner)]
           (if is-json
             (json-resp (assoc proj :owner owner-obj))
+            (let [contributors (take 10 (:contributors proj-extras))
+                  watchers (take 10 (:watchers proj-extras))
+                  stargazers (take 10 (:stargazers proj-extras))
+                  people (vec (set (concat contributors watchers stargazers)))
+                  users (actions/load-users-by-id db people)
+                  contributors (filter #(in? contributors (:login %)) users)
+                  watchers (filter #(in? watchers (:login %)) users)
+                  stargazers (filter #(in? stargazers (:login %)) users)
+                  ]
             (html-resp
               (views/layout host
                 (project-header id proj admin? owner contributor-count watcher-count)
@@ -208,11 +221,11 @@
                       (get-project-readme* redis id))]
                   [:div.col-lg-2
                     (panel [:a {:href (str "/p/" id "/contributors")} [:span [:i.fa.fa-users] " Contributors" ]]
-                      (user-list (take 10 (:contributors proj-extras))))
+                      (user-list contributors ))
                     (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
-                      (user-list (take 10 (:watchers proj-extras))))
+                      (user-list watchers))
                     (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
-                      (user-list (take 10 (:stargazers proj-extras))))
+                      (user-list stargazers))
                   
                     (panel "Related Projects"
                       [:ul
@@ -221,4 +234,4 @@
                             [:a {:href (str "/p/"(:full_name x))} (:full_name x)
                             [:p {:style "color:gray"} (cutoff (:description x) 50)]]
                             ]
-                          )])]]))))))))
+                          )])]])))))))))
