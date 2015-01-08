@@ -141,38 +141,56 @@
         (json-resp (assoc proj :owner owner-obj))
         (views/layout host
           (project-header id proj admin? owner contributor-count watcher-count)
-          (mod-fn id proj proj-extras)))))
+          (mod-fn db id proj proj-extras)))))
+
+
+(defhtml render-user
+  [x]
+  [:a {:href (format "/user2/%s" (:login x)) :title (:name x)} 
+    [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
+    [:span.name (:login x)]]
+    [:span.followers.pull-right (:followers x)])
 
 (defhtml contribs
-  [id proj proj-extras]
-  (panel [:span [:i.fa.fa-users] " Contributors" ]
-    [:ul (for [x (:contributors proj-extras)]
-      [:li [:a {:href (format "/user2/%s" x)} x]])]))
+  [db id proj proj-extras]
+  (let [ppl-list (:contributors proj-extras)
+        users (actions/load-users-by-id db (vec ppl-list))]
+    (panel [:span [:i.fa.fa-users] " Contributors" ]
+      [:div.row.user-list 
+        (for [x (reverse (sort-by :followers users))]
+          [:div.col-lg-3.user-thumb
+            (render-user x)])])))
 
 (defhtml watchers
-  [id proj proj-extras]
-  (panel "Watchers"
-    [:ul (for [x (:watchers proj-extras)]
-      [:li [:a {:href (format "/user2/%s" x)} x]])]))
+  [db id proj proj-extras]
+  (let [ppl-list (:watchers proj-extras)
+        users (actions/load-users-by-id db (vec ppl-list))]
+    (panel "Watchers"
+      [:div.row.user-list 
+        (for [x (reverse (sort-by :followers users))]
+          [:div.col-lg-3.user-thumb
+            (render-user x)])])))
 
 (defhtml stargazers
-  [id proj proj-extras]
-  (panel "Star gazers"
-    [:ul (for [x (:stargazers proj-extras)]
-      [:li [:a {:href (format "/user2/%s" x)} x]])]))
+  [db id proj proj-extras]
+  (let [ppl-list (:stargazers proj-extras)
+        users (actions/load-users-by-id db (vec ppl-list))]
+    (panel "Star gazers"
+      [:div.row.user-list
+        (for [x (reverse (sort-by :followers users))]
+          [:div.col-lg-3.user-thumb
+            (render-user x)])])))
 
 (def get-project-contrib (partial get-project-* contribs))
 (def get-project-stargazers (partial get-project-* stargazers))
 (def get-project-watchers (partial get-project-* watchers))
 
+
 (defhtml user-list
   [users]
   [:ul (for [x (reverse (sort-by :followers users))]
-    [:li [:a {:href (format "/user2/%s" (:login x))} 
-    [:img.img-rounded {:src (:image x) :style "width:24px;height:24px;"}]
-    [:span (:login x)]
-    [:span.badge.badge-default.pull-right (:followers x)]
-     ]])])
+    [:li.user-thumb 
+    (render-user x)])])
 
 (defn get-proj-module
   [spec request]
@@ -216,17 +234,16 @@
               (views/layout host
                 (project-header id proj admin? owner contributor-count watcher-count)
                 [:div.row
-                  [:div.col-lg-10
+                  [:div.col-lg-9
                     (views/panel "READ ME"
                       (get-project-readme* redis id))]
-                  [:div.col-lg-2
+                  [:div.col-lg-3
                     (panel [:a {:href (str "/p/" id "/contributors")} [:span [:i.fa.fa-users] " Contributors" ]]
                       (user-list contributors ))
                     (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
                       (user-list watchers))
                     (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
-                      (user-list stargazers))
-                  
+                      (user-list stargazers))                 
                     (panel "Related Projects"
                       [:ul
                         (for [x related-projects]

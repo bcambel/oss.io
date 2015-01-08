@@ -320,6 +320,7 @@
 
 (defn load-users-by-id
   [db user-ids]
+  (log/warn "Fetching user-ids" user-ids)
   (let [conn (:connection db)]
     (cql/select conn :github_user
         (dbq/where [[:in :login user-ids]]))))
