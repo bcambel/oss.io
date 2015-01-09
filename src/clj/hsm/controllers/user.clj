@@ -48,7 +48,7 @@
     [:h3 [:a {:href (str "/user2/" id "/followers")} c-followers ]" followers "]
     
     (when admin?
-      [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id)} "Synchronize"])
+      [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])
     ))
 
 (defhtml render-repos
@@ -78,7 +78,9 @@
     (if (or force-sync (not (:full_profile user)))
       (do 
         (gh/find-n-update db id conf)
-        (redirect (str "/user2/" id)))
+        ; (redirect (str "/user2/" id))
+        (json-resp {:ok 1})
+        )
       (let [user-extras (actions/user-extras db id)
             user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
             c-star (count (:starred user-extras))
