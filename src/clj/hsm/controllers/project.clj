@@ -101,7 +101,7 @@
         [:input {:type "hidden" :value (:id proj)}]
         [:button.btn.btn-primary {:type "submit"} "Love It"]]
         (when admin?
-          [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id)} "Synchronize"])
+          [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])
         ]
     [:div.col-lg-8
       [:h3
