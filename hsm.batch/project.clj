@@ -10,6 +10,7 @@
       [clj-aws-s3 "0.3.10" :exclusions [joda-time]]
       [midje "1.7.0-SNAPSHOT"]
       [clj-time "0.6.0"]
+      [cheshire "5.3.1"]
       [cascading/cascading-hadoop2-mr1 "2.6.0" ]
        [cascalog/cascalog "2.1.1" 
        :exclusions [cascading/cascading-hadoop org.codehaus.plexus/plexus-utils commons-codec cascading/cascading-local]]
@@ -20,8 +21,10 @@
   :repositories {
     "conjars" "http://conjars.org/repo/"
     "sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"}
-  :main ^:skip-aot hsm.batch
+  :main hsm.batch
+  :aot [hsm.batch]
   :target-path "target/%s"
+  :uberjar-name "hsm.batch.jar"
   :profiles {
         :provided
              {:dependencies
