@@ -346,3 +346,18 @@
   (let [conn (:connection db)]
       (cql/select conn :collection))
   )
+
+(defn update-collection 
+  [db id items]
+  (let [conn (:connection db)]
+    (cql/update conn :collection 
+      {:items items}
+      (dbq/where [[:= :id id]])))) 
+
+(defn get-collection
+  [db id]
+  (let [conn (:connection db)]
+      (cql/select conn :collection
+        (dbq/limit 1)
+        (dbq/where [[:= :id id]])))
+  )
