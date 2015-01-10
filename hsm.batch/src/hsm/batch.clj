@@ -32,10 +32,9 @@
 
 (defn exec
   [f sorting cutoff top-n]
-  (let [objects (load-json f)
-        objects (b.core/parsevaluate objects)
+  (let [objects (b.core/parsevaluate (load-json f))
         objects (if (> cutoff 0) (subvec (vec objects) 0 cutoff) objects)]
-    (?- (stdout) 
+    (?- (lfs-textline ".run/" :sinkmode :replace)
       (top-obj 
         (mapper objects)
          sorting top-n
@@ -51,4 +50,5 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [f cutoff]
+
   (execute f 0 (Integer/parseInt cutoff)))
