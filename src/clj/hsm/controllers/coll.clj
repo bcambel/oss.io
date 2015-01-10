@@ -18,7 +18,7 @@
         project-to-add (if-not (nil? project-form-param) project-form-param (get body "project"))
         coll (first (actions/get-collection db id))]
     (log/warn (:form-params request))
-    (let [items (:items coll)
+    (let [items (or (:items coll) {})
           new-items (assoc items project-to-add "1")]
       (log/debug "Before" items)
       (log/debug "After" new-items)
@@ -44,23 +44,37 @@
 
 (defhtml render-collection
   [c]
-  [:div.col-lg-3
+  
     (panel
-      [:h3 [:a {:href (str "/collections/" (:id c))}(:name c)]]
+      [:div.row
+        [:h3 {:style "display:inline;"}
+          [:a {:href (str "/collections/" (:id c))}(:name c)]]
+        [:div.button-group.pull-right.actions
+          [:a.gh-btn {:href (str "/collections/" (:id c) "/star")}  
+            [:i.fa.fa-star] " Star " ]
+            [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/star")} 12]
+
+          [:a.gh-btn {:href (str "/collections/" (:id c) "/fork")}  
+            [:i.fa.fa-code-fork] 
+            [:span.gh-text "Fork"]
+            ]
+            [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/fork")} 0]]]
       [:div 
         [:p (:description c)]
         (for [item (keys (:items c))]
           (let [el (get item (:items c))]
-            [:li [:a {:href (str "/p/" (str item el))} (str item el)]
+            [:div.row.coll-row
+              [:a.pull-left {:href (str "/p/" (str item el))} (str item el)]
               [:form {:method "POST" :action (format "/collections/%s/delete" (:id c))}
                 [:input {:type "hidden" :name :project :value item}]
-                [:button.btn.btn-danger.btn-xs {:type :submit} "X"]
-              ]  
-            ]))
+                [:a {:href "#" :onclick "$(this).parent('form').submit();return false;" }
+                  [:i.fa.fa-minus-circle.red]]]]))
+        [:hr]
         [:form {:method "POST" :action (format "/collections/%s/add" (:id c))}
-          [:input {:type "text" :name :project}]
-          [:button.btn.btn-primary {:type :submit} "Add to"]
-        ]])])
+          [:div#remote 
+            [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]
+            [:a.btn.btn-default {:type :submit} "Add"]]
+        ]]))
 
 (defn get-coll
   [{:keys [db event-chan redis conf]} request]
@@ -85,9 +99,10 @@
     (if is-json
       (json-resp colls)
       (layout host
-        [:div
+        [:div.row
           (for [c colls]
-            (render-collection c)
+            [:div.col-lg-6
+              (render-collection c)]
             )]))))
 
 

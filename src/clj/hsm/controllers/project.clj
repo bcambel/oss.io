@@ -92,6 +92,23 @@
 
     ; (fn [redis id] (get-project-readme* redis id))))
 
+
+(defn search
+  [{:keys [db event-chan redis]} request]
+
+  (let [host        (host-of request)
+        is-json     (type-of request :json)
+        term        (get-in request [:query-params "q"])
+        hosted-pl   (host->pl->lang host)
+        platform    (or hosted-pl (pl->lang (id-of request :platform)))
+        projects    (actions/load-projects* db platform 100)]
+    (log/warn request)
+    (log/warn "TERML:" term)
+    (let [found (filter #(.contains (:full_name %) term) projects)
+          sorted-found (reverse (sort-by :watchers found))]
+          ;(map #(assoc % :full_name (format "%s - %s" (:watchers %) (:full_name %)))
+    (json-resp sorted-found))))
+
 (defhtml project-header
   [id proj admin? owner contributor-count watcher-count]
   [:div.row
@@ -99,6 +116,7 @@
       [:h3 [:i.fa.fa-star] [:a {:href (str "/p/" id "/stargazers")}(:watchers proj)]]
       [:form {:action "/ajax/project/follow" :method "POST"}
         [:input {:type "hidden" :value (:id proj)}]
+          
         [:button.btn.btn-primary {:type "submit"} "Love It"]]
         (when admin?
           [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])

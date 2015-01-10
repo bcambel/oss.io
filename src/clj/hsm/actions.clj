@@ -236,6 +236,21 @@
   [dict]
   (assoc dict :id (str (:id dict))))
 
+
+
+(defn load-projects*
+  [db platform limit-by]
+  (log/info "[LIST-PROJ] Fetching " platform limit-by)
+  (let [conn (:connection db)
+        limit-by (if (> limit-by 100) 100 limit-by)]
+    (when-let [projects (cql/select conn :github_project
+                          (dbq/limit 10000) ; place a hard limit
+                           (when-not (nil? platform) (dbq/where 
+                                        [[= :language platform]])))]
+      projects
+    ))
+  )
+
 (defn list-top-proj*
   "Given platform/language returns top n projects"
   [db platform limit-by]
@@ -243,6 +258,7 @@
   (let [conn (:connection db)
         limit-by (if (> limit-by 100) 100 limit-by)]
     (when-let [projects (cql/select conn :github_project
+                        (dbq/limit 10000) ; place a hard limit
                           (dbq/where [[= :language platform]]))]
       (map
         stringify-id
@@ -347,7 +363,7 @@
       (cql/select conn :collection))
   )
 
-(defn update-collection 
+(defn update-collection
   [db id items]
   (let [conn (:connection db)]
     (cql/update conn :collection 
