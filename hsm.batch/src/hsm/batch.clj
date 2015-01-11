@@ -44,10 +44,15 @@
     (data-source :> ?id ?w ?lang ?name)
     (integer ?w :> ?watch)))
 
+(defn format-name
+  [id name]
+  (str id "-" name))
+
 (defn language-filtered
   [lang data-source]
-  (<- [?id ?watch ?lang ?name] 
+  (<- [?watch ?ident]
     (data-source :> ?id ?watch ?lang ?name)
+    (format-name ?id ?name :> ?ident)
     (= lang ?lang)))
 
 (deffilterfn is-lang
@@ -64,19 +69,24 @@
     (is-lang ?lang)))
 
 (defn process
+  "Finds all the cities in the given file
+  Runs the top-list for each of them and generate the top-projects list as well"
   [file cutoff top-n output]
   (info "Processing" file)
   (let [sorting ["?watch"]
         data-source (c.more/lfs-delimited file)
         max-items 1000
-        all-languages (first (??- (languages (final-set data-source))))]
+        all-languages (first (??- (languages (final-set data-source))))
+        ; all-languages [["Python"]]
+        ]
     (info all-languages)
-    (?- (stdout)
-      (top-obj (final-set data-source) sorting 1000))
     (doseq [[lang] all-languages]
       (info lang)
-      (?- (lfs-textline (str output "lang/" lang))
-        (top-obj (language-filtered lang (final-set data-source)) ["?watch"] max-items)))))
+      (?- (lfs-textline (str output "lang/" lang) :delimiter " " :sinkmode :replace)
+        (top-obj (language-filtered lang (final-set data-source)) ["?watch"] max-items)))
+    (?- (lfs-textline (str output "top-projects" ) :sinkmode :replace)
+      (top-obj (final-set data-source) sorting 1000))
+    ))
 
 (defn extract
   [f cutoff output]
