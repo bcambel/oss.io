@@ -43,7 +43,7 @@
 
 (defn extract
   [f cutoff]
-  (let [part (last (vec (.split f)))
+  (let [part (last (vec (.split f "/")))
         objects (b.core/parsevaluate (load-json f))
         objects (if (> cutoff 0) (subvec (vec objects) 0 cutoff) objects)]
     (?- (lfs-textline (str ".run/" part "/") :sinkmode :replace)
@@ -52,8 +52,9 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [mode f cutoff & args]
-  (let [cutoff (Integer/parseInt cutoff)])
+  (info mode f cutoff args)
+  (let [cut (Integer/parseInt cutoff)]
   (condp = mode
-    "e" (extract f cutoff)
-    "g" (process (vec args) 0 cutoff)
-    ))
+    "e" (extract f cut)
+    "g" (process (vec args) 0 cut)
+    )))
