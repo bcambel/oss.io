@@ -7,8 +7,10 @@
     [cascalog.logic.ops :as c]
     [cheshire.core :refer :all]
     [hsm.batch.core :as b.core]
+    [cascalog.more-taps :as c.more]
   )(:gen-class))
 
+(defn integer[s] (Integer/parseInt s))
 
 (defn load-json
   [f]
@@ -23,7 +25,7 @@
   (<- [?id ?watchers ?language ?proj] 
     (source :> ?proj ?idx ?watchers ?language ?full)
     (fill-s :< ?idx :> ?id)
-    (> ?watchers 50)
+    (> ?watchers 5)
     ; (fill-s :< ?languagex :> ?language)
     ))
 
@@ -33,28 +35,65 @@
 
 (defn top-projects
   [out-tap query top-n]
-  (?- out-tap 
+  (?- out-tap
     (top-obj query ["?watchers"] top-n)))
 
+(defn final-set
+  [data-source]
+  (<- [?id ?watch ?lang ?name]
+    (data-source :> ?id ?w ?lang ?name)
+    (integer ?w :> ?watch)))
+
+(defn language-filtered
+  [lang data-source]
+  (<- [?id ?watch ?lang ?name] 
+    (data-source :> ?id ?watch ?lang ?name)
+    (= lang ?lang)))
+
+(deffilterfn is-lang
+  "NULL Languages exported as 54abc by either Hadoop or Cassandra.
+  So filter here by checking if text contains 54"
+  [l]
+  (not (.contains l "54")))
+
+(defn languages
+  [data-source]
+  (<- [?lang]
+    (data-source :> ?id ?watch ?lang ?name)
+    (:distinct true)
+    (is-lang ?lang)))
+
 (defn process
-  [files cutoff top-n]
-  (let [sorting ["?watchers"]]
-    (info files)))
+  [file cutoff top-n output]
+  (info "Processing" file)
+  (let [sorting ["?watch"]
+        data-source (c.more/lfs-delimited file)
+        max-items 1000
+        all-languages (first (??- (languages (final-set data-source))))]
+    (info all-languages)
+    (?- (stdout)
+      (top-obj (final-set data-source) sorting 1000))
+    (doseq [[lang] all-languages]
+      (info lang)
+      (?- (lfs-textline (str output "lang/" lang))
+        (top-obj (language-filtered lang (final-set data-source)) ["?watch"] max-items)))))
 
 (defn extract
-  [f cutoff]
+  [f cutoff output]
+  (warn "EXTRACT " f cutoff)
   (let [part (last (vec (.split f "/")))
         objects (b.core/parsevaluate (load-json f))
         objects (if (> cutoff 0) (subvec (vec objects) 0 cutoff) objects)]
-    (?- (lfs-textline (str ".run/" part "/") :sinkmode :replace)
+    (?- (lfs-textline (str output part "/") :sinkmode :replace)
        (all-projects objects))))
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [mode f cutoff & args]
-  (info mode f cutoff args)
-  (let [cut (Integer/parseInt cutoff)]
+  [mode output cutoff & args]
+  (info mode cutoff args)
+  (let [files args
+    cut (Integer/parseInt cutoff)]
   (condp = mode
-    "e" (extract f cut)
-    "g" (process (vec args) 0 cut)
-    )))
+    "e" (mapv #(extract % cut output) files)
+    "g" (process (first files) 0 cut output))
+  (info "DONE!")))
