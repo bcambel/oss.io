@@ -79,7 +79,7 @@
         (GET  "/p/:user/:project"         request (cont-project/get-proj specs request))
         (GET  "/p/:user/:project/:mod"    request (cont-project/get-proj-module specs request))
         (GET  "/top-projects"             request (cont-project/list-top-proj specs request))
-        (GET  "/:platform/index"          request (c.main/platform [db event-chan] request))
+        (GET  "/:platform/index"          request (c.main/platform specs request))
         (GET  "/:platform/top-projects"   request (cont-project/list-top-proj specs request))
         (GET  "/:platform/discussions"    request (cont-disc/discussions [db event-chan] request))
         (GET  "/collections"              request (c.coll/load-coll [db event-chan] request))

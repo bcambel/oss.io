@@ -18,12 +18,12 @@
         ))))
 
 (defn platform
-  [[db event-chan] request]
+  [{:keys [db event-chan redis]} request]
   (let [host (host-of request)
         pl   (pl->lang (id-of request :platform))
         top-disc (list-top-disc db pl 5)
         top-members (list-top-user db pl 5)
-        top-projects (list-top-proj db pl 20)]
+        top-projects (list-top-proj db redis pl 20)]
     (html-resp 
       (layout host
         [:div 

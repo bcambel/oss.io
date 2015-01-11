@@ -7,7 +7,11 @@
     [clojurewerkz.cassaforte.query :as dbq]
     [qbits.hayt :as hayt]
     [qbits.hayt.dsl.statement :as hs]
-    [hsm.utils :refer [id-generate now->ep]]))
+    [hsm.utils :refer :all]
+    [hsm.cache :as cache]))
+
+(declare list-top-proj**)
+(declare load-projects-by-int-id)
 
 ;; USER
 (defn follow-user
@@ -251,7 +255,26 @@
     ))
   )
 
+
+(defn ^:private fetch-top-proj
+  [db redis language size]
+  (log/warn "Start REDIS TOP PROJ Fetch" language)
+  (let [projects (cache/ssort-fetch redis (str "lang-" language) 0 (- size 1))
+        project-ids (mapv #(Integer/parseInt (first (.split % "-"))) projects)]
+    (log/warn project-ids)
+    (let [found-projects (load-projects-by-int-id db project-ids)]
+      ; (log/warn found-projects)
+      (log/warn (count found-projects))
+      found-projects)))
+
 (defn list-top-proj*
+  [db redis platform limit-by]
+  (let [cached-projects (fetch-top-proj db redis platform limit-by)]
+    (if (!!nil? cached-projects)
+        cached-projects
+        (list-top-proj** db platform limit-by))))
+
+(defn list-top-proj**
   "Given platform/language returns top n projects"
   [db platform limit-by]
   (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
