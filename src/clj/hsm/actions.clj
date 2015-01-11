@@ -280,6 +280,13 @@
     (cql/select conn :github_project
       (dbq/where [[:in :full_name proj-list]]))))
 
+(defn load-projects-by-int-id
+  [db proj-list]
+  (let [conn (:connection db)]
+     (mapcat #(cql/select conn :github_project
+            (dbq/where [[:= :id %]]))
+      proj-list)))
+
 (defn load-project-extras
   [db proj]
   (let [conn (:connection db)]

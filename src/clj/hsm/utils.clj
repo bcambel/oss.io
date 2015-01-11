@@ -191,3 +191,7 @@
 (defn set* [x] (if (set?    x) x (set x)))
 (defn !nil-set  [x] (disj (set* x) nil))
 (defn conj-some [coll ?x] (if (!nil? ?x) (conj coll ?x) coll))
+
+(defn !!nil?
+  [x]
+  (and (!nil? x) (not (empty? x))))

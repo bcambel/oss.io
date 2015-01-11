@@ -25,4 +25,6 @@
       "python" "Python"
       "clojure" "Clojure"
       "clj" "Clojure"
+      "php" "PHP"
+
   		platform)))

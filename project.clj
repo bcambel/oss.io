@@ -66,6 +66,7 @@
               :main {:main hsm.server :uberjar-name "hsm.jar"}
               
               :dev {
+                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                     :repl-options {:init-ns hsm.server
                                   ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
                                 }

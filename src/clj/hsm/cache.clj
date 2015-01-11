@@ -2,6 +2,11 @@
   (:require 
     [taoensso.carmine :as car :refer (wcar)]))
 
+(defn ssort-fetch
+  [redis k start end]
+  (wcar redis
+    (car/zrevrange k start end))
+  )
 
 (defn retrieve
   [redis key]

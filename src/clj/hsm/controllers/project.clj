@@ -50,8 +50,19 @@
             [:p {:style "color:gray"} (get x :description)]]]
         ])]])
 
+(defn fetch-top-proj
+  [db redis language size]
+  (log/warn "Start REDIS TOP PROJ Fetch" language)
+  (let [projects (cache/ssort-fetch redis (str "lang-" language) 0 size)
+        project-ids (mapv #(Integer/parseInt (first (.split % "-"))) projects)]
+    (log/warn project-ids)
+    (let [found-projects (actions/load-projects-by-int-id db  project-ids)]
+      ; (log/warn found-projects)
+      (log/warn (count found-projects))
+      found-projects)))
+
 (defn list-top-proj
-  [[db event-chan] request]
+  [{:keys [db event-chan redis]} request]
   (log/warn request)
   (let [host        (host-of request)
         body         (body-of request)
@@ -65,8 +76,12 @@
         limit       (or (get-in request [:params :limit]) (str 20))
         limit-by     (or (Integer/parseInt limit) 20)]
     (when platform
-      (let [top-projects (actions/list-top-proj db platform limit-by)
+      (let [cached-projects (fetch-top-proj db redis platform limit-by)
+            top-projects (if (!!nil? cached-projects)
+                            (actions/list-top-proj db platform limit-by)
+                            cached-projects)
             keyset (keys (first top-projects))]
+        ; (log/warn cached-projects)
         (if is-json
           (json-resp top-projects)
           (html-resp
@@ -219,7 +234,7 @@
         force-sync (is-true (get-in request [:params :force-sync]))
         related-projects []
         admin? true]
-    (when-let [proj (first (actions/load-project db id))]
+    (let [proj (first (actions/load-project db id))]
       (if force-sync
         (do
           (gh/enhance-proj db id 1000)
