@@ -283,6 +283,7 @@
 (defn load-projects-by-int-id
   [db proj-list]
   (let [conn (:connection db)]
+    ;; FIX THIS SHIT!@!@!@!
      (mapcat #(cql/select conn :github_project
             (dbq/where [[:= :id %]]))
       proj-list)))

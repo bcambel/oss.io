@@ -78,8 +78,8 @@
     (when platform
       (let [cached-projects (fetch-top-proj db redis platform limit-by)
             top-projects (if (!!nil? cached-projects)
-                            (actions/list-top-proj db platform limit-by)
-                            cached-projects)
+                            cached-projects
+                            (actions/list-top-proj db platform limit-by))
             keyset (keys (first top-projects))]
         ; (log/warn cached-projects)
         (if is-json
