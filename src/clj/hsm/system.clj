@@ -12,7 +12,7 @@
         [hsm.controllers.discussion   :as cont-disc]
         [hsm.controllers.main         :as c.main]
         [hsm.integration.ghub         :as ghub]
-        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache]]
+        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log]]
         [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
@@ -101,6 +101,7 @@
       (-> http-handler
           (wrap-exception-handler)
           (wrap-nocache)
+          (wrap-log)
           ; (if is-dev? wrap-nocache identity )
           ))
 

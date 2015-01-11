@@ -8,6 +8,15 @@
   (:import
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
+(defn wrap-log
+  [handler]
+  (fn [request]
+    (log/info request)
+    (let [response (handler request)]
+      (log/info (str "[HTTP" (:status response)"]") (:url request))
+      response
+    )))
+
 (defn wrap-exception-handler
   "Development only exception handler.
   In the near future plug in sentry"
@@ -38,21 +47,24 @@
   constructs a RING 200 Response.
   TODO: Optionable status code.."
   [data & [status]]
-  (-> (generate-string data)
-        (resp/response)
-        (resp/header "Content-Type" "application/json")
-        (resp/status (or status 200))))
+  (let [http-status-code (or status 200)]
+    (log/info http-status-code)
+    (-> (generate-string data)
+          (resp/response)
+          (resp/header "Content-Type" "application/json")
+          (resp/status http-status-code))))
 
 (defn html-resp
   "Generates Text/HTML resp of given object,
   constructs a RING 200 Response.
   TODO: Optionable status code.."
   [data & [status]]
-  (-> data
-        (resp/response)
-        (resp/content-type "text/html")
-        (resp/charset "UTF-8")
-        (resp/status (or status 200))))
+    (let [http-status-code (or status 200)]
+      (-> data
+            (resp/response)
+            (resp/content-type "text/html")
+            (resp/charset "UTF-8")
+            (resp/status http-status-code))))
 
 
 (defn trans-resp
