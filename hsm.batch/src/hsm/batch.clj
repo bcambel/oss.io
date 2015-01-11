@@ -18,37 +18,42 @@
   [s]
   (format "%10s" s))
 
- (defn mapper [source] 
-    (<- [?id ?watchers ?language ?proj] 
-      (source :> ?proj ?idx ?watchers ?language ?full)
-      (fill-s :< ?idx :> ?id)
-      (> ?watchers 50)
-      ; (fill-s :< ?languagex :> ?language)
-      ))
+(defn all-projects
+  [source]
+  (<- [?id ?watchers ?language ?proj] 
+    (source :> ?proj ?idx ?watchers ?language ?full)
+    (fill-s :< ?idx :> ?id)
+    (> ?watchers 50)
+    ; (fill-s :< ?languagex :> ?language)
+    ))
 
 (defn top-obj
   [query field cutoff]
   (c/first-n query cutoff :sort field :reverse true))
 
-(defn exec
-  [f sorting cutoff top-n]
-  (let [objects (b.core/parsevaluate (load-json f))
+(defn top-projects
+  [out-tap query top-n]
+  (?- out-tap 
+    (top-obj query ["?watchers"] top-n)))
+
+(defn process
+  [files cutoff top-n]
+  (let [sorting ["?watchers"]]
+    (info files)))
+
+(defn extract
+  [f cutoff]
+  (let [part (last (vec (.split f)))
+        objects (b.core/parsevaluate (load-json f))
         objects (if (> cutoff 0) (subvec (vec objects) 0 cutoff) objects)]
-    (?- (lfs-textline ".run/" :sinkmode :replace)
-      (top-obj 
-        (mapper objects)
-         sorting top-n
-        ))))
-
-(defn execute
-  [f cutoff top-n]
-  (exec f ["?watchers"] cutoff top-n)
-  )
- 
-
+    (?- (lfs-textline (str ".run/" part "/") :sinkmode :replace)
+       (all-projects objects))))
 
 (defn -main
   "I don't do a whole lot ... yet."
-  [f cutoff]
-
-  (execute f 0 (Integer/parseInt cutoff)))
+  [mode f cutoff & args]
+  (let [cutoff (Integer/parseInt cutoff)])
+  (condp = mode
+    "e" (extract f cutoff)
+    "g" (process (vec args) 0 cutoff)
+    ))
