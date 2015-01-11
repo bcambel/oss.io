@@ -35,6 +35,8 @@
 
 (defhtml list-view
   [top-projects keyset]
+  [:div.col-lg-9
+  (panel "Top Projects"
   [:div.btn-toolbar
   [:div.btn-group.pull-right
     [:a.btn.btn-info {:href "?limit=20"} "20"]
@@ -48,7 +50,7 @@
           [:td  
             [:a { :href (format "/p/%s" (get x :full_name))} (get x :full_name)
             [:p {:style "color:gray"} (get x :description)]]]
-        ])]])
+        ])]])])
 
 
 

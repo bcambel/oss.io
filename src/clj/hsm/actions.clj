@@ -288,7 +288,7 @@
         (take limit-by (reverse
                           (sort-by :watchers projects)))))))
 
-(def list-top-proj (memo/ttl list-top-proj* :ttl/threshold 60000 ))
+(def list-top-proj (memo/ttl list-top-proj* :ttl/threshold 6000000 ))
 
 (defn load-project
   [db proj]
