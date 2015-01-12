@@ -42,6 +42,8 @@
       (actions/update-collection db id new-items)
       (redirect (format "/collections/%s%s" id (if is-json "?json=1" ""))))))
 
+(def submit-form "$(this).parent('form').submit();return false;")
+
 (defhtml render-collection
   [c]
   
@@ -67,13 +69,13 @@
               [:a.pull-left {:href (str "/p/" (str item el))} (str item el)]
               [:form {:method "POST" :action (format "/collections/%s/delete" (:id c))}
                 [:input {:type "hidden" :name :project :value item}]
-                [:a {:href "#" :onclick "$(this).parent('form').submit();return false;" }
+                [:a {:href "#" :onclick submit-form }
                   [:i.fa.fa-minus-circle.red]]]]))
         [:hr]
         [:form {:method "POST" :action (format "/collections/%s/add" (:id c))}
           [:div#remote 
             [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]
-            [:a.btn.btn-default {:type :submit} "Add"]]
+            [:a.btn.btn-default {:href "#" :onclick submit-form} "Add"]]
         ]]))
 
 (defn get-coll
