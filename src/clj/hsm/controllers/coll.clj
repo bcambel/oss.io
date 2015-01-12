@@ -74,8 +74,8 @@
         [:hr]
         [:form {:method "POST" :action (format "/collections/%s/add" (:id c))}
           [:div#remote 
-            [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]
-            [:a.btn.btn-default {:href "#" :onclick submit-form} "Add"]]
+            [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]]
+            [:a.btn.btn-default {:href "#" :onclick submit-form} "Add"]
         ]]))
 
 (defn get-coll
@@ -106,5 +106,4 @@
             [:div.col-lg-6
               (render-collection c)]
             )]))))
-
 

@@ -16,6 +16,7 @@
        :exclusions [cascading/cascading-hadoop org.codehaus.plexus/plexus-utils commons-codec cascading/cascading-local]]
       [eu.bitwalker/UserAgentUtils "1.15"]
       [org.clojure/core.memoize "0.5.6"]
+      [clojurewerkz/elastisch "2.1.0"]
     ]
 
   :repositories {

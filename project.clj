@@ -35,6 +35,7 @@
                 [me.raynes/fs "1.4.6"]
                 [clj-kafka/clj-kafka "0.2.8-0.8.1.1"]
                 [hiccup "1.0.5"]
+                [clojurewerkz/elastisch "2.1.0"]
                 [liberator "0.12.2"]
                 [commons-logging "1.1.3"]
                 [raven-clj "1.2.0"]

@@ -80,6 +80,9 @@
               (view-fn top-projects keyset))))))))
 
 (defn get-project-readme*
+  "Fetch read me. Redis is used.
+  Or Fetches from github.
+  TODO: Post retrieved data to ElasticSearch"
   [redis proj]
   (let [cache-key (str "readme-" proj)
         cached (cache/retrieve redis cache-key)]
@@ -90,16 +93,17 @@
         readme
         ))))
 
-(defn get-project-readme 
+(defn get-project-readme
+  "Memoized Project README.
+  Might take a while if Github is reached."
   [redis proj] 
   (memo/memo 
     (fn[] 
       (get-project-readme redis proj))))
 
-    ; (fn [redis id] (get-project-readme* redis id))))
-
-
 (defn search
+  "Temporary horrible searching logic.
+  Will be replaced with proper ElasticSearch Solution"
   [{:keys [db event-chan redis]} request]
 
   (let [host        (host-of request)
