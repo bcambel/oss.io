@@ -47,7 +47,8 @@
                 [org.clojure/tools.logging "0.3.1"]
                 [weasel "0.4.0-SNAPSHOT"]
                 [midje "1.7.0-SNAPSHOT"]
-                [leiningen "2.5.0"]]
+                [leiningen "2.5.0"]
+                [org.clojure/tools.nrepl "0.2.5"]]
 
   :plugins [[lein-environ "1.0.0"]
             [lein-release "1.0.5"]]
