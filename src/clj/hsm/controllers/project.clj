@@ -9,6 +9,11 @@
     [hiccup.page :as hic.pg]
     [hiccup.element :as hic.el]
     [hiccup.def         :refer [defhtml]]
+    [clojurewerkz.elastisch.rest :as esr]
+    [clojurewerkz.elastisch.rest.index :as esi]
+    [clojurewerkz.elastisch.rest.document :as esd]
+    [clojurewerkz.elastisch.rest.response :as esrsp]
+    [clojurewerkz.elastisch.query :as q]
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.views :as views :refer [layout panel panelx render-user]]
@@ -101,6 +106,16 @@
     (fn[] 
       (get-project-readme redis proj))))
 
+(defn update-search
+  [{:keys [db event-chan redis]} request]
+  (let [index-name  "hackersome"
+        es-conn     (esr/connect "http://127.0.0.1:9200")]
+    (when (esi/exists? es-conn index-name)
+      (esi/delete es-conn index-name))
+    (map #(esd/create es-conn index-name "github_project" 
+      (select-keys % [:description :name :language :id :watchers :homepage :full_name] )) 
+    (actions/load-all-projects db))))
+
 (defn search
   "Temporary horrible searching logic.
   Will be replaced with proper ElasticSearch Solution"
@@ -111,16 +126,18 @@
         term        (get-in request [:query-params "q"])
         hosted-pl   (host->pl->lang host)
         platform    (or hosted-pl (pl->lang (id-of request :platform)))
-        projects    (actions/load-projects* db platform 100)]
+        es-conn     (esr/connect "http://127.0.0.1:9200")]
     (log/warn request)
     (log/warn "TERML:" term)
-    (let [found (filter #(.contains (:full_name %) term) projects)
-          sorted-found (reverse (sort-by :watchers found))]
+    (let [res (esd/search es-conn "hackersome" "github_project" :query (q/query-string :query term))
+          n (esrsp/total-hits res)
+          hits (esrsp/hits-from res)]
           ;(map #(assoc % :full_name (format "%s - %s" (:watchers %) (:full_name %)))
-    (json-resp sorted-found))))
+    (json-resp (map :_source hits)))))
 
 (defhtml project-header
   [id proj admin? owner contributor-count watcher-count]
+  (panel id
   [:div.row
     [:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
       [:h3 [:i.fa.fa-star] [:a {:href (str "/p/" id "/stargazers")}(:watchers proj)]]
@@ -148,7 +165,7 @@
         [:a {:href (str "/p/" id "/contributors")} 
           [:span [:i.fa.fa-users] contributor-count]]]
       [:span.label.label-warning (:language proj)]
-      [:p.lead (:description proj)]]]
+      [:p.lead (:description proj)]]])
       [:hr])
 
 (defn get-project-*

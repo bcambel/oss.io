@@ -89,6 +89,7 @@
         (POST  "/collections/:id/delete"  request (c.coll/del-p-coll specs request))
         (GET  "/import/:language"         [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (GET  "/search"                   request (cont-project/search specs request))
+        (GET  "/search/update"            request (cont-project/update-search specs request))
         (route/not-found "Page not found")
         ))
 

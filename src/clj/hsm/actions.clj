@@ -255,6 +255,10 @@
     ))
   )
 
+(defn load-all-projects
+  [db]
+  (let [conn (:connection db)]
+    (cql/iterate-table conn :github_project :full_name 100)))
 
 (defn ^:private fetch-top-proj
   [db redis language size]
@@ -268,6 +272,8 @@
       found-projects)))
 
 (defn list-top-proj*
+  "List top projects; 
+  Results will be fetched from redis"
   [db redis platform limit-by]
   (let [cached-projects (fetch-top-proj db redis platform limit-by)]
     (if (!!nil? cached-projects)
@@ -275,7 +281,8 @@
         (list-top-proj** db platform limit-by))))
 
 (defn list-top-proj**
-  "Given platform/language returns top n projects"
+  "Given platform/language returns top n projects.
+  TODO: DELETE THIS"
   [db platform limit-by]
   (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
   (let [conn (:connection db)
