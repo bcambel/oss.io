@@ -79,6 +79,11 @@
                      [:ul.dropdown-menu
                        (for [lang languages]
                          [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
+                  [:form.navbar-form navbar-left 
+                    [:div.form-group 
+                      [:input.form-control.typeahead {:type "text"}]
+
+                    ][:button {:type "Submit"}]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           [:div.col-lg-1.left-panel ""]

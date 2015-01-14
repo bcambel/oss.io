@@ -113,10 +113,10 @@
     (if (nil? es-conn)
       (json-resp {:ok false :reason "Conn failure..."})
       (do
-        (when (esi/exists? es-conn index-name)
-          (esi/delete es-conn index-name)
-          (esi/create es-conn index-name))
-        (map #(esd/create es-conn index-name "github_project"
+        ; (when (esi/exists? es-conn index-name)
+        ;   (esi/delete es-conn index-name)
+        ;   (esi/create es-conn index-name))
+        (mapv #(esd/create es-conn index-name "github_project"
           (select-keys % [:description :name :language :id :watchers :homepage :full_name]))
         (actions/load-all-projects db 200))
         (json-resp {:ok 1})))))
