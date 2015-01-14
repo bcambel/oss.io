@@ -1,9 +1,9 @@
 (ns hsm.system.kafka
   (:use [clj-kafka.core :only (with-resource)])
   (:require
-    [clojure.tools.logging                   :as log]
+    [clojure.tools.logging                  :as log]
     [clj-kafka.zk                           :as zk]
-    [clj-kafka.consumer.zk                   :as consumer.zk]
+    [clj-kafka.consumer.zk                  :as consumer.zk]
     [clj-kafka.producer                     :as kfk.prod]
     [clojure.core.async                     :as async :refer [alts! go chan]]
     [com.stuartsierra.component             :as component]))
@@ -24,7 +24,7 @@
 
   (start [component]
     (try
-      (log/warn "Starting KAFKA PROD Component")
+      (log/warn "Starting KAFKA PRODUCER Component")
       (let [producing-channel (or prod-chan (chan))
             brokers (get-broker-list zookeeper)
             producer-config {"metadata.broker.list" brokers

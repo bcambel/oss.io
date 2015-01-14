@@ -119,7 +119,7 @@
 (defn search
   "Temporary horrible searching logic.
   Will be replaced with proper ElasticSearch Solution"
-  [{:keys [db event-chan redis]} request]
+  [{:keys [db event-chan redis else]} request]
 
   (let [host        (host-of request)
         is-json     (type-of request :json)

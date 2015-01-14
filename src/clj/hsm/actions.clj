@@ -256,9 +256,10 @@
   )
 
 (defn load-all-projects
-  [db]
-  (let [conn (:connection db)]
-    (cql/iterate-table conn :github_project :full_name 100)))
+  [db batch-size]
+  (let [batch-size (if (> batch-size 100) 100 batch-size)
+        conn (:connection db)]
+    (cql/iterate-table conn :github_project :full_name batch-size)))
 
 (defn ^:private fetch-top-proj
   [db redis language size]
