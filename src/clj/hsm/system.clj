@@ -2,7 +2,7 @@
      (:require
         [clojure.java.io              :as io]
         [cheshire.core                :refer :all]
-        [clojurewerkz.cassaforte.cql  :as cql   ]
+        [clojurewerkz.cassaforte.cql  :as cql]
         [clojure.tools.logging        :as log]
         [hsm.dev                      :refer :all]
         [hsm.controllers.user         :as cont-user]
@@ -16,6 +16,7 @@
         [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
+        [hsm.system.else              :as sys.else]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
         [ring.middleware.reload       :as reload]
@@ -34,7 +35,7 @@
     (json-resp (cql/select conn :user))))
 
 
-(defrecord HTTP [port db kafka-producer redis conf server]
+(defrecord HTTP [port db kafka-producer redis else conf server]
   component/Lifecycle
 
   (start [this]
@@ -43,7 +44,11 @@
 
     (log/info "Starting HTTP Server on " port)
     (let [event-chan (:channel kafka-producer)
-          specs {:db db :event-chan event-chan :redis redis :conf conf}]
+          specs {:db db
+                 :event-chan event-chan
+                 :redis redis
+                 :conf conf
+                 :else else}]
       (defroutes routes
         (resources "/")
         (resources "/react" {:root "react"})
@@ -121,15 +126,17 @@
 
 (defn front-end-system
   [config-options]
-  (let [{:keys [host port keyspace server-port zookeeper redis-host redis-port]} config-options]
+  (let [{:keys [host port keyspace server-port zookeeper redis-host
+                redis-port else-host else-port else-index]} config-options]
     (-> (component/system-map
           :db (sys.cassandra/cassandra-db host port keyspace)
           :redis (sys.redis/redis-db redis-host redis-port)
           :kafka-producer (sys.kafka/kafka-producer zookeeper)
+          :else (sys.else/elastisch else-host else-port else-index)
           :conf config-options
           :app (component/using
             (http-server server-port)
-            [:db :kafka-producer :redis :conf]
+            [:db :kafka-producer :redis :conf :else]
             )))))
 
 (defrecord Worker [kafka-producer]

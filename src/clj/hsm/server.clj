@@ -34,7 +34,10 @@
                                     :port (:db-port c) 
                                     :keyspace (:db-keyspace c)
                                     :redis-host (:redis-host c)
-                                    :redis-port (:redis-port c)})
+                                    :redis-port (:redis-port c)
+                                    :else-host (:else-host c)
+                                    :else-port (:else-port c)
+                                    :else-index (:else-index c)})
         app-sys (component/start sys)]
         app-sys
     )))

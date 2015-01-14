@@ -107,33 +107,36 @@
       (get-project-readme redis proj))))
 
 (defn update-search
-  [{:keys [db event-chan redis]} request]
-  (let [index-name  "hackersome"
-        es-conn     (esr/connect "http://127.0.0.1:9200")]
-    (when (esi/exists? es-conn index-name)
-      (esi/delete es-conn index-name))
-    (map #(esd/create es-conn index-name "github_project" 
-      (select-keys % [:description :name :language :id :watchers :homepage :full_name] )) 
-    (actions/load-all-projects db))))
+  [{:keys [db event-chan redis else]} request]
+  (let [index-name  (:index else)
+        es-conn     (:conn else)]
+    (if (nil? es-conn)
+      (json-resp {:ok false :reason "Conn failure..."})
+      (do
+        (when (esi/exists? es-conn index-name)
+          (esi/delete es-conn index-name))
+        (map #(esd/create es-conn index-name "github_project"
+          (select-keys % [:description :name :language :id :watchers :homepage :full_name]))
+        (actions/load-all-projects db))))))
 
 (defn search
   "Temporary horrible searching logic.
   Will be replaced with proper ElasticSearch Solution"
   [{:keys [db event-chan redis else]} request]
-
   (let [host        (host-of request)
         is-json     (type-of request :json)
         term        (get-in request [:query-params "q"])
         hosted-pl   (host->pl->lang host)
         platform    (or hosted-pl (pl->lang (id-of request :platform)))
-        es-conn     (esr/connect "http://127.0.0.1:9200")]
-    (log/warn request)
+        index-name  (:index else)
+        es-conn     (:conn else)]
     (log/warn "TERML:" term)
-    (let [res (esd/search es-conn "hackersome" "github_project" :query (q/query-string :query term))
+    (let [res (esd/search es-conn index-name "github_project"
+                :query (q/query-string :query term))
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]
-          ;(map #(assoc % :full_name (format "%s - %s" (:watchers %) (:full_name %)))
-    (json-resp (map :_source hits)))))
+      (json-resp (map :_source hits)))))
+;(map #(assoc % :full_name (format "%s - %s" (:watchers %) (:full_name %)))
 
 (defhtml project-header
   [id proj admin? owner contributor-count watcher-count]

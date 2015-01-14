@@ -87,6 +87,4 @@
                   (for [x discussion-list]
                     [:li 
                       [:a {:href (str "/discussion/" (:id x))} (:title x) 
-                        [:p {:style "color:gray" } (get-in x [:post :text])]]])])
-              ]]
-            ))))))
+                        [:p {:style "color:gray" } (get-in x [:post :text])]]])])]]))))))
