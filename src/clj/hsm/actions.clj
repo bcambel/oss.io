@@ -1,4 +1,4 @@
-(ns hsm.actions
+  (ns hsm.actions
   (:require
     [clojure.core.memoize :as memo]
     [clojure.tools.logging :as log]

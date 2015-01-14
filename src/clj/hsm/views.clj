@@ -58,6 +58,7 @@
       {:lang "en-US"}
       [:head
         [:meta {:charset "UTF-8"}]
+        [:meta {:name "robots" :content "noindex"}]
         [:meta {:content "IE=edge,chrome=1"
                 :http-equiv "X-UA-Compatible"}]
         [:title "Hackersome"]
