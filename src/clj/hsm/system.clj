@@ -113,7 +113,7 @@
 
     ; (if is-dev? (start-figwheel))
     (let [server (run-jetty app {:port (Integer. port)
-                            :join? false})]
+                            :join? (not is-dev?)})]
       (assoc this :server server)))
 
   (stop [this]

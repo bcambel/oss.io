@@ -79,11 +79,11 @@
                      [:ul.dropdown-menu
                        (for [lang languages]
                          [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
-                  [:form.navbar-form navbar-left 
+                  [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
                     [:div.form-group 
-                      [:input.form-control.typeahead {:type "text"}]
+                      [:input.form-control.typeahead {:type "text" :name "project"}]
 
-                    ][:button {:type "Submit"}]]
+                    ][:button {:type "Submit"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           [:div.col-lg-1.left-panel ""]
@@ -109,7 +109,7 @@
           "psearch = new Bloodhound({
             queryTokenizer: Bloodhound.tokenizers.whitespace,
             datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
-            limit: 10,
+            limit: 20,
             remote: '/search?json=1&q=%QUERY'
             });
           psearch.initialize();
