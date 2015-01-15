@@ -94,7 +94,9 @@
     (if (!nil? cached)
       cached
       (let [readme (gh/project-readme proj)]
-        (cache/setup redis cache-key readme)
+        (try 
+          (cache/setup redis cache-key readme)
+          (catch Throwable t (log/error t)))
         readme
         ))))
 
@@ -174,7 +176,7 @@
       [:hr])
 
 (defn get-project-*
-  [mod-fn {:keys [db event-chan redis]} request]
+  [mod-fn selector {:keys [db event-chan redis]} request]
    (let [host  (host-of request)
          is-json (type-of request :json)
          id (format "%s/%s" (id-of request :user) (id-of request :project))
@@ -188,14 +190,14 @@
          owner (first (.split id "/"))
          owner-obj (actions/load-user2 db owner)]
       (if is-json
-        (json-resp (assoc proj :owner owner-obj))
+        (json-resp (selector proj-extras));(assoc proj :owner owner-obj))
         (views/layout host
           (project-header id proj admin? owner contributor-count watcher-count)
-          (mod-fn db id proj proj-extras)))))
+          (mod-fn db selector id proj proj-extras)))))
 
 (defhtml contribs
-  [db id proj proj-extras]
-  (let [ppl-list (:contributors proj-extras)
+  [db selector id proj proj-extras]
+  (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
     (panel [:span [:i.fa.fa-users] " Contributors" ]
       [:div.row.user-list 
@@ -204,8 +206,8 @@
             (render-user x)])])))
 
 (defhtml watchers
-  [db id proj proj-extras]
-  (let [ppl-list (:watchers proj-extras)
+  [db selector id proj proj-extras]
+  (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
     (panel "Watchers"
       [:div.row.user-list 
@@ -214,8 +216,8 @@
             (render-user x)])])))
 
 (defhtml stargazers
-  [db id proj proj-extras]
-  (let [ppl-list (:stargazers proj-extras)
+  [db selector id proj proj-extras]
+  (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
     (panel "Star gazers"
       [:div.row.user-list
@@ -223,9 +225,9 @@
           [:div.col-lg-3.user-thumb
             (render-user x)])])))
 
-(def get-project-contrib (partial get-project-* contribs))
-(def get-project-stargazers (partial get-project-* stargazers))
-(def get-project-watchers (partial get-project-* watchers))
+(def get-project-contrib (partial get-project-* contribs :contributors))
+(def get-project-stargazers (partial get-project-* stargazers :stargazers))
+(def get-project-watchers (partial get-project-* watchers :watchers))
 
 
 (defhtml user-list

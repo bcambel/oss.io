@@ -22,6 +22,8 @@
         [ring.middleware.reload       :as reload]
         [ring.util.response           :as resp]
         [ring.adapter.jetty           :refer [run-jetty]]
+        [raven-clj.ring               :refer [wrap-sentry]]
+        [raven-clj.core               :refer  [capture]]
         [net.cgrand.enlive-html       :refer [deftemplate]]
         [compojure.core               :refer [GET POST PUT defroutes]]
         [com.stuartsierra.component   :as component]))
@@ -103,9 +105,12 @@
         (reload/wrap-reload (api #'routes))
         (api routes)))
 
+    (def dsn (:sentry-dsn (:conf conf)))
+    
     (def app
       (-> http-handler
-          (wrap-exception-handler)
+          (wrap-exception-handler dsn)
+          (wrap-sentry dsn)
           (wrap-nocache)
           (wrap-log)
           ; (if is-dev? wrap-nocache identity )
@@ -114,6 +119,9 @@
     ; (if is-dev? (start-figwheel))
     (let [server (run-jetty app {:port (Integer. port)
                             :join? (not is-dev?)})]
+      
+      ; (capture (:sentry-dsn conf) "Starting up..")
+
       (assoc this :server server)))
 
   (stop [this]
@@ -131,12 +139,12 @@
     (-> (component/system-map
           :db (sys.cassandra/cassandra-db host port keyspace)
           :redis (sys.redis/redis-db redis-host redis-port)
-          :kafka-producer (sys.kafka/kafka-producer zookeeper)
+          :kafka-producer "a" ;(sys.kafka/kafka-producer zookeeper)
           :else (sys.else/elastisch else-host else-port else-index)
           :conf config-options
           :app (component/using
             (http-server server-port)
-            [:db :kafka-producer :redis :conf :else]
+            [:db :kafka-producer :redis :conf :else] ;
             )))))
 
 (defrecord Worker [kafka-producer]

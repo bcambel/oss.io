@@ -19,18 +19,29 @@ def command_nginx(command='reload'):
 
 
 @task
-def deploy(compile_app=True):
+def release(compile_app=True):
   if compile_app:
     local("lein uberjar")
+  deploy()
 
+@task
+def deploy_assets():
+  put("resources/public/css/style.css", "/var/www/hackersome/public/css/style.css")
+
+@task
+def deploy():
   version = open("VERSION").readlines()[0]
   jar_file = "target/hackersome-{}-standalone.jar".format(version)
   put(jar_file, "/var/www/hackersome/hackersome-latest.jar")
 
-  put("resources/public/css/style.css", "/var/www/hackersome/public/css/style.css")
+  deploy_assets()
   
   with cd("/var/www/hackersome"):
-    sudo("mv hackersome.jar hackersome-old.jar")
+    try:
+      sudo("mv hackersome.jar hackersome-old.jar")
+    except:
+      pass
+
     sudo("mv hackersome-latest.jar hackersome.jar")
 
   sudo("supervisorctl restart prod_hackersome")

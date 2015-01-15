@@ -49,8 +49,9 @@
                 [midje "1.7.0-SNAPSHOT"]
                 [leiningen "2.5.0"]
                 [org.clojure/tools.nrepl "0.2.5"]
+                [raven-clj "1.2.0"]
                 ]
-                
+
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
   :plugins [[lein-environ "1.0.0"]
             [lein-release "1.0.5"]]

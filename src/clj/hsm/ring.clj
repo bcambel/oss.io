@@ -4,6 +4,8 @@
     [ring.util.response     :as resp]
     [cognitect.transit       :as t]
     [clojure.stacktrace     :as clj-stk]
+    [raven-clj.core               :refer  [capture]]
+    [raven-clj.ring               :refer [capture-error]]
     [cheshire.core           :refer :all])
   (:import
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
@@ -20,7 +22,7 @@
 (defn wrap-exception-handler
   "Development only exception handler.
   In the near future plug in sentry"
-  [handler]
+  [handler dsn]
   (fn [req]
     (try
       (handler req)
@@ -31,6 +33,17 @@
       (catch Throwable e
         (do
           (log/error e)
+          
+          (when dsn
+            
+              (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]
+                (log/info "SENTRY: " (deref ft 1000 :timed-out) e))
+              )
+              ; :message (.getMessage e) 
+              ; :exception {
+              ;   :stacktrace (clj-stk/print-stack-trace e) 
+              ;   :type (str (class e))}}
+              ;   ))
           (clj-stk/print-stack-trace e)
         (->
          (resp/response "Sorry. An error occured.")

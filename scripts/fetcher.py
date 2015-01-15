@@ -1,15 +1,16 @@
 import json
 import requests
 import sys
+import time
 
 session = requests.Session()
 
-def fetch_user(user, mode):
+def fetch_user(user, mode=None, sleep=0):
   
-  if mode != '':
-    url = "http://hackersome.com/user2/{}/{}?json=1".format(user, mode)
-  else:
+  if mode is None or mode == '':
     url = "http://hackersome.com/user2/{}?json=1".format(user)
+  else:
+    url = "http://hackersome.com/user2/{}/{}?json=1".format(user, mode)
 
   print "Fetching url", url
 
@@ -25,7 +26,17 @@ def fetch_user(user, mode):
   for o in obj:
     print "Getting " + o
     session.get("http://hackersome.com/user2/{}?json=1".format(o))
+    time.sleep(sleep)
 
 
 if __name__ == "__main__":
-  fetch_user(sys.argv[1], sys.argv[2] if len(sys.argv) >= 3 else "")
+  user,mode,sleep= None, None, 0
+
+  if len(sys.argv) == 2:
+    _, user, mode = sys.argv
+  if len(sys.argv) == 3:
+    _, user, mode = sys.argv
+  if len(sys.argv) == 4:
+    _, user, mode, sleep = sys.argv
+
+  fetch_user(user, mode, float(sleep))
