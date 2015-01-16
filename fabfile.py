@@ -27,9 +27,11 @@ def runx(command):
 
 
 @task
+def compile():
+  local("lein uberjar")
+
+@task
 def release(compile_app=True):
-  if compile_app:
-    local("lein uberjar")
   deploy()
 
 @task
