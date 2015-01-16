@@ -22,7 +22,7 @@
 
 (defn get-user [user-action] 
   (log/info "Download " user-action)
-  (when-let [body (safe-get (format "http://hackersome.com/user2/%s?json=1" user-action))]
+  (when-let [body (safe-get (format "http://hackersome.com/%s?json=1" user-action))]
     (let [content (safe-parse body)]
       [user-action content])))
 
@@ -30,7 +30,7 @@
   [action & [thread-count]]
   (let [[act datasource] (get-user action)]
     (cp/with-shutdown! [net-pool (cp/threadpool (or (Integer/parseInt thread-count) 20))]
-      (def results (cp/upmap net-pool get-user datasource))
+      (def results (cp/upmap net-pool get-user (map #(str "/user2/" %) datasource)))
 
       (doseq [[user-action content] results] 
         (log/info user-action content))
