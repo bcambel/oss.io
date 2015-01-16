@@ -168,6 +168,14 @@
   [seq el]  
   (some #(= el %) seq))
 
+(defn hex-to-str
+  "Partition given key by 2.
+  Concats the char that are found in the position"
+  [s]
+  (apply str
+    (map #(char (Integer/parseInt % 16))
+      (map (fn[x] (apply str x)) (partition 2 s)))))
+
 ;; Following functions borrowed+modified slightly from 
 ;; Peter Taoussanis <https://www.taoensso.com>
 ;; https://github.com/ptaoussanis/encore

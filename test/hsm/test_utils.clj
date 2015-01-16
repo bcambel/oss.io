@@ -169,3 +169,12 @@
 		[1]				'(1)			true
 		[1 [1]]		'(1 [1])	true
 	)
+
+(tabular
+	(fact "Hexadecimal Cassandra keys to String"
+		(hex-to-str ?s ) => ?res)
+		?s 			?res
+		"6d7574686875732f666c6173682d6d6573736167652d636f6e647563746f72" 			"muthhus/flash-message-conductor"
+		"657268756162757368756f2f50726f746f636f6c2d466f726573742d56616d6569" 	"erhuabushuo/Protocol-Forest-Vamei"
+		"726f7566666a2f486f77746f536563757269747942756e646c65" "rouffj/HowtoSecurityBundle"
+		)

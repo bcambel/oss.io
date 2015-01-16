@@ -5,13 +5,26 @@
     [clojure.tools.logging :as log]) 
   (:gen-class))
 
+(defn safe-parse
+  [body]
+  (try
+    (parse-string body)
+    (catch Throwable t
+      (log/error t body))))
+
+(defn safe-get
+  [url]
+  (try
+    (let [response (http/get url)]
+      (:body response))
+    (catch Throwable t
+      (log/warn t))))
+
 (defn get-user [user-action] 
   (log/info "Download " user-action)
-  (let [content (parse-string 
-                  (:body (http/get 
-                    (format "http://hackersome.com/user2/%s?json=1" user-action))))]
-      [user-action content]
-    ))
+  (when-let [body (safe-get (format "http://hackersome.com/user2/%s?json=1" user-action))]
+    (let [content (safe-parse body)]
+      [user-action content])))
 
 (defn -main
   [action & [thread-count]]

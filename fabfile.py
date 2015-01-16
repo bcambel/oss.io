@@ -17,6 +17,14 @@ def install_packages():
 def command_nginx(command='reload'):
     run("service nginx {}".format(command))
 
+@task
+def cassax(command='status'):
+    run("service cassandra {}".format(command))
+
+@task
+def runx(command):
+    run("{}".format(command))
+
 
 @task
 def release(compile_app=True):

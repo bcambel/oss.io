@@ -251,9 +251,7 @@
                           (dbq/limit 10000) ; place a hard limit
                            (when-not (nil? platform) (dbq/where 
                                         [[= :language platform]])))]
-      projects
-    ))
-  )
+      projects)))
 
 (defn load-all-projects
   [db batch-size]
