@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
+            [slingshot.slingshot :refer [throw+ try+]]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
             [hsm.views :refer [layout panel]]
@@ -64,7 +65,7 @@
         user (whois request)
         data (utils/mapkeyw body)]
     (let [res (actions/create-discussion db platform user data)]
-      (event-pipe/create-discussion event-chan {:discussion res  :current-user user})
+      (try+ (event-pipe/create-discussion event-chan {:discussion res  :current-user user}))
       (json-resp res))))
 
 (defn discussions

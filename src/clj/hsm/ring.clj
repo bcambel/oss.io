@@ -6,7 +6,8 @@
     [clojure.stacktrace     :as clj-stk]
     [raven-clj.core               :refer  [capture]]
     [raven-clj.ring               :refer [capture-error]]
-    [cheshire.core           :refer :all])
+    [cheshire.core           :refer :all]
+    )
   (:import
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
@@ -36,7 +37,8 @@
           (when dsn
             
               (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]
-                (log/info "SENTRY: " (deref ft 1000 :timed-out) e))
+                ; (log/info "SENTRY: " (deref ft 1000 :timed-out) e)
+                )
               )
               ; :message (.getMessage e) 
               ; :exception {

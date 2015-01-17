@@ -91,21 +91,24 @@
   (s/validate Discussion data)
   (let [conn (:connection db)
         post (:post data)
+        
         post-info {:id (id-generate) :user_id user :text post}
         additional {:id (id-generate) :published_at (now->ep)
                     :user_id user :platform_id platform
                     :post_id (:id post-info)}
         discussion-info (merge additional (dissoc data :post))]
+    (log/warn post-info)
+    (log/warn discussion-info)
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
     ;; add this update into the atomic-batch as well
     (cql/update conn :post_counter 
-      (dbq/values {
+       {
         :karma (dbq/increment-by 1)
-        :upvotes (dbq/increment-by 1)
-        :views (dbq/increment-by 1)})
+        :up_votes (dbq/increment-by 1)
+        :views (dbq/increment-by 1)}
       (dbq/where {:id (:id post-info)}))
     additional))
 
