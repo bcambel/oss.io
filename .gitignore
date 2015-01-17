@@ -17,4 +17,4 @@ pom.xml.asc
 /.repl
 app.ini
 *.class
-.py[oc]
+*.py[oc]
