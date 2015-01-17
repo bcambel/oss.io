@@ -108,6 +108,12 @@
     (fn[] 
       (get-project-readme redis proj))))
 
+(defn transform-project
+  [x]
+  (let [data (select-keys x [:description :name :language :id :watchers :homepage :full_name])]
+    (-> data
+      (assoc :owner (first (vec (.split (:full_name data) "/")))))))
+
 (defn update-search
   [{:keys [db event-chan redis else]} request]
   (let [index-name  (:index else)
@@ -115,12 +121,10 @@
     (if (nil? es-conn)
       (json-resp {:ok false :reason "Conn failure..."})
       (do
-        ; (when (esi/exists? es-conn index-name)
-        ;   (esi/delete es-conn index-name)
-        ;   (esi/create es-conn index-name))
-        (mapv #(esd/create es-conn index-name "github_project"
-          (select-keys % [:description :name :language :id :watchers :homepage :full_name]))
-        (actions/load-all-projects db 200))
+        (when (esi/exists? es-conn index-name)
+          (esi/flush es-conn index-name :refresh true))
+        (mapv #(esd/create es-conn index-name "github_project" (transform-project %))
+          (actions/load-all-projects db 200))
         (json-resp {:ok 1})))))
 
 (defn search

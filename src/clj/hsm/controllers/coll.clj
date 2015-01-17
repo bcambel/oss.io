@@ -4,7 +4,7 @@
     [clojure.tools.logging :as log]
     [hiccup.def                   :refer [defhtml]]
     [hsm.actions :as actions]
-    [hsm.views :refer [layout panel]]
+    [hsm.views :refer [layout panel render-user]]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.utils :refer [type-of id-of host-of body-of mapkeyw id-generate whois !nil?]]))
 
@@ -66,13 +66,12 @@
             [:a.gh-btn {:href "#" :onclick submit-form}
               [:i.fa.fa-star] " Star "]]
 
-          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/stargazers")} 12]
+          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/stargazers")} (:stargazers c)]
           [:form { :action (str "/collections/" (:id c) "/fork") :data-remote "true" :data-redirect :true :method "POST" }
             [:a.gh-btn {:href "#" :onclick submit-form}
               [:i.fa.fa-code-fork]
               [:span.gh-text "Fork"]]]
-          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/forks")} 0]]
-          ]]
+          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/forks")} (:forks c)]]]]
 
       [:div.panel-body
         [:p (:description c)]
@@ -99,11 +98,23 @@
   (let [host (host-of request)
         is-json? (type-of request :json)
         id (BigInteger. (id-of request))
-        coll (first (actions/get-collection db id))]
+        coll (first (actions/get-collection db id))
+        coll-extra (actions/get-collection-extra db id)
+        coll (merge coll {:stargazers (count (:stargazers coll-extra)) :forks  (count (:forks coll-extra))})
+        coll-followers (partial actions/load-users-by-id db) ]
+    (log/warn coll-extra)
     (if is-json?
       (json-resp coll)
       (layout host
-        (render-collection coll)))))
+        (render-collection coll)
+        [:hr]
+        (let [stargazers (coll-followers (vec (:stargazers coll-extra)))]
+          (panel "Stargazers"
+            [:div.row.user-list 
+              (for [x (reverse (sort-by :followers stargazers))]
+                [:div.col-lg-3.user-thumb
+                  (render-user x)])]))
+        ))))
   
 
 (defn create-coll
@@ -122,7 +133,8 @@
   [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json (type-of request :json)
-        colls (actions/load-collections db 10)]
+        colls (actions/load-collections db 10)
+        colls (map #(merge % {:stargazers 0 :forks 0}) colls)]
     (if is-json
       (json-resp colls)
       (layout host
@@ -163,6 +175,7 @@
       (let [new-id (id-generate)
             new-coll (merge coll {:id new-id :user_id user-id})]
         (actions/create-collection db new-coll)
+        (actions/add-collection-fork db id new-id)
         (json-resp {:id new-id :url (str "/collections/" new-id) }))
       (json-resp {:ok 1}))))
 

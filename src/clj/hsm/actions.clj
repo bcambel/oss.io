@@ -424,8 +424,15 @@
 (defn get-collection-extra
   [db id]
   (let [conn (:connection db)]
-      (cql/select conn :collection_list
+      (first (cql/select conn :collection_list
         (dbq/limit 1)
+        (dbq/where [[:= :id id]])))))
+
+(defn add-collection-fork
+  [db id fork-id]
+  (let [conn (:connection db)]
+      (cql/update conn :collection_list
+        {:forks [+ #{(str fork-id)}]}
         (dbq/where [[:= :id id]]))))
 
 (defn delete-collection
