@@ -93,10 +93,14 @@
               content]]
           [:div.col-lg-1]
          ]
+        [:script {:type "text/javascript"} "var session = {};"]
+        (include-js "//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js")
         (include-js "//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js")
         (include-js "//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")
         (include-js "//cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.4/typeahead.bundle.min.js")
         (include-js "//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js")
+        (include-js "/js/app.js")
+
         (when (if (nil? is-dev?) true is-dev?)
           [:script {:type "text/javascript"}
           (str 

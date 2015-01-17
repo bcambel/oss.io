@@ -397,8 +397,13 @@
 (defn load-collections
   [db limit-by]
   (let [conn (:connection db)]
-      (cql/select conn :collection))
-  )
+      (cql/select conn :collection)))
+
+(defn create-collection
+  [db data]
+  (let [conn (:connection db)]
+    (cql/insert conn
+      :collection data)))
 
 (defn update-collection
   [db id items]

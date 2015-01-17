@@ -6,13 +6,13 @@
     [hsm.actions :as actions]
     [hsm.views :refer [layout panel]]
     [hsm.ring :refer [json-resp html-resp redirect]]
-    [hsm.utils :refer [type-of id-of host-of body-of]]))
+    [hsm.utils :refer [type-of id-of host-of body-of mapkeyw id-generate]]))
 
 (defn add-p-coll
   [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json (type-of request :json)
-        id (Integer/parseInt (id-of request))
+        id (BigInteger. (id-of request))
         body (body-of request)
         project-form-param (get (:form-params request) "project")
         project-to-add (if-not (nil? project-form-param) project-form-param (get body "project"))
@@ -82,7 +82,7 @@
   [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json? (type-of request :json)
-        id (Integer/parseInt (id-of request))
+        id (BigInteger. (id-of request))
         coll (first (actions/get-collection db id))]
     (if is-json?
       (json-resp coll)
@@ -91,8 +91,17 @@
   
 
 (defn create-coll
-  [{:keys [db event-chan redis conf]} request] 
-  )
+  [{:keys [db event-chan redis conf]} request]
+  (let [body (body-of request)
+        data (select-keys (mapkeyw body) [:name])
+        new-id (id-generate)]
+    ; (log/warn request)
+    ; (log/warn body)
+    ; (log/warn data)
+    (actions/create-collection db (merge {:id new-id} data))
+    (json-resp { :id (str new-id) } )
+  ))
+
 (defn load-coll
   [[db event-chan] request]
   (let [host (host-of request)
@@ -101,6 +110,12 @@
     (if is-json
       (json-resp colls)
       (layout host
+        [:form {:action "/collections/create" :method "POST" :data-remote "true" :id :create-coll}
+          [:div.form-group
+          [:input.form-control {:type :text :name :name }]
+          [:input {:type :hidden :name :test :value 1}]]
+          [:button.btn.btn-primary {:type :submit} "Create"]
+        ]
         [:div.row
           (for [c colls]
             [:div.col-lg-6
