@@ -18,18 +18,18 @@
     content])
 
 (defhtml panelx
-  ([header body-css & content ]
+  ([header footer body-css & content ]
     (let [panel-body-css (s/join " " 
                             (conj (set body-css) "panel-body"))]
       [:div.panel.panel-default 
         [:div.panel-heading header]
         [:div {:class panel-body-css} 
           content]
-        [:div.panel-footer "Footer"]])))
+        [:div.panel-footer footer]])))
 
 (defhtml panel
   [header & content]
-    (panelx header ["panel-body"] content))
+    (panelx header "" ["panel-body"] content))
 
 (defhtml languages-pane
   []
