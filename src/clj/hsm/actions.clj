@@ -421,6 +421,13 @@
         (dbq/limit 1)
         (dbq/where [[:= :id id]]))))
 
+(defn get-collection-extras-by-id
+  [db id-list]
+  (let [conn (:connection db)]
+      (cql/select conn :collection_list
+        (dbq/limit 1000)
+        (dbq/where [[:in :id id-list]]))))
+
 (defn get-collection-extra
   [db id]
   (let [conn (:connection db)]

@@ -122,34 +122,40 @@
   (let [body (body-of request)
         data (select-keys (mapkeyw body) [:name])
         new-id (id-generate)]
-    ; (log/warn request)
-    ; (log/warn body)
-    ; (log/warn data)
     (actions/create-collection db (merge {:id new-id} data))
-    (json-resp { :id (str new-id) :url (format "/collections/%s" new-id) } )
-  ))
+    (json-resp {:id (str new-id) 
+                :url (format "/collections/%s" new-id) } )))
+
+(defn find-extra-of
+  [coll-extras x]
+  (let [candidate (first (filter #(= (:id %) (:id x)) coll-extras))
+        data (or candidate { :stargazers #{} :forks #{}})]
+
+    (merge x {:stargazers (count (:stargazers data)) 
+              :forks (count (:forks data))})))
 
 (defn load-coll
   [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json (type-of request :json)
         colls (actions/load-collections db 10)
-        colls (map #(merge % {:stargazers 0 :forks 0}) colls)]
-    (if is-json
-      (json-resp colls)
-      (layout host
-        [:div.jumbotron
-          [:h3 "Create a List/Collection to group your projects together "]
-          [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
-            [:div.form-group
-            [:input.form-control {:type :text :name :name }]
-            [:input {:type :hidden :name :test :value 1}]]
-            [:button.btn.btn-primary {:type :submit} "Create"]]]
-        [:div.row
-          (for [c colls]
-            [:div.col-lg-6
-              (render-collection c)]
-            )]))))
+        coll-extras (actions/get-collection-extras-by-id db (map :id colls))]
+    (let [colls (map (partial find-extra-of coll-extras) colls)]
+      (log/warn colls)
+      (if is-json
+        (json-resp colls)
+        (layout host
+          [:div.jumbotron
+            [:h3 "Create a List/Collection to group your projects together "]
+            [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
+              [:div.form-group
+              [:input.form-control {:type :text :name :name }]
+              [:input {:type :hidden :name :test :value 1}]]
+              [:button.btn.btn-primary {:type :submit} "Create"]]]
+          [:div.row
+            (for [c colls]
+              [:div.col-lg-6
+                (render-collection c)])])))))
 
 (defn star-coll
   [{:keys [db event-chan redis conf]} request]
