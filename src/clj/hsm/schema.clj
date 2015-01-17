@@ -235,6 +235,12 @@
             :updated      :bigint
             :primary-key  [:id]
   }
+  :collection_list {
+            :id           :bigint
+            :stargazers   (cq/set-type :text) ;user-ids/logins
+            :forks        (cq/set-type :text) ;collection-id
+            :primary-key  [:id]
+  }
 
   :github_project {
             :id :bigint

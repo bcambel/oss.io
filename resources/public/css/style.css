@@ -163,9 +163,15 @@ i{
 .coll-row > *{
   margin-right:10px;
 }
+
 .actions {
   font-size:16px;
 }
+
+.actions form{ 
+  float:left;
+}
+
 .actions a.gh-count {
   margin-right:10px;
 }

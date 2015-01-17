@@ -6,7 +6,7 @@
     [hsm.actions :as actions]
     [hsm.views :refer [layout panel]]
     [hsm.ring :refer [json-resp html-resp redirect]]
-    [hsm.utils :refer [type-of id-of host-of body-of mapkeyw id-generate]]))
+    [hsm.utils :refer [type-of id-of host-of body-of mapkeyw id-generate whois !nil?]]))
 
 (defn add-p-coll
   [{:keys [db event-chan redis conf]} request]
@@ -62,15 +62,17 @@
         [:h3 {:style "display:inline;"}
           [:a {:href (str "/collections/" (:id c))}(:name c)]
         [:div.button-group.pull-right.actions
-          [:a.gh-btn {:href (str "/collections/" (:id c) "/star")}  
-            [:i.fa.fa-star] " Star " ]
-            [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/star")} 12]
+          [:form { :action (str "/collections/" (:id c) "/star") :data-remote "true"  :method "POST" }
+            [:a.gh-btn {:href "#" :onclick submit-form}
+              [:i.fa.fa-star] " Star "]]
 
-          [:a.gh-btn {:href (str "/collections/" (:id c) "/fork")}  
-            [:i.fa.fa-code-fork] 
-            [:span.gh-text "Fork"]
-            ]
-            [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/fork")} 0]]]]
+          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/stargazers")} 12]
+          [:form { :action (str "/collections/" (:id c) "/fork") :data-remote "true" :data-redirect :true :method "POST" }
+            [:a.gh-btn {:href "#" :onclick submit-form}
+              [:i.fa.fa-code-fork]
+              [:span.gh-text "Fork"]]]
+          [:a.gh-count {:style "display:block" :href (str "/collections/" (:id c) "/forks")} 0]]
+          ]]
 
       [:div.panel-body
         [:p (:description c)]
@@ -125,21 +127,49 @@
       (json-resp colls)
       (layout host
         [:div.jumbotron
-          [:h3 "Create a List/Collection to group your projects together "
-              ; [:ul 
-              ;   [:li [:a {:href "/collections/python"} "Python"]]
-              ;   [:li [:a {:href "/collections/clojure"} "Clojure"]]
-              ; ]
-              ]
-        [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
-          [:div.form-group
-          [:input.form-control {:type :text :name :name }]
-          [:input {:type :hidden :name :test :value 1}]]
-          [:button.btn.btn-primary {:type :submit} "Create"]]
-        ]
+          [:h3 "Create a List/Collection to group your projects together "]
+          [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
+            [:div.form-group
+            [:input.form-control {:type :text :name :name }]
+            [:input {:type :hidden :name :test :value 1}]]
+            [:button.btn.btn-primary {:type :submit} "Create"]]]
         [:div.row
           (for [c colls]
             [:div.col-lg-6
               (render-collection c)]
             )]))))
+
+(defn star-coll
+  [{:keys [db event-chan redis conf]} request]
+  (let [host (host-of request)
+        is-json? (type-of request :json)
+        id (BigInteger. (id-of request))
+        user-id (str (whois request))
+        coll (first (actions/get-collection db id))
+        user-set #{user-id}]
+    (log/warn "[STAR]" id user-id user-set)
+    (when (!nil? coll)
+      (actions/star-collection db id user-set))
+    (json-resp {:ok 1})
+  ))
+
+(defn fork-coll
+  [{:keys [db event-chan redis conf]} request]
+  (let [host (host-of request)
+        is-json? (type-of request :json)
+        id (BigInteger. (id-of request))
+        user-id (whois request)]
+    (if-let [coll (first (actions/get-collection db id))]
+      (let [new-id (id-generate)
+            new-coll (merge coll {:id new-id :user_id user-id})]
+        (actions/create-collection db new-coll)
+        (json-resp {:id new-id :url (str "/collections/" new-id) }))
+      (json-resp {:ok 1}))))
+
+
+(defn coll-stargazers
+  [{:keys [db event-chan redis conf]} request])
+
+(defn coll-forks
+  [{:keys [db event-chan redis conf]} request])
 

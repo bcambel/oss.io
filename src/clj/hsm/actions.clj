@@ -403,7 +403,9 @@
   [db data]
   (let [conn (:connection db)]
     (cql/insert conn
-      :collection data)))
+      :collection data)
+    (cql/insert conn 
+      :collection_list { :id (:id data)})))
 
 (defn update-collection
   [db id items]
@@ -419,11 +421,22 @@
         (dbq/limit 1)
         (dbq/where [[:= :id id]]))))
 
+(defn get-collection-extra
+  [db id]
+  (let [conn (:connection db)]
+      (cql/select conn :collection_list
+        (dbq/limit 1)
+        (dbq/where [[:= :id id]]))))
+
 (defn delete-collection
   [db id]
   (let [conn (:connection db)]
       (cql/delete conn :collection
-        (dbq/where [[:= :id id]])))
-  )
+        (dbq/where [[:= :id id]]))))
 
-
+(defn star-collection
+  [db id user-set]
+  (let [conn (:connection db)]
+      (cql/update conn :collection_list
+        {:stargazers [+ user-set]}
+        (dbq/where [[:= :id id]]))))
