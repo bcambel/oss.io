@@ -5,12 +5,12 @@
         [clojurewerkz.cassaforte.cql  :as cql]
         [clojure.tools.logging        :as log]
         [hsm.dev                      :refer :all]
-        [hsm.controllers.user         :as cont-user]
-        [hsm.controllers.post         :as cont-post]
-        [hsm.controllers.project      :as cont-project]
+        [hsm.controllers.user         :as c.u]
+        [hsm.controllers.post         :as c.p]
+        [hsm.controllers.project      :as c.pr]
         [hsm.controllers.coll         :as c.coll]
-        [hsm.controllers.discussion   :as cont-disc]
-        [hsm.controllers.main         :as c.main]
+        [hsm.controllers.discussion   :as c.d]
+        [hsm.controllers.main         :as c.m]
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log]]
         [hsm.system.kafka             :as sys.kafka]
@@ -55,49 +55,61 @@
         (resources "/")
         (resources "/react" {:root "react"})
         ; (GET  "/" req (defaultpage))
-        (GET  "/"                         request (c.main/homepage [db event-chan] request))
-        (GET  "/test"                     request (sample-conn db request))
-        (POST "/user/create"              request (cont-user/create-user [db event-chan] request))
-        (POST "/post/create"              request (cont-post/create-post [db event-chan] request))
-        (POST "/discussion/create"        request (cont-disc/create-discussion [db event-chan] request))
-        (GET  "/discussion/:id"           [id request] (cont-disc/get-discussion [db event-chan] id request))
-        (GET  "/discussion/:id/posts"     [id request] (cont-disc/get-discussion-posts [db event-chan] id request))
-        (POST "/discussion/:id/post/create" request (cont-disc/post-discussion [db event-chan] request))
-        (POST "/discussion/:id/follow"    [id request] (cont-disc/follow-discussion [db event-chan] id request))
-        (POST "/discussion/:id/unfollow"  [id request] (cont-disc/unfollow-discussion [db event-chan] id request))
-        (GET  "/users"                    request (cont-user/some-user specs request))
-        (GET  "/user2/:id"                request (cont-user/get-user2 specs request))
-        (GET  "/user2/:id/sync"           request (cont-user/sync-user2 [db event-chan] request))
-        (GET  "/user2/:id/followers"      request (cont-user/user2-follower specs request))
-        (GET  "/user2/:id/following"      request (cont-user/user2-following specs request))
-        (GET  "/user2/:id/starred"        request (cont-user/user2-starred specs request))
-        (GET  "/user2/:id/contrib"        request (cont-user/user2-contrib specs request))
-        (GET  "/user2/:id/activity"       request (cont-user/user2-activity specs request))
-        (GET  "/user/:id"                 request (cont-user/get-user [db event-chan] request))
-        (GET  "/user/:id/activity"        request (cont-user/get-user-activity [db event-chan] request))
-        (POST "/user/:id/follow"          request (cont-user/follow-user [db event-chan] request))
-        (POST "/user/:id/unfollow"        request (cont-user/unfollow-user [db event-chan] request))
-        (GET  "/user/:id/followers"       request (cont-user/get-user-followers [db event-chan] request))
-        (GET  "/user/:id/following"       request (cont-user/get-user-following [db event-chan] request))
-        (POST "/link/create"              request (cont-post/create-link [db event-chan] request))
-        (POST "/link/:id/upvote"          request (cont-post/upvote-link [db event-chan] request))
-        (GET  "/link/:id"                 request (cont-post/show-link [db event-chan] request))
-        (GET  "/links/:date"              request (cont-post/list-links [db event-chan] request))
-        (GET  "/p/:user/:project"         request (cont-project/get-proj specs request))
-        (GET  "/p/:user/:project/:mod"    request (cont-project/get-proj-module specs request))
-        (GET  "/top-projects"             request (cont-project/list-top-proj specs request))
-        (GET  "/:platform/index"          request (c.main/platform specs request))
-        (GET  "/:platform/top-projects"   request (cont-project/list-top-proj specs request))
-        (GET  "/:platform/discussions"    request (cont-disc/discussions [db event-chan] request))
-        (GET  "/collections"              request (c.coll/load-coll [db event-chan] request))
-        (POST  "/collections/create"      request (c.coll/create-coll specs request))
-        (GET  "/collections/:id"          request (c.coll/get-coll specs request))
-        (GET  "/collections/:id/rm"       request (c.coll/rm-coll specs request))
-        (POST  "/collections/:id/add"     request (c.coll/add-p-coll specs request))
-        (POST  "/collections/:id/delete"  request (c.coll/del-p-coll specs request))
-        (GET  "/import/:language"         [language] (json-resp (ghub/import-repos [db event-chan] language)))
-        (GET  "/search"                   request (cont-project/search specs request))
-        (GET  "/search/update"            request (cont-project/update-search specs request))
+        (GET  "/"                                 request (c.m/homepage [db event-chan] request))
+        (GET  "/test"                             request (sample-conn db request))
+        ; (POST "/user/create"                    request (c.u/create-user [db event-chan] request))
+        (POST "/post/create"                      request (c.p/create-post [db event-chan] request))
+
+        (POST "/discussion/create"                request (c.d/create-discussion [db event-chan] request))
+        (GET  "/discussion/:id"                   [id request] (c.d/get-discussion [db event-chan] id request))
+        (GET  "/discussion/:id/posts"             [id request] (c.d/get-discussion-posts [db event-chan] id request))
+        (POST "/discussion/:id/post/create"       request (c.d/post-discussion [db event-chan] request))
+        (POST "/discussion/:id/follow"            [id request] (c.d/follow-discussion [db event-chan] id request))
+        (POST "/discussion/:id/unfollow"          [id request] (c.d/unfollow-discussion [db event-chan] id request))
+
+        (GET  "/users"                            request (c.u/some-user specs request))
+        (GET  "/user2/:id"                        request (c.u/get-user2 specs request))
+        (GET  "/user2/:id/sync"                   request (c.u/sync-user2 [db event-chan] request))
+        (GET  "/user2/:id/followers"              request (c.u/user2-follower specs request))
+        (GET  "/user2/:id/following"              request (c.u/user2-following specs request))
+        (GET  "/user2/:id/starred"                request (c.u/user2-starred specs request))
+        (GET  "/user2/:id/contrib"                request (c.u/user2-contrib specs request))
+        (GET  "/user2/:id/activity"               request (c.u/user2-activity specs request))
+        
+        (GET  "/user/:id"                         request (c.u/get-user [db event-chan] request))
+        (GET  "/user/:id/activity"                request (c.u/get-user-activity [db event-chan] request))
+        (POST "/user/:id/follow"                  request (c.u/follow-user [db event-chan] request))
+        (POST "/user/:id/unfollow"                request (c.u/unfollow-user [db event-chan] request))
+        (GET  "/user/:id/followers"               request (c.u/get-user-followers [db event-chan] request))
+        (GET  "/user/:id/following"               request (c.u/get-user-following [db event-chan] request))
+        
+        (POST "/link/create"                      request (c.p/create-link [db event-chan] request))
+        (POST "/link/:id/upvote"                  request (c.p/upvote-link [db event-chan] request))
+        (GET  "/link/:id"                         request (c.p/show-link [db event-chan] request))
+        (GET  "/links/:date"                      request (c.p/list-links [db event-chan] request))
+        
+        (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))
+        (GET  "/p/:user/:project/:mod"            request (c.pr/get-proj-module specs request))
+        
+        (GET  "/top-projects"                     request (c.pr/list-top-proj specs request))
+        (GET  "/:platform/index"                  request (c.m/platform specs request))
+        (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
+        (GET  "/:platform/discussions"            request (c.d/discussions [db event-chan] request))
+
+        (GET  "/collections"                      request (c.coll/load-coll specs request))
+        (POST "/collections/create"               request (c.coll/create-coll specs request))
+        (GET  "/collections/:id"                  request (c.coll/get-coll specs request))
+        (GET  "/collections/:id/rm"               request (c.coll/rm-coll specs request))
+        (GET  "/collections/:id/stargazers"       request (c.coll/coll-stargazers specs request))
+        (GET  "/collections/:id/forks"            request (c.coll/coll-forks specs request))
+        (POST "/collections/:id/star"             request (c.coll/star-coll specs request))
+        (POST "/collections/:id/fork"             request (c.coll/fork-coll specs request))
+        (POST "/collections/:id/add"              request (c.coll/add-p-coll specs request))
+        (POST "/collections/:id/delete"           request (c.coll/del-p-coll specs request))
+
+        (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
+        (GET  "/search"                   request (c.pr/search specs request))
+        (GET  "/search/update"            request (c.pr/update-search specs request))
         (route/not-found "Page not found")
         ))
 

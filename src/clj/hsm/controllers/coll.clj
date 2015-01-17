@@ -87,9 +87,9 @@
           [:form {:method "POST" :action (format "/collections/%s/add" (:id c)) :style "display:none;"}
             [:div#remote 
               [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]]
-              [:a.btn.btn-default {:href "#" :onclick submit-form} "Add"]]
+              [:a.btn.btn-default {:href "#" :rel "nofollow" :onclick submit-form} "Add"]]
 
-          [:a.red.pull-right {:href (format "/collections/%s/rm" (:id c)) } "Delete"]
+          [:a.red.pull-right {:href (format "/collections/%s/rm" (:id c)) :rel "nofollow" } "Delete"]
               ]])
 
 (defn get-coll
@@ -117,7 +117,7 @@
   ))
 
 (defn load-coll
-  [[db event-chan] request]
+  [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json (type-of request :json)
         colls (actions/load-collections db 10)]
