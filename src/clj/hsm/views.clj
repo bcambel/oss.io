@@ -24,7 +24,8 @@
       [:div.panel.panel-default 
         [:div.panel-heading header]
         [:div {:class panel-body-css} 
-          content]])))
+          content]
+        [:div.panel-footer "Footer"]])))
 
 (defhtml panel
   [header & content]
@@ -82,7 +83,7 @@
                          [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
                   [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
                     [:div.form-group 
-                      [:input.form-control.typeahead {:type "text" :name "project"}]
+                      [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]
 
                     ][:button {:type "Submit"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]

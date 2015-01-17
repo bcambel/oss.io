@@ -92,6 +92,7 @@
         (GET  "/collections"              request (c.coll/load-coll [db event-chan] request))
         (POST  "/collections/create"      request (c.coll/create-coll specs request))
         (GET  "/collections/:id"          request (c.coll/get-coll specs request))
+        (GET  "/collections/:id/rm"       request (c.coll/rm-coll specs request))
         (POST  "/collections/:id/add"     request (c.coll/add-p-coll specs request))
         (POST  "/collections/:id/delete"  request (c.coll/del-p-coll specs request))
         (GET  "/import/:language"         [language] (json-resp (ghub/import-repos [db event-chan] language)))

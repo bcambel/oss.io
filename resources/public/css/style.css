@@ -85,13 +85,17 @@ i{
   padding-right:20px;
 }
 
+#remote{
+  float:left;
+}
+
 .typeahead,
 .tt-query,
 .tt-hint {
   /*width: 396px;*/
   /*height: 30px;*/
-  padding: 8px 12px;
-  font-size: 24px;
+  /*padding: 8px 12px;*/
+  /*font-size: 24px;*/
   line-height: 30px;
   border: 2px solid #ccc;
   -webkit-border-radius: 8px;
@@ -158,6 +162,9 @@ i{
 }
 .coll-row > *{
   margin-right:10px;
+}
+.actions {
+  font-size:16px;
 }
 .actions a.gh-count {
   margin-right:10px;

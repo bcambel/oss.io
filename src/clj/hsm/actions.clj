@@ -417,5 +417,13 @@
   (let [conn (:connection db)]
       (cql/select conn :collection
         (dbq/limit 1)
+        (dbq/where [[:= :id id]]))))
+
+(defn delete-collection
+  [db id]
+  (let [conn (:connection db)]
+      (cql/delete conn :collection
         (dbq/where [[:= :id id]])))
   )
+
+
