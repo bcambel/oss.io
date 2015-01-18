@@ -9,7 +9,7 @@
             [hsm.pipe.event :as event-pipe]
             [hsm.views :refer [layout panel panelx render-user]]
             [hsm.ring :refer [json-resp html-resp redirect]]
-            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of !!nil? cutoff]]))
+            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of !!nil? cutoff mapkeyw]]))
 
 (defn load-discussions
   [{:keys [db event-chan redis conf]} request]
@@ -72,7 +72,7 @@
                       [:div.btn-group.pull-right
                       [:a.btn.btn-default {:href "#"} [:i.fa.fa-reply]]
                       [:a.btn.btn-default {:href "#"} [:i.fa.fa-share]]
-                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-edit]]
+                      [:a.btn.btn-default {:href (format "/discussion/%s/post/%s/edit" disc-id (:id p)) } [:i.fa.fa-edit]]
                       [:a.btn.btn-default {:href "#" :data-remote :true 
                                           :data-method :POST
                                           :data-redirect :true
@@ -80,7 +80,7 @@
                         [:i.fa.fa-trash]]]
                     ]
                   ]
-                  [:div.post-body
+                  [:div.post-body ;{:id (str "post-" (:id p))}
                     (md-to-html-string (:text p) :heading-anchors true :reference-links? true)]])
               [:hr]
               [:div.row.discussion-buttons
@@ -133,6 +133,41 @@
       (redirect (str "/discussion/" id))
       )
   ))
+
+(defn update-post-discussion
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user]} (common-of request)
+        post-id (BigInteger. (id-of request :pid))
+        disc-id (BigInteger. id)
+        post (actions/load-post db post-id)
+        data (mapkeyw body)]
+    (log/warn data)
+    (actions/update-post db post-id (select-keys data [:text]))
+    (json-resp {:url (str "/discussion/" disc-id)})))
+
+(defn edit-post-discussion
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user]} (common-of request)
+        post-id (BigInteger. (id-of request :pid))
+        disc-id (BigInteger. id)
+        discussion (actions/load-discussion db disc-id)
+        post (actions/load-post db post-id)]
+    (layout host 
+      [:div#reply-section.bs-callout.bs-callout-info
+        [:h4 "Editing your post for the following discussion"]
+        [:p (md-to-html-string (get-in discussion [:post :text]))]
+        [:hr]
+        [:form {:data-remote :true :action (format "/discussion/%s/post/%s/edit" disc-id post-id ) 
+                :method :POST :data-redirect :true}
+          [:div.form-group
+            [:label "You said.."]
+
+            [:textarea.form-control {:type :text :name :text 
+                                    :rows 10 :data-provide :markdown 
+                                    :data-iconlibrary :fa} (:text post)]]
+          [:button.btn.btn-success {:type :submit} "Start Discussion"]  
+            ]]
+        )))
 
 (defn post-discussion
   [{:keys [db event-chan redis conf]} request]

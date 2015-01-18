@@ -65,7 +65,9 @@
         (GET  "/discussion/:id"                   request (c.d/get-discussion specs request))
         (GET  "/discussion/:id/posts"             request (c.d/get-discussion-posts specs request))
         (POST "/discussion/:id/post/create"       request (c.d/post-discussion specs request))
-        (POST "/discussion/:id/post/:pid/delete" request (c.d/rm-post-discussion specs request))
+        (POST "/discussion/:id/post/:pid/delete"  request (c.d/rm-post-discussion specs request))
+        (GET  "/discussion/:id/post/:pid/edit"    request (c.d/edit-post-discussion specs request))
+        (POST  "/discussion/:id/post/:pid/edit"   request (c.d/update-post-discussion specs request))
         (POST "/discussion/:id/follow"            request (c.d/follow-discussion specs request))
         (POST "/discussion/:id/unfollow"          request (c.d/unfollow-discussion specs request))
 

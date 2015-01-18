@@ -205,6 +205,12 @@
 
 ;; POST Related
 
+(defn update-post
+  [{:keys [connection]} post-id data]
+  (cql/update connection :post
+    data
+    (dbq/where [[:= :id post-id]])))
+
 (defn create-post
   [db post user]
   (s/validate Post post)
