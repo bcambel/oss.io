@@ -50,6 +50,7 @@
                 [leiningen "2.5.0"]
                 [org.clojure/tools.nrepl "0.2.5"]
                 [raven-clj "1.2.0"]
+                [markdown-clj "0.9.62"]
                 ]
 
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
@@ -57,7 +58,7 @@
             [lein-release "1.0.5"]
             [s3-wagon-private "1.1.2"]]
   :repositories [["private" {:url "s3p://hackersome/releases/" :creds :gpg}]]
-  
+
   :codox {:defaults {:doc/format :markdown}
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}

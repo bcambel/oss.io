@@ -1,6 +1,7 @@
 (ns hsm.controllers.discussion
   (:require [clojure.tools.logging :as log]
             [clojure.java.io :as io]
+            [markdown.core :refer [md-to-html-string]]
             [cheshire.core :refer :all]
             [ring.util.response :as resp]
             [slingshot.slingshot :refer [throw+ try+]]
@@ -22,25 +23,21 @@
       (html-resp
           (layout host 
             (panelx
-              [:h3 (:title discussion)]
-              "" ""
-              [:div.bs-callout
-                [:p (get-in discussion [:post :text])]]
+              [:h3 (:title discussion)] "" ""
+              [:div.bs-callout.bs-callout-danger
+                [:p (get-in discussion [:post :text])]
+                [:a.btn.btn-primary {:href "#reply-section"} "Reply"]]
               [:hr]
                (for [p posts]
                 [:div.bs-callout
-                  [:p (:text p)]]
-                )
+                    (md-to-html-string (:text p))])
               [:hr]
-              [:form {:data-remote :true :action (str "/discussion/" id  "/post/create") :method :POST}
-                [:div.form-group
-                  [:textarea.form-control {:type :text :name :text :rows 10}]]
-
-                [:button.btn.btn-success {:type :submit} "Post"]
-              ]
-              )
-            )
-    ))))
+              [:div#reply-section.bs-callout.bs-callout-info
+                [:h4 "Reply to the post"]
+                [:form {:data-remote :true :action (str "/discussion/" id  "/post/create") :method :POST}
+                  [:div.form-group
+                    [:textarea.form-control {:name :text :rows 10 :data-provide :markdown}]]
+                  [:button.btn.btn-success {:type :submit} "Post"]]]))))))
 
 (defn ^:private following-discussion
   [f act-name {:keys [db event-chan redis conf]} request]
