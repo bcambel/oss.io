@@ -32,7 +32,7 @@
                 (cutoff (get-in x [:post :text]) 200)]]]
               [:div.col-lg-3 "Users"]
               [:div.col-lg-1 "Count"]
-              [:div.col-lg-2 "Activity"]
+              [:div.col-lg-2 (:published_at x)]
               ]]))))))
 
 (defn get-discussion 
