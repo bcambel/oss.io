@@ -50,57 +50,57 @@
                "" ""
             [:div.row 
               [:div.col-lg-10
-              [:div.bs-callout.bs-callout-danger
-                [:div.post-head.row
+                [:div.bs-callout.bs-callout-danger {:style "background-color:#f4f4f4;" }
+                  [:div.post-head.row 
+                        [:div.col-lg-6
+                        (render-user (actions/load-user2 db "bcambel") :show-followers false)]
+                        [:div.col-lg-6
+                        [:div.btn-group.pull-right.post-actions
+                        [:a.btn.pull-right {:href (format "/discussion/%s/post/%s/edit" disc-id (:id (:post discussion))) :style "font-weight:bolder;"} [:i.fa.fa-edit]]
+                        [:a.btn. {:href "#reply-section" :onclick "$('#reply-section').toggle();" :style "display:block;"} 
+                          [:i.fa.fa-reply] "Reply"]]
+                        ]
+                        ]
+                  [:h4 (:title discussion)]
+                  [:p (md-to-html-string (get-in discussion [:post :text]))]]
+                ; [:hr]
+                (when-not (!!nil? posts)
+                  [:div.bs-callout.bs-callout-warning [:h4 "No posts yet."] 
+                    [:p "Be the first one to answer! The unicorns will be with you all the time."]])
+                 (for [p posts]
+                  [:div.bs-callout.row.post {:id (str "post-" (:id p)) :data-id (:id p) }
+                    [:div.post-head.row
                       [:div.col-lg-6
-                      (render-user (actions/load-user2 db "bcambel") :show-followers false)]
+                        (render-user (actions/load-user2 db "bcambel"))]
                       [:div.col-lg-6
-                      [:a.btn.btn-default.pull-right {:href (format "/discussion/%s/post/%s/edit" disc-id (:id (:post discussion))) } [:i.fa.fa-edit]]]
+                        [:div.btn-group.pull-right.post-actions
+                        [:a.btn {:href "#"} [:i.fa.fa-reply]]
+                        [:a.btn {:href "#"} [:i.fa.fa-share]]
+                        [:a.btn {:href (format "/discussion/%s/post/%s/edit" disc-id (:id p)) } [:i.fa.fa-edit]]
+                        [:a.btn {:href "#" :data-remote :true 
+                                            :data-method :POST
+                                            :data-redirect :true
+                                            :data-url (format "/discussion/%s/post/%s/delete" disc-id (:id p) ) } 
+                          [:i.fa.fa-trash]]]
                       ]
-                [:h4 (:title discussion)]
-                [:p (md-to-html-string (get-in discussion [:post :text]))]
-
-                [:hr]
-                [:div.row 
-                [:a.btn.btn-primary.btn-xs.pull-right {:href "#reply-section" :onclick "$('#reply-section').toggle();" :style "display:block;"} 
-                  [:i.fa.fa-reply] "Reply"]]]
-              ; [:hr]
-              (when-not (!!nil? posts)
-                [:div.bs-callout.bs-callout-warning [:h4 "No posts yet."] 
-                  [:p "Be the first one to answer! The unicorns will be with you all the time."]])
-               (for [p posts]
-                [:div.bs-callout.row.post {:id (str "post-" (:id p)) :data-id (:id p) }
-                  [:div.post-head.row
-                    [:div.col-lg-6
-                      (render-user (actions/load-user2 db "bcambel"))]
-                    [:div.col-lg-6
-                      [:div.btn-group.pull-right.post-actions
-                      [:a.btn {:href "#"} [:i.fa.fa-reply]]
-                      [:a.btn {:href "#"} [:i.fa.fa-share]]
-                      [:a.btn {:href (format "/discussion/%s/post/%s/edit" disc-id (:id p)) } [:i.fa.fa-edit]]
-                      [:a.btn {:href "#" :data-remote :true 
-                                          :data-method :POST
-                                          :data-redirect :true
-                                          :data-url (format "/discussion/%s/post/%s/delete" disc-id (:id p) ) } 
-                        [:i.fa.fa-trash]]]
                     ]
-                  ]
-                  [:div.post-body ;{:id (str "post-" (:id p))}
-                    (md-to-html-string (:text p) :heading-anchors true :reference-links? true)]])
-              [:hr]
-              [:div.row.discussion-buttons
-              [:a.btn.btn-primary.btn-md {:href "#" :onclick "$('#reply-section').toggle();return false;"} [:i.fa.fa-reply] "Reply"]
+                    [:div.post-body ;{:id (str "post-" (:id p))}
+                      (md-to-html-string (:text p) :heading-anchors true :reference-links? true)]])
+                [:hr]
+                [:div.row.discussion-buttons
+                [:a.btn.btn-primary.btn-md {:href "#" :onclick "$('#reply-section').toggle();return false;"} [:i.fa.fa-reply] "Reply"]
 
-              [:a.btn.btn-success.btn-md {:href "#" :onclick "return false;"} [:i.fa.fa-share] "Share"]
-              ]
+                [:a.btn.btn-success.btn-md {:href "#" :onclick "return false;"} [:i.fa.fa-share] "Share"]
+                ]
 
-              [:div#reply-section.bs-callout.bs-callout-info {:style "display:none;"}
-                [:h4 "Reply to the post"]
-                [:form {:data-remote :true :data-redirect :true :action (str "/discussion/" id  "/post/create") :method :POST}
-                  [:div.form-group
-                    [:textarea.form-control {:name :text :rows 5 :data-provide :markdown :data-iconlibrary :fa}]]
-                  [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]
-                  ]
+                [:div#reply-section.bs-callout.bs-callout-info {:style "display:none;"}
+                  [:h4 "Reply to the post"]
+                  [:form {:data-remote :true :data-redirect :true :action (str "/discussion/" id  "/post/create") :method :POST}
+                    [:div.form-group
+                      [:textarea.form-control {:name :text :rows 5 :data-provide :markdown :data-iconlibrary :fa}]]
+                    [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]
+                [:hr]
+                ]
               [:div.col-lg-2 ]
             ])))))
 
