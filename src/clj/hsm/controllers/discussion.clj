@@ -9,7 +9,7 @@
             [hsm.pipe.event :as event-pipe]
             [hsm.views :refer [layout panel panelx render-user]]
             [hsm.ring :refer [json-resp html-resp redirect]]
-            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of]]))
+            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of !!nil? cutoff]]))
 
 (defn load-discussions
   [{:keys [db event-chan redis conf]} request]
@@ -18,11 +18,22 @@
   (if json?
     (json-resp top-disc)
     (layout host 
-      (panel [:a {:href (format "/discussions" pl)} "Discussions"]
+      (panelx
+        [:div [:a {:href (format "/discussions" pl)} "Discussions"] 
+              [:a.pull-right.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
+        [:div [:a.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
+        ""
         (for [x top-disc]
           [:div.bs-callout
-            [:a {:href (str "/discussion/" (:id x))} (:title x) 
-              [:p {:style "color:gray" } (get-in x [:post :text])]]]))))))
+            [:div.row 
+              [:div.col-lg-6 
+                [:a {:href (str "/discussion/" (:id x))} (:title x) 
+                [:p {:style "color:gray" } 
+                (cutoff (get-in x [:post :text]) 200)]]]
+              [:div.col-lg-3 "Users"]
+              [:div.col-lg-1 "Count"]
+              [:div.col-lg-2 "Activity"]
+              ]]))))))
 
 (defn get-discussion 
   [{:keys [db event-chan redis conf]} request]
@@ -35,26 +46,54 @@
       (json-resp discussion)
       (html-resp
           (layout host 
-            (panelx
-              [:h3 (:title discussion)] "" ""
+            ; (panelx
+               "" ""
+            [:div.row 
+              [:div.col-lg-10
               [:div.bs-callout.bs-callout-danger
+                [:div.post-head 
+                      (render-user (actions/load-user2 db "bcambel"))]
+                [:h4 (:title discussion)]
                 [:p (md-to-html-string (get-in discussion [:post :text]))]
                 [:hr]
-                [:a.btn.btn-primary.btn-xs {:href "#reply-section"} [:i.fa.fa-reply] "Reply"]]
-              [:hr]
+                [:div.row 
+                [:a.btn.btn-primary.btn-xs.pull-right {:href "#reply-section" :onclick "$('#reply-section').toggle();" :style "display:block;"} 
+                  [:i.fa.fa-reply] "Reply"]]]
+              ; [:hr]
+              (when-not (!!nil? posts)
+                [:div.bs-callout.bs-callout-warning [:h4 "No posts yet."] 
+                  [:p "Be the first one to answer! The unicorns will be with you all the time."]])
                (for [p posts]
                 [:div.bs-callout.row.post {:id (str "post-" (:id p)) :data-id (:id p) }
-                  [:div.post-head 
-                    (render-user (actions/load-user2 db "bcambel"))]
+                  [:div.post-head.row
+                    [:div.col-lg-6
+                      (render-user (actions/load-user2 db "bcambel"))]
+                    [:div.col-lg-6
+                      [:div.btn-group.pull-right
+                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-reply]]
+                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-share]]
+                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-edit]]
+                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-trash]]]
+                    ]
+                  ]
                   [:div.post-body
-                    (md-to-html-string (:text p))]])
+                    (md-to-html-string (:text p) :heading-anchors true :reference-links? true)]])
               [:hr]
-              [:div#reply-section.bs-callout.bs-callout-info
+              [:div.row.discussion-buttons
+              [:a.btn.btn-primary.btn-md {:href "#" :onclick "$('#reply-section').toggle();return false;"} [:i.fa.fa-reply] "Reply"]
+
+              [:a.btn.btn-success.btn-md {:href "#" :onclick "return false;"} [:i.fa.fa-share] "Share"]
+              ]
+
+              [:div#reply-section.bs-callout.bs-callout-info {:style "display:none;"}
                 [:h4 "Reply to the post"]
                 [:form {:data-remote :true :data-redirect :true :action (str "/discussion/" id  "/post/create") :method :POST}
                   [:div.form-group
-                    [:textarea.form-control {:name :text :rows 5 :data-provide :markdown}]]
-                  [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]))))))
+                    [:textarea.form-control {:name :text :rows 5 :data-provide :markdown :data-iconlibrary :fa}]]
+                  [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]
+                  ]
+              [:div.col-lg-2 ]
+            ])))))
 
 (defn ^:private following-discussion
   [f act-name {:keys [db event-chan redis conf]} request]
@@ -123,20 +162,22 @@
   (let [host (host-of request)]
   (html-resp 
     (layout host 
-      [:div.bs-callout.bs-callout-danger
-        [:h4 "Start a new discussion"]
-        [:p "Please search first before creating new discussion"]
-        ]
+      [:div.bs-callout.bs-callout-danger {:style "background-color:#EEEEEE;"}
+        [:h4 "Heyo, Start a new discussion here! But.."]
+        [:p "Please " [:b "search"] " first before creating new discussion"]
+        [:p [:b "Always keep in mind, there is no stupid question, only stupid answer!"]]]
+      [:div#reply-section.bs-callout.bs-callout-info
+        [:h4 "Discussion details"]
         [:form {:data-remote :true :action "/discussion/create" :method :POST :data-redirect :true}
           [:div.form-group
             [:label "Question"]
             [:input.form-control {:type :text :name :title}]]
           [:div.form-group
             [:label "Explain.."]
-            [:textarea.form-control {:type :text :name :post :rows 10}]]
+            [:textarea.form-control {:type :text :name :post :rows 10 :data-provide :markdown :data-iconlibrary :fa}]]
 
           [:button.btn.btn-success {:type :submit} "Start Discussion"]
-            ]
+            ]]
   ))))
 
 (defn discussions

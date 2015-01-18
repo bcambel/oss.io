@@ -148,12 +148,21 @@
 (defn load-post
   [db post-id]
   (let [conn (:connection db)]
-    (first (or (cql/select conn :post (dbq/where [[= :id post-id]])) []))))
+    (first (or (cql/select conn :post 
+      (dbq/where [[= :id post-id]])) []))))
+
+(defn load-posts-by-ids
+  [{:keys [connection]} post-id-list]
+  (cql/select connection :post 
+    (dbq/where [[:in :id post-id-list]])))
 
 (defn load-discussions
   [db]
   (let [conn (:connection db)]
-    (cql/select conn :discussion)))
+    (let [discussions (cql/select conn :discussion)
+          posts (load-posts-by-ids db (map :post_id discussions))]
+      (map #(assoc % :post (first (filter (fn[x] (= (:id x) (:post_id %))) posts)))  
+        discussions))))
 
 (defn load-discussion
   [db disc-id]

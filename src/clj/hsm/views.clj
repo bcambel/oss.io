@@ -87,9 +87,8 @@
                          [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
                   [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
                     [:div.form-group 
-                      [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]
-
-                    ][:button {:type "Submit"} "Go"]]
+                      [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]]
+                      [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           [:div.col-lg-1.left-panel ""]
