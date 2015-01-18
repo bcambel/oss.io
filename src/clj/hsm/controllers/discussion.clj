@@ -52,7 +52,7 @@
               [:div.col-lg-10
               [:div.bs-callout.bs-callout-danger
                 [:div.post-head 
-                      (render-user (actions/load-user2 db "bcambel"))]
+                      (render-user (actions/load-user2 db "bcambel") :show-followers false)]
                 [:h4 (:title discussion)]
                 [:p (md-to-html-string (get-in discussion [:post :text]))]
                 [:hr]
@@ -73,7 +73,11 @@
                       [:a.btn.btn-default {:href "#"} [:i.fa.fa-reply]]
                       [:a.btn.btn-default {:href "#"} [:i.fa.fa-share]]
                       [:a.btn.btn-default {:href "#"} [:i.fa.fa-edit]]
-                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-trash]]]
+                      [:a.btn.btn-default {:href "#" :data-remote :true 
+                                          :data-method :POST
+                                          :data-redirect :true
+                                          :data-url (format "/discussion/%s/post/%s/delete" disc-id (:id p) ) } 
+                        [:i.fa.fa-trash]]]
                     ]
                   ]
                   [:div.post-body
@@ -118,6 +122,17 @@
         data (utils/mapkeyw body)]
     (let [result (actions/load-discussion-posts db discussion-id )]
       (json-resp result))))
+
+(defn rm-post-discussion
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user]} (common-of request)
+        post-id (id-of request :pid)]
+    (actions/delete-post db (BigInteger. post-id))
+    (if json? 
+      (json-resp {:ok 1 :url (str "/discussion/" id)})
+      (redirect (str "/discussion/" id))
+      )
+  ))
 
 (defn post-discussion
   [{:keys [db event-chan redis conf]} request]

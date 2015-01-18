@@ -235,7 +235,12 @@
       :created_at (now->ep)
       :positive true})))
 
-(defn delete-post [post user])
+(defn delete-post 
+  [{:keys [connection]} post-id]
+  (cql/delete connection :post 
+    (dbq/where [[:= :id post-id]])
+    )
+  )
 
 (defn create-link
   [db link-data user]

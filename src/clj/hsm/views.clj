@@ -47,13 +47,15 @@
     "dev.hackersome.com" "UA-57973731-1" })
 
 (defhtml render-user
-  [x]
+  [x & {:keys [show-followers] :or {show-followers false}}]
   (log/warn x)
   [:div.user-card
     [:a {:href (format "/user2/%s" (:login x)) :title (:name x)}
       [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
       [:span.name (:login x)]]
-    [:span.followers.pull-right (:followers x)]])
+    (when show-followers
+      [:span.followers.pull-right (:followers x)])
+    ])
 
 (defhtml layout
   [website & content]
