@@ -161,13 +161,10 @@
                 :method :POST :data-redirect :true}
           [:div.form-group
             [:label "You said.."]
-
             [:textarea.form-control {:type :text :name :text 
                                     :rows 10 :data-provide :markdown 
                                     :data-iconlibrary :fa} (:text post)]]
-          [:button.btn.btn-success {:type :submit} "Start Discussion"]  
-            ]]
-        )))
+          [:button.btn.btn-success {:type :submit} "Save"]]])))
 
 (defn post-discussion
   [{:keys [db event-chan redis conf]} request]
