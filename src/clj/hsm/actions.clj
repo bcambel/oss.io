@@ -88,22 +88,32 @@
 
 (defn create-discussion
   [db platform user data]
-  (s/validate Discussion data)
+  ; (log/warn "[CREATE-DISC]" data)
+  (try 
+    (s/validate Discussion data)
+    ; this is stupid. Must not fail here!!
+    ; #<IllegalArgumentException java.lang.IllegalArgumentException: 
+    ; Don't know how to create ISeq from: schema.utils$result_builder$conjer__777>
+    (catch Throwable t (log/error "[CREATE-DISC-VAL]" t)))
+
   (let [conn (:connection db)
         post (:post data)
 
         post-info {:id (id-generate) :user_id user :text post}
-        additional {:id (id-generate) :published_at (now->ep)
-                    :user_id user :platform_id platform
+        additional {:id (id-generate) 
+                    :published_at (now->ep)
+                    :user_id user 
+                    :platform_id platform
                     :post_id (:id post-info)}
         discussion-info (merge additional (dissoc data :post))]
-    (log/warn post-info)
-    (log/warn discussion-info)
+    (log/warn "[CREATE-DISC]" post-info)
+    (log/warn "[CREATE-DISC]" discussion-info)
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-info))
         (hs/insert :discussion (dbq/values discussion-info))))
-    ;; add this update into the atomic-batch as well
+    ;; COUNTER COLUMN OPs are not supported in Batch; so CANNOT 
+    ;; add this update into the atomic-batch.
     (cql/update conn :post_counter 
        {
         :karma (dbq/increment-by 1)

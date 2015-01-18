@@ -7,8 +7,8 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.views :refer [layout panel panelx]]
-            [hsm.ring :refer [json-resp html-resp]]
+            [hsm.views :refer [layout panel panelx render-user]]
+            [hsm.ring :refer [json-resp html-resp redirect]]
             [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of]]))
 
 (defn get-discussion 
@@ -25,13 +25,15 @@
             (panelx
               [:h3 (:title discussion)] "" ""
               [:div.bs-callout.bs-callout-danger
-                [:p (get-in discussion [:post :text])]
+                [:p (md-to-html-string (get-in discussion [:post :text]))]
                 [:hr]
                 [:a.btn.btn-primary.btn-xs {:href "#reply-section"} [:i.fa.fa-reply] "Reply"]]
               [:hr]
                (for [p posts]
-                [:div.bs-callout {:id (str "post-" (:id p))}
-                    (md-to-html-string (:text p))])
+                [:div.bs-callout.row {:id (str "post-" (:id p))}
+                  [:div {:style "border-bottom:1px solid #eee;margin-bottom:10px;"} (render-user (actions/load-user2 db "bcambel"))]
+                  [:div.col-md-11
+                    (md-to-html-string (:text p))]])
               [:hr]
               [:div#reply-section.bs-callout.bs-callout-info
                 [:h4 "Reply to the post"]
@@ -84,14 +86,23 @@
 (defn create-discussion
   [{:keys [db event-chan redis conf]} request]
   (log/warn request)
-  (let [host  (host-of request)
-        body (body-of request)
+  (let [{:keys [host id body json? user pl]} (common-of request)
         platform 1
         user (whois request)
         data (utils/mapkeyw body)]
-    (let [res (actions/create-discussion db platform user data)]
+        (log/warn data)
+    (let [res (try
+                  (actions/create-discussion db platform user data)
+                  (catch Throwable t
+                    (log/error t)))
+          response (if (nil? res)
+                        {:ok false}
+                        {:id (:id res) :url (str "/discussion/" (:id res)) })]
+          (log/warn res)
       (try+ (event-pipe/create-discussion event-chan {:discussion res  :current-user user}))
-      (json-resp res))))
+      (if json?
+        (json-resp response)
+        (redirect (str "/discussion/" res))))))
 
 (defn new-discussion
   [{:keys [db event-chan redis conf]} request]
@@ -102,7 +113,7 @@
         [:h4 "Start a new discussion"]
         [:p "Please search first before creating new discussion"]
         ]
-        [:form {:data-remote :true :action "/discussion/create" :method :POST}
+        [:form {:data-remote :true :action "/discussion/create" :method :POST :data-redirect :true}
           [:div.form-group
             [:label "Question"]
             [:input.form-control {:type :text :name :title}]]

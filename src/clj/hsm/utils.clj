@@ -144,7 +144,9 @@
     (is-true (get-in request [:params mode]))
     (= (name mode) (get-in request [:params :format]))
     (= (get mime-types mode)
-      (get-in request [:headers "accept"]))))
+      (get-in request [:headers "accept"]))
+    (= "XMLHttpRequest"
+      (get-in request [:headers "x-requested-with"]))))
 
 (defn whois
   "Temporary user finder.. Returns a static User ID"
