@@ -34,6 +34,18 @@ a{
   text-decoration: none !important;
 }
 
+.post-actions{
+  opacity: 0.5;
+}
+.post-actions a{
+  color:gray;
+}
+.post-actions a:hover{
+  color:gray;
+  opacity: 1;
+  font-weight: bold;
+}
+
 .navbar-nav li a{
   font-weight: bold;
   font-size:16px;

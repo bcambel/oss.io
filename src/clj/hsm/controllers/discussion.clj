@@ -51,10 +51,15 @@
             [:div.row 
               [:div.col-lg-10
               [:div.bs-callout.bs-callout-danger
-                [:div.post-head 
+                [:div.post-head.row
+                      [:div.col-lg-6
                       (render-user (actions/load-user2 db "bcambel") :show-followers false)]
+                      [:div.col-lg-6
+                      [:a.btn.btn-default.pull-right {:href (format "/discussion/%s/post/%s/edit" disc-id (:id (:post discussion))) } [:i.fa.fa-edit]]]
+                      ]
                 [:h4 (:title discussion)]
                 [:p (md-to-html-string (get-in discussion [:post :text]))]
+
                 [:hr]
                 [:div.row 
                 [:a.btn.btn-primary.btn-xs.pull-right {:href "#reply-section" :onclick "$('#reply-section').toggle();" :style "display:block;"} 
@@ -69,11 +74,11 @@
                     [:div.col-lg-6
                       (render-user (actions/load-user2 db "bcambel"))]
                     [:div.col-lg-6
-                      [:div.btn-group.pull-right
-                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-reply]]
-                      [:a.btn.btn-default {:href "#"} [:i.fa.fa-share]]
-                      [:a.btn.btn-default {:href (format "/discussion/%s/post/%s/edit" disc-id (:id p)) } [:i.fa.fa-edit]]
-                      [:a.btn.btn-default {:href "#" :data-remote :true 
+                      [:div.btn-group.pull-right.post-actions
+                      [:a.btn {:href "#"} [:i.fa.fa-reply]]
+                      [:a.btn {:href "#"} [:i.fa.fa-share]]
+                      [:a.btn {:href (format "/discussion/%s/post/%s/edit" disc-id (:id p)) } [:i.fa.fa-edit]]
+                      [:a.btn {:href "#" :data-remote :true 
                                           :data-method :POST
                                           :data-redirect :true
                                           :data-url (format "/discussion/%s/post/%s/delete" disc-id (:id p) ) } 
