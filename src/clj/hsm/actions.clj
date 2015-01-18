@@ -91,7 +91,7 @@
   (s/validate Discussion data)
   (let [conn (:connection db)
         post (:post data)
-        
+
         post-info {:id (id-generate) :user_id user :text post}
         additional {:id (id-generate) :published_at (now->ep)
                     :user_id user :platform_id platform
@@ -123,18 +123,16 @@
     (cql/atomic-batch conn
       (dbq/queries
         (hs/insert :post (dbq/values post-data))
-        (hs/update :post_counter
-            (dbq/values {:karma 0 :upvotes (0) :views 1 })
-            (dbq/where {:id post-id}))
         (hs/insert :discussion_post
           (dbq/values { :post_id post-id
                         :user_id user
                         :disc_id disc-id }))))
-    ; (cql/update conn :post_counter {:id post-id
-    ;                           ; :karma 1;(dbq/increment-by 1)
-    ;                           ; :upvotes 1;(dbq/increment-by 1)
-    ;                           ; :views 1;(dbq/increment-by 1)
-    ;                           })
+
+    (cql/update conn :post_counter 
+      {:karma (dbq/increment-by 1)
+       :up_votes (dbq/increment-by 1)
+       :views (dbq/increment-by 1)}
+      (dbq/where [[:= :id post-id]]))
     post-id))
 
 (defn load-post

@@ -3,7 +3,9 @@
 h1 {
   text-decoration: none;
 }
-
+p {
+  font-size: 16px;
+}
 .panel ul {
   list-style-type: none;
   padding-left:1px;
@@ -88,6 +90,18 @@ i{
 #remote{
   float:left;
 }
+
+.bs-callout {
+  padding: 20px;
+  margin: 20px 0;
+  border: 1px solid #eee;
+  border-left-width: 5px;
+  border-radius: 3px;
+}
+.bs-callout-danger {
+  border-left-color: #d9534f;
+}
+
 
 .typeahead,
 .tt-query,

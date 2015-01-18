@@ -7,6 +7,7 @@
     [raven-clj.core               :refer  [capture]]
     [raven-clj.ring               :refer [capture-error]]
     [cheshire.core           :refer :all]
+    [hsm.dev :refer [is-dev?]]
     )
   (:import
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
@@ -35,17 +36,10 @@
           (log/error e)
           
           (when dsn
-            
-              (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]
+            (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]))
                 ; (log/info "SENTRY: " (deref ft 1000 :timed-out) e)
-                )
-              )
-              ; :message (.getMessage e) 
-              ; :exception {
-              ;   :stacktrace (clj-stk/print-stack-trace e) 
-              ;   :type (str (class e))}}
-              ;   ))
-          (clj-stk/print-stack-trace e)
+          (log/error "[EXCP]" (str (class e)) (clj-stk/print-cause-trace e))
+          (when is-dev? (throw e))
         (->
          (resp/response "Sorry. An error occured.")
          (resp/status 500)))))))

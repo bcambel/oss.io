@@ -152,6 +152,14 @@
   (log/debug (get-in request [:headers "x-auth-token"]))
   243975551163827208)
 
+(defn common-of
+  [request]
+  {:host (host-of request)
+    :body (body-of request)
+    :id (id-of request)
+    :json? (type-of request :json)
+    :user (whois request)})
+
 (defn byte-array->str
   "Convert byte array into String"
   [bytes]

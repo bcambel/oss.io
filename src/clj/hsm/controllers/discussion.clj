@@ -6,22 +6,46 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.views :refer [layout panel]]
+            [hsm.views :refer [layout panel panelx]]
             [hsm.ring :refer [json-resp html-resp]]
-            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of]]))
+            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of]]))
 
 (defn get-discussion 
-  [[db event-chan] id request]
-  (let [discussion (actions/load-discussion db (BigInteger. id))]
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user]} (common-of request)
+        disc-id (BigInteger. id)
+        discussion (actions/load-discussion db disc-id)
+        posts (actions/load-discussion-posts db disc-id)]
     (log/info "[DISC]Loading " id discussion)
-    (json-resp discussion)))
+    (if json?
+      (json-resp discussion)
+      (html-resp
+          (layout host 
+            (panelx
+              [:h3 (:title discussion)]
+              "" ""
+              [:div.bs-callout
+                [:p (get-in discussion [:post :text])]]
+              [:hr]
+               (for [p posts]
+                [:div.bs-callout
+                  [:p (:text p)]]
+                )
+              [:hr]
+              [:form {:data-remote :true :action (str "/discussion/" id  "/post/create") :method :POST}
+                [:div.form-group
+                  [:textarea.form-control {:type :text :name :text :rows 10}]]
+
+                [:button.btn.btn-success {:type :submit} "Post"]
+              ]
+              )
+            )
+    ))))
 
 (defn ^:private following-discussion
-  [f act-name [db event-chan] id request]
-  (let [host  (host-of request)
-        body (body-of request)
-        platform 1
-        user (whois request)
+  [f act-name {:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user pl]} (common-of request)
+        
         discussion-id (BigInteger. id)]
     (let [result (f db discussion-id user)]
       (event-pipe/follow-discussion act-name event-chan {:user user :id discussion-id})
@@ -31,9 +55,10 @@
 (def unfollow-discussion (partial following-discussion actions/unfollow-discussion :unfollow-discussion))
 
 (defn get-discussion-posts
-  [[db event-chan] id request]
+  [{:keys [db event-chan redis conf]} request]
   (let [host  (host-of request)
         body (body-of request)
+        id (id-of request)
         platform 1
         user (whois request)
         discussion-id (BigInteger. id)
@@ -42,22 +67,23 @@
       (json-resp result))))
 
 (defn post-discussion
-  [[db event-chan] request]
+  [{:keys [db event-chan redis conf]} request]
   (log/warn request)
   (let [host  (host-of request)
         body (body-of request)
         platform 1
-        id (get-in request [:route-params :id])
+        id (id-of request)
         user (whois request)
         discussion-id (BigInteger. id)
         data (utils/mapkeyw body)]
         (log/warn host body)
     (let [result (actions/new-discussion-post db user discussion-id data)]
-      (event-pipe/post-discussion event-chan {:post result :discussion-id discussion-id :current-user user})
-      (json-resp result))))
+      (try+ 
+        (event-pipe/post-discussion event-chan {:post result :discussion-id discussion-id :current-user user}))
+      (json-resp {:id (str result) :url (format "/discussion/%s/post/%s" id result)}))))
 
 (defn create-discussion
-  [[db event-chan] request]
+  [{:keys [db event-chan redis conf]} request]
   (log/warn request)
   (let [host  (host-of request)
         body (body-of request)
@@ -68,11 +94,33 @@
       (try+ (event-pipe/create-discussion event-chan {:discussion res  :current-user user}))
       (json-resp res))))
 
+(defn new-discussion
+  [{:keys [db event-chan redis conf]} request]
+  (let [host (host-of request)]
+  (html-resp 
+    (layout host 
+      [:div.bs-callout.bs-callout-danger
+        [:h4 "Start a new discussion"]
+        [:p "Please search first before creating new discussion"]
+        ]
+        [:form {:data-remote :true :action "/discussion/create" :method :POST}
+          [:div.form-group
+            [:label "Question"]
+            [:input.form-control {:type :text :name :title}]]
+          [:div.form-group
+            [:label "Explain.."]
+            [:textarea.form-control {:type :text :name :post :rows 10}]]
+
+          [:button.btn.btn-success {:type :submit} "Start Discussion"]
+            ]
+  ))))
+
 (defn discussions
-  [[db event-chan] request]
+  [{:keys [db event-chan redis conf]} request]
   (log/warn request)
   (let [host  (host-of request)
         body (body-of request)
+        id (id-of request)
         user (whois request)
         pl (id-of request :platform)
         is-json (type-of request :json)]
