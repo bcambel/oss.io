@@ -79,8 +79,9 @@
                  [:ul.nav.navbar-nav
                   [:li [:a {:href "/users"} "Users"]]
                   [:li [:a {:href "/collections"} "Collections"]]
+                  [:li [:a {:href "/discussions"} "Discussions"]]
                    [:li.dropdown
-                     [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Projects" [:span.caret]]
+                     [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
                      [:ul.dropdown-menu
                        (for [lang languages]
                          [:li [:a {:href (format "/%s/index" lang) } lang]])]]]

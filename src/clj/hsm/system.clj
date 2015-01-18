@@ -59,6 +59,7 @@
         (GET  "/test"                             request (sample-conn db request))
         ; (POST "/user/create"                    request (c.u/create-user [db event-chan] request))
         (POST "/post/create"                      request (c.p/create-post [db event-chan] request))
+        (GET  "/discussions"                      request (c.d/load-discussions specs request))
         (GET  "/discussion/new"                   request (c.d/new-discussion specs request))
         (POST "/discussion/create"                request (c.d/create-discussion specs request))
         (GET  "/discussion/:id"                   request (c.d/get-discussion specs request))

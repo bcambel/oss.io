@@ -150,6 +150,11 @@
   (let [conn (:connection db)]
     (first (or (cql/select conn :post (dbq/where [[= :id post-id]])) []))))
 
+(defn load-discussions
+  [db]
+  (let [conn (:connection db)]
+    (cql/select conn :discussion)))
+
 (defn load-discussion
   [db disc-id]
   (let [conn (:connection db)]

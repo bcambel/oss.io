@@ -11,6 +11,19 @@
             [hsm.ring :refer [json-resp html-resp redirect]]
             [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of]]))
 
+(defn load-discussions
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user pl]} (common-of request)
+        top-disc (actions/load-discussions db)]
+  (if json?
+    (json-resp top-disc)
+    (layout host 
+      (panel [:a {:href (format "/discussions" pl)} "Discussions"]
+        (for [x top-disc]
+          [:div.bs-callout
+            [:a {:href (str "/discussion/" (:id x))} (:title x) 
+              [:p {:style "color:gray" } (get-in x [:post :text])]]]))))))
+
 (defn get-discussion 
   [{:keys [db event-chan redis conf]} request]
   (let [{:keys [host id body json? user]} (common-of request)
@@ -30,16 +43,17 @@
                 [:a.btn.btn-primary.btn-xs {:href "#reply-section"} [:i.fa.fa-reply] "Reply"]]
               [:hr]
                (for [p posts]
-                [:div.bs-callout.row {:id (str "post-" (:id p))}
-                  [:div {:style "border-bottom:1px solid #eee;margin-bottom:10px;"} (render-user (actions/load-user2 db "bcambel"))]
-                  [:div.col-md-11
+                [:div.bs-callout.row.post {:id (str "post-" (:id p)) :data-id (:id p) }
+                  [:div.post-head 
+                    (render-user (actions/load-user2 db "bcambel"))]
+                  [:div.post-body
                     (md-to-html-string (:text p))]])
               [:hr]
               [:div#reply-section.bs-callout.bs-callout-info
                 [:h4 "Reply to the post"]
                 [:form {:data-remote :true :data-redirect :true :action (str "/discussion/" id  "/post/create") :method :POST}
                   [:div.form-group
-                    [:textarea.form-control {:name :text :rows 10 :data-provide :markdown}]]
+                    [:textarea.form-control {:name :text :rows 5 :data-provide :markdown}]]
                   [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]))))))
 
 (defn ^:private following-discussion
