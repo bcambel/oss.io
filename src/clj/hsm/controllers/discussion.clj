@@ -26,18 +26,19 @@
               [:h3 (:title discussion)] "" ""
               [:div.bs-callout.bs-callout-danger
                 [:p (get-in discussion [:post :text])]
-                [:a.btn.btn-primary {:href "#reply-section"} "Reply"]]
+                [:hr]
+                [:a.btn.btn-primary.btn-xs {:href "#reply-section"} [:i.fa.fa-reply] "Reply"]]
               [:hr]
                (for [p posts]
-                [:div.bs-callout
+                [:div.bs-callout {:id (str "post-" (:id p))}
                     (md-to-html-string (:text p))])
               [:hr]
               [:div#reply-section.bs-callout.bs-callout-info
                 [:h4 "Reply to the post"]
-                [:form {:data-remote :true :action (str "/discussion/" id  "/post/create") :method :POST}
+                [:form {:data-remote :true :data-redirect :true :action (str "/discussion/" id  "/post/create") :method :POST}
                   [:div.form-group
                     [:textarea.form-control {:name :text :rows 10 :data-provide :markdown}]]
-                  [:button.btn.btn-success {:type :submit} "Post"]]]))))))
+                  [:button.btn.btn-success {:type :submit} [:i.fa.fa-reply] "Post"]]]))))))
 
 (defn ^:private following-discussion
   [f act-name {:keys [db event-chan redis conf]} request]
@@ -77,7 +78,8 @@
     (let [result (actions/new-discussion-post db user discussion-id data)]
       (try+ 
         (event-pipe/post-discussion event-chan {:post result :discussion-id discussion-id :current-user user}))
-      (json-resp {:id (str result) :url (format "/discussion/%s/post/%s" id result)}))))
+      (json-resp {:id (str result) 
+        :url (format "/discussion/%s" id )})))) ;(str result)
 
 (defn create-discussion
   [{:keys [db event-chan redis conf]} request]
