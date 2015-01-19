@@ -57,11 +57,11 @@
                         [:div.col-lg-6
                         [:div.btn-group.pull-right.post-actions
                         [:a.btn.pull-right {:href (format "/discussion/%s/post/%s/edit" disc-id (:id (:post discussion))) :style "font-weight:bolder;"} [:i.fa.fa-edit]]
-                        [:a.btn. {:href "#reply-section" :onclick "$('#reply-section').toggle();" :style "display:block;"} 
+                        [:a.btn. {:href "#reply-section" :onclick "$('#reply-section').toggle();$('textarea').focus();" :style "display:block;"} 
                           [:i.fa.fa-reply] "Reply"]]
                         ]
                         ]
-                  [:h4 (:title discussion)]
+                  [:h3 (:title discussion)]
                   [:p (md-to-html-string (get-in discussion [:post :text]))]]
                 ; [:hr]
                 (when-not (!!nil? posts)

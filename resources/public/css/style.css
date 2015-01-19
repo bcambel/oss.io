@@ -102,7 +102,7 @@ i{
 
 .post-head {
   /*border-bottom:1px solid #eee;*/
-  border-bottom: 2px dashed #eeeeee;
+  border-bottom: 1px solid #eeeeee;
   padding-bottom:10px;margin-bottom:10px;
 }
 
@@ -128,7 +128,7 @@ i{
 color: #5bc0de;
 }
 
-.bs-callout-danger h4 {
+.bs-callout-danger h4, .bs-callout-danger h3 {
   color: #d9534f;
   padding-bottom: 10px;
   border-bottom: 2px dashed #eeeeee;
