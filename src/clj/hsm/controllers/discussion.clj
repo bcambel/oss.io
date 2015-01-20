@@ -11,29 +11,62 @@
             [hsm.ring :refer [json-resp html-resp redirect]]
             [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of !!nil? cutoff mapkeyw]]))
 
+(defn get-topic
+  [{:keys [db event-chan redis conf]} request]
+  (let [{:keys [host id body json? user pl]} (common-of request)
+        ; topic (actions/get-topic db (or pl 1) (Integer/parseInt id))
+        topic (actions/get-topic-by-slug db id)
+        top-disc (actions/load-discussions db)]
+        (log/warn topic)
+      (if json?
+        (json-resp topic)
+        (layout host 
+          (panelx
+            [:h3 (:name topic)]
+            "" ""  
+            (for [x top-disc]
+              [:div.row 
+                [:div.col-lg-6 
+                  [:h4
+                    [:a {:href (str "/discussion/" (:id x)) :style "margin:bottom:10px;"} (:title x)] 
+                    [:p {:style "color:gray" } 
+                  (cutoff (get-in x [:post :text]) 200)]]]
+                [:div.col-lg-3 "Users"]
+                [:div.col-lg-1 "Count"]
+                [:div.col-lg-2 (:published_at x)]
+                ]))))))
+
+
 (defn load-discussions
   [{:keys [db event-chan redis conf]} request]
   (let [{:keys [host id body json? user pl]} (common-of request)
+        topics (actions/load-topics db 1)
         top-disc (actions/load-discussions db)]
   (if json?
     (json-resp top-disc)
     (layout host 
-      (panelx
-        [:div [:a {:href (format "/discussions" pl)} "Discussions"] 
-              [:a.pull-right.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
-        [:div [:a.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
-        ""
-        (for [x top-disc]
-          [:div.bs-callout
-            [:div.row 
-              [:div.col-lg-6 
-                [:a {:href (str "/discussion/" (:id x))} (:title x) 
-                [:p {:style "color:gray" } 
-                (cutoff (get-in x [:post :text]) 200)]]]
-              [:div.col-lg-3 "Users"]
-              [:div.col-lg-1 "Count"]
-              [:div.col-lg-2 (:published_at x)]
-              ]]))))))
+      [:div.row
+        [:div.btn-group
+            [:button.btn.btn-default.dropdown-toggle {:type :button :data-toggle :dropdown } "Topics" [:span.caret]]
+            [:ul.dropdown-menu
+            (for [t topics]
+              [:li [:a {:href (format "/topic/%s" (:slug t))} (:name t)]]
+              )]]
+        [:hr]
+      (for [t topics]
+        [:div.bs-callout.bs-callout-danger
+          [:h4 [:a {:href (format "/topic/%s" (:id t))} (:name t)]
+                [:a.pull-right.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
+          (for [x top-disc]
+              [:div.row
+                [:div.col-lg-6
+                  [:a {:href (str "/discussion/" (:id x))} (:title x)
+                  [:p {:style "color:gray"}
+                  (cutoff (get-in x [:post :text]) 30)]]]
+                [:div.col-lg-3 "Users"]
+                [:div.col-lg-1 "Count"]
+                [:div.col-lg-2 (:published_at x)]
+                ])])]))))
 
 (defn get-discussion 
   [{:keys [db event-chan redis conf]} request]

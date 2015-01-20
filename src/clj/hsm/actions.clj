@@ -444,49 +444,62 @@
       :collection_list { :id (:id data)})))
 
 (defn update-collection
-  [db id items]
-  (let [conn (:connection db)]
-    (cql/update conn :collection 
-      {:items items}
-      (dbq/where [[:= :id id]])))) 
+  [{:keys [connection]} id items]  
+  (cql/update connection :collection 
+    {:items items}
+    (dbq/where [[:= :id id]])))
 
 (defn get-collection
-  [db id]
-  (let [conn (:connection db)]
-      (cql/select conn :collection
-        (dbq/limit 1)
-        (dbq/where [[:= :id id]]))))
+  [{:keys [connection]} id]
+  (cql/select connection :collection
+    (dbq/limit 1)
+    (dbq/where [[:= :id id]])))
 
 (defn get-collection-extras-by-id
-  [db id-list]
-  (let [conn (:connection db)]
-      (cql/select conn :collection_list
-        (dbq/limit 1000)
-        (dbq/where [[:in :id id-list]]))))
+  [{:keys [connection]} id-list]
+  (cql/select connection :collection_list
+    (dbq/limit 1000)
+    (dbq/where [[:in :id id-list]])))
 
 (defn get-collection-extra
-  [db id]
-  (let [conn (:connection db)]
-      (first (cql/select conn :collection_list
-        (dbq/limit 1)
-        (dbq/where [[:= :id id]])))))
+  [{:keys [connection]} id]
+  (first 
+    (cql/select connection :collection_list
+      (dbq/limit 1)
+      (dbq/where [[:= :id id]]))))
 
 (defn add-collection-fork
-  [db id fork-id]
-  (let [conn (:connection db)]
-      (cql/update conn :collection_list
-        {:forks [+ #{(str fork-id)}]}
-        (dbq/where [[:= :id id]]))))
+  [{:keys [connection]} id fork-id]
+  (cql/update connection :collection_list
+    {:forks [+ #{(str fork-id)}]}
+    (dbq/where [[:= :id id]])))
 
 (defn delete-collection
-  [db id]
-  (let [conn (:connection db)]
-      (cql/delete conn :collection
-        (dbq/where [[:= :id id]]))))
+  [{:keys [connection]} id]
+  (cql/delete connection :collection
+    (dbq/where [[:= :id id]])))
 
 (defn star-collection
-  [db id user-set]
-  (let [conn (:connection db)]
-      (cql/update conn :collection_list
-        {:stargazers [+ user-set]}
-        (dbq/where [[:= :id id]]))))
+  [{:keys [connection]} id user-set]
+  (cql/update connection :collection_list
+    {:stargazers [+ user-set]}
+    (dbq/where [[:= :id id]])))
+
+(defn load-topics
+  [{:keys [connection]} pl]
+  (cql/select connection :topic
+    (dbq/where [[:= :platform_id pl]])))
+
+(defn get-topic
+  [{:keys [connection]} pl id]
+  (first 
+    (cql/select connection :topic
+      (dbq/where [
+        [:= :platform_id pl]
+        [:= :id id]]))))
+
+(defn get-topic-by-slug
+  [{:keys [connection]} slug]
+  (first 
+    (cql/select connection :topic
+      (dbq/where [[:= :slug slug]]))))

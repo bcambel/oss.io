@@ -59,6 +59,7 @@
         (GET  "/test"                             request (sample-conn db request))
         ; (POST "/user/create"                    request (c.u/create-user [db event-chan] request))
         (POST "/post/create"                      request (c.p/create-post [db event-chan] request))
+        (GET  "/topic/:id"                        request (c.d/get-topic specs request))
         (GET  "/discussions"                      request (c.d/load-discussions specs request))
         (GET  "/discussion/new"                   request (c.d/new-discussion specs request))
         (POST "/discussion/create"                request (c.d/create-discussion specs request))
@@ -67,7 +68,7 @@
         (POST "/discussion/:id/post/create"       request (c.d/post-discussion specs request))
         (POST "/discussion/:id/post/:pid/delete"  request (c.d/rm-post-discussion specs request))
         (GET  "/discussion/:id/post/:pid/edit"    request (c.d/edit-post-discussion specs request))
-        (POST  "/discussion/:id/post/:pid/edit"   request (c.d/update-post-discussion specs request))
+        (POST "/discussion/:id/post/:pid/edit"    request (c.d/update-post-discussion specs request))
         (POST "/discussion/:id/follow"            request (c.d/follow-discussion specs request))
         (POST "/discussion/:id/unfollow"          request (c.d/unfollow-discussion specs request))
 
@@ -112,8 +113,9 @@
         (POST "/collections/:id/delete"           request (c.coll/del-p-coll specs request))
 
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
-        (GET  "/search"                   request (c.pr/search specs request))
-        (GET  "/search/update"            request (c.pr/update-search specs request))
+        (GET  "/search"                           request (c.pr/search specs request))
+        (GET  "/search/update"                    request (c.pr/update-search specs request))
+
         (route/not-found "Page not found")
         ))
 
