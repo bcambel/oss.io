@@ -95,5 +95,7 @@
                        :omit-source true
                        :aot :all}}
 
-  :aliases { "dev-git-sync" ["trampoline" "with-profile" "dev,gsync" "run"]}
+  :aliases { "dev-git-sync" ["trampoline" "with-profile" "dev,gsync" "run"]
+              "all" ["with-profile" "dev:dev,1.7:dev,master"]
+    }
                        )
