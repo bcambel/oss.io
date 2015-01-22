@@ -2,7 +2,6 @@
   (:require [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [cheshire.core :as json]
-            [hsm.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
             [liberator.core :refer [resource defresource]]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :as route :refer [resources]]
