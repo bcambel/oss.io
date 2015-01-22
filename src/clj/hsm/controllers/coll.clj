@@ -78,7 +78,8 @@
         (for [item (keys (:items c))]
           (let [el (get item (:items c))]
             [:div.row.coll-row
-              [:a.pull-left {:href (str "/p/" (str item el))} (str item el)]
+              [:h4 
+                [:a.pull-left {:href (str "/p/" (str item el))} (str item el)]]
               [:form {:method "POST" :action (format "/collections/%s/delete" (:id c))}
                 [:input {:type "hidden" :name :project :value item}]
                 [:a {:href "#" :onclick submit-form }

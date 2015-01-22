@@ -138,4 +138,4 @@
             });
           "
           )
-        ])[:img {:src "http://strck.hackersome.com" :alt ""}]])))
+        ])[:img {:src "http://strck.hackersome.com/pixel.gif" :alt ""}]])))
