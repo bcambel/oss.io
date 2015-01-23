@@ -93,10 +93,14 @@
         (GET  "/link/:id"                         request (c.p/show-link [db event-chan] request))
         (GET  "/links/:date"                      request (c.p/list-links [db event-chan] request))
         
-        (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))
-        (GET  "/p/:user/:project/:mod"            request (c.pr/get-proj-module specs request))
+        (GET  "/os/:user/:project"            request (c.pr/get-proj specs request))
+        (GET  "/open-source/:user/:project"   request (c.pr/get-proj specs request))
+        (GET  "/p/:user/:project"             request (c.pr/get-proj specs request))
+        (GET  "/p/:user/:project/:mod"        request (c.pr/get-proj-module specs request))
         
         (GET  "/top-projects"                     request (c.pr/list-top-proj specs request))
+        (GET  "/open-source"                      request (c.pr/list-top-proj specs request))
+
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
         (GET  "/:platform/discussions"            request (c.d/discussions [db event-chan] request))

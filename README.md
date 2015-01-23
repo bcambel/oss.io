@@ -121,12 +121,17 @@ docker exec -it <container_id> cqlsh < schema.cql
 Kafka
 ==========
 
+http://www.michael-noll.com/blog/2013/03/13/running-a-multi-broker-apache-kafka-cluster-on-a-single-node/
+
+
 Using [Ches/Kafka](https://registry.hub.docker.com/u/ches/kafka/) as the base image. It's very simple to 
 setup and use. Kafka requires ZooKeeper to keep track of it's client markers, nodes, etc..
 
 ```shell
 docker run -d --name zookeeper jplock/zookeeper:3.4.6
-docker run -d --name kafka --link zookeeper:zookeeper ches/kafka
+docker run -d --name kafka --link zookeeper:zookeeper ches/kafka -p 9092:9092
+docker run -d --name kafka --publish 9092:9092 --publish 7203:7203 --link zookeeper:zookeeper ches/kafka
+
 ZK_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' zookeeper)
 KAFKA_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' kafka)
 # learn the image ID. 
@@ -144,3 +149,5 @@ https://registry.hub.docker.com/u/wurstmeister/kafka/
 Copyright © 2014 Bahadir Cambel
 
 Distributed under the MIT License.
+
+docker run -d --hostname localhost --name kafka --volume ./data:/data --volume ./logs:/logs --publish 9092:9092 --publish 7203:7203 --env EXPOSED_HOST=127.0.0.1 --env ZOOKEEPER_IP=127.0.0.1 ches/kafka

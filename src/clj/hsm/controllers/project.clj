@@ -67,12 +67,12 @@
         user         (whois request)
         data         (utils/mapkeyw body)
         hosted-pl     (host->pl->lang host)
-        platform      (or hosted-pl (pl->lang (id-of request :platform)))
+        platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
         is-json     false
         view         (get-in request [:params :view])
         view-fn     (if (= view "grid") grid-view list-view)
-        limit       (or (get-in request [:params :limit]) (str 20))
-        limit-by     (or (Integer/parseInt limit) 20)]
+        limit       (or (get-in request [:params :limit]) (str 100))
+        limit-by     (or (Integer/parseInt limit) 100)]
     (when platform
       (let [
             top-projects (actions/list-top-proj db redis platform limit-by)
@@ -82,7 +82,26 @@
           (json-resp top-projects)
           (html-resp
             (views/layout host
-              (view-fn top-projects keyset))))))))
+              ; [:h1 "Top Projects"]
+              [:div.row 
+                [:div.col-lg-2
+                  [:a.btn.btn-success {:href "#mc_embed _signup"} "Subscribe"]
+                  [:p "Join " [:b 917] " others"]
+                  [:p "No spamming. I promise!"]
+                  ; <a href="https://twitter.com/share" class="twitter-share-button" data-text="Top 400 #Python Projects"
+                  ;  data-via="pythonhackers" data-url="pythonhackers.com/open-source/" data-size="large" data-related="pythonhackers"
+                  ;  data-hashtags="python,hackers,github">Tell your friends</a>
+                  [:a.twitter-share-button {:href "https://twitter.com/share" 
+                    :data-text (format "Top %s Projects" platform)
+                    :data-via "pythonhackers" :data-url (format "%s/open-source" host) :data-size :large
+                    :data-hashtags "python,hackers,github"
+                    } "Tell your friends"]
+                  [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
+                  [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
+                ]
+                [:div.col-lg-10
+                  (view-fn top-projects keyset)]]
+              )))))))
 
 (defn get-project-readme*
   "Fetch read me. Redis is used.

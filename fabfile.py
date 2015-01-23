@@ -38,6 +38,7 @@ def release(compile_app=True):
 def deploy_assets():
   put("resources/public/css/style.css", "/var/www/hackersome/public/css/style.css")
   put("resources/public/js/app.js", "/var/www/hackersome/public/js/app.js")
+  put("logback.xml", "/var/www/hackersome/logback.xml")
 
 @task
 def deploy():
