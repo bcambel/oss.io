@@ -17,8 +17,34 @@
   (:import [com.google.common.net InternetDomainName]))
 
 ; implement a multi-method for different types
-
 (declare in?)
+(declare !nil?)
+
+(defn containss?
+  [s x]
+  (.contains x s))
+
+(defn host->pl->lang
+  [host]
+  (condp containss? (str/lower-case host)
+    "pythonhackers.com" "Python"
+    "clojurehackers.com" "Clojure"
+    "erlangarticles.com" "Erlang"
+    "pythonarticles.com" "Python"
+    nil
+  ))
+
+(defn pl->lang
+  [platform]
+  (when (!nil? platform )
+    (condp = (str/lower-case platform)
+      "cpp" "C++"
+      "csharp" "C#"
+      "python" "Python"
+      "clojure" "Clojure"
+      "clj" "Clojure"
+      "php" "PHP"
+      platform)))
 
 (defn is-true
   [val]
@@ -156,11 +182,19 @@
 
 (defn common-of
   [request]
-  {:host (host-of request)
+  (let [host (host-of request)
+      hosted-pl (host->pl->lang host)]
+  {:host host
     :body (body-of request)
+    :req-id (:req-id request)
     :id (id-of request)
+    :host-pl hosted-pl
+    :url (:uri request)
+    :platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
     :json? (type-of request :json)
-    :user (whois request)})
+    :user (whois request)
+    :limit-by     (or (Integer/parseInt (or (get-in request [:params :limit]) "100")) 100)
+    }))
 
 (defn byte-array->str
   "Convert byte array into String"

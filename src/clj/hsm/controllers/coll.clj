@@ -5,7 +5,6 @@
     [hiccup.def                   :refer [defhtml]]
     [hsm.actions :as actions]
     [hsm.views :refer [layout panel render-user left-menu]]
-    [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.utils :refer :all]))
 

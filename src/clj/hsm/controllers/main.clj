@@ -3,8 +3,7 @@
     [hiccup.def     :refer [defhtml]]
     [hsm.ring       :refer [html-resp]]
     [hsm.views      :refer :all]
-    [hsm.utils      :refer [host-of id-of cutoff]]
-    [hsm.helpers    :refer [pl->lang]]
+    [hsm.utils      :refer [host-of id-of cutoff pl->lang]]
     [hsm.conf       :refer [languages]]
     [hsm.actions    :refer [list-top-proj list-top-disc list-top-user]]))
 

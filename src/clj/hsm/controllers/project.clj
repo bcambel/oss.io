@@ -17,7 +17,6 @@
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.views :as views :refer [layout panel panelx render-user left-menu]]
-    [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.integration.ghub :as gh]
     [hsm.cache :as cache]
     [hsm.utils :as utils :refer :all]))
@@ -59,28 +58,18 @@
 
 (defn list-top-proj
   [{:keys [db event-chan redis]} request]
-  (log/warn request)
-  (let [host        (host-of request)
-        body         (body-of request)
-        user         (whois request)
-        data         (utils/mapkeyw body)
-        hosted-pl     (host->pl->lang host)
-        platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
-        is-json     false
+  (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
         view         (get-in request [:params :view])
-        view-fn     (if (= view "grid") grid-view list-view)
-        limit       (or (get-in request [:params :limit]) (str 100))
-        limit-by     (or (Integer/parseInt limit) 100)]
+        view-fn     (if (= view "grid") grid-view list-view)]
+    (log/info req-id platform hosted-pl host url)
     (when platform
-      (let [
-            top-projects (actions/list-top-proj db redis platform limit-by)
+      (let [top-projects (actions/list-top-proj db redis platform limit-by)
             keyset (keys (first top-projects))]
         ; (log/warn cached-projects)
-        (if is-json
+        (if json?
           (json-resp top-projects)
           (html-resp
             (views/layout host
-              ; [:h1 "Top Projects"]
               [:div.row 
                 [:div.col-lg-3
                   (left-menu host platform "open-source")]

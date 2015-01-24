@@ -7,7 +7,6 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.helpers :refer [pl->lang host->pl->lang]]
             [hsm.views :refer [layout panel panelx render-user left-menu]]
             [hsm.ring :refer [json-resp html-resp redirect]]
             [hsm.utils :as utils :refer :all]))

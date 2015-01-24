@@ -23,10 +23,10 @@
   [handler]
   (fn [request]
     (let [ req (assign-id request)]
-      (log/info "[LOG]")
+      ; (log/info "[LOG]")
       (log/info req)
       (let [response (handler req)]
-        (log/info (str "[HTTP" (:status response)"]") (:uri req) (:req-id req))
+        (log/info "HTTP" (:status response) (:req-id req) (:uri req))
       response
     ))))
 
@@ -57,7 +57,7 @@
   [handler]
   (fn [request]
      (let [response (handler request)]
-        (log/info "[NOCACHE]")
+        ; (log/info "[NOCACHE]")
         (-> response
         (assoc-in [:headers  "Pragma"] "no-cache")
         (assoc-in [:headers  "X-Req-ID"] (:req-id request))
