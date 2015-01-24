@@ -95,14 +95,23 @@
         
         (GET  "/os/:user/:project"                request (c.pr/get-proj specs request))
         (GET  "/open-source/:user/:project"       request (c.pr/get-proj specs request))
+        (GET  "/open-source"                      request (c.pr/list-top-proj specs request))
+        (GET  "/open-source/"                     request (c.pr/list-top-proj specs request))
+        
         (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))
         (GET  "/p/:user/:project/:mod"            request (c.pr/get-proj-module specs request))
         
+        (GET  "/python-packages/:project"         request (c.pr/get-py-proj specs request))
+        (GET  "/python-packages/:project/"        request (c.pr/get-py-proj specs request))
+        (GET  "/top-python-contributors-developers" 
+                                                  request (c.pr/get-py-contribs specs request))
+
         (GET  "/top-projects/"                    request (c.pr/list-top-proj specs request))
         (GET  "/top-projects"                     request (c.pr/list-top-proj specs request))
         (GET  "/top-:platform-projects/"          request (c.pr/list-top-proj specs request))
-        (GET  "/open-source"                      request (c.pr/list-top-proj specs request))
-        (GET  "/open-source/"                     request (c.pr/list-top-proj specs request))
+        
+        (GET  "/os/"                              request (c.pr/list-top-proj specs request))
+        (GET  "/os"                               request (c.pr/list-top-proj specs request))
 
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))

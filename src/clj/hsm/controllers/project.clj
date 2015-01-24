@@ -242,6 +242,18 @@
       "contributors" (get-project-contrib spec request)
       (resp/status 404))))
 
+(defn get-py-contribs
+  [{:keys [db event-chan redis]} request]
+
+  )
+(defn get-py-proj
+  "Temporary solution till there is a proper solution.
+  Somehow fetch the Python Package Projects. Same will go for Clojars."
+  [{:keys [db event-chan redis]} request]
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)]
+  (layout host "Project")
+  ))
 (defn get-proj
   [{:keys [db event-chan redis]} request]
   (let [host  (host-of request)
