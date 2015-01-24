@@ -7,9 +7,10 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [hsm.actions :as actions]
             [hsm.pipe.event :as event-pipe]
-            [hsm.views :refer [layout panel panelx render-user]]
+            [hsm.helpers :refer [pl->lang host->pl->lang]]
+            [hsm.views :refer [layout panel panelx render-user left-menu]]
             [hsm.ring :refer [json-resp html-resp redirect]]
-            [hsm.utils :as utils :refer [body-of host-of whois type-of id-of common-of !!nil? cutoff mapkeyw]]))
+            [hsm.utils :as utils :refer :all]))
 
 (defn get-topic
   [{:keys [db event-chan redis conf]} request]
@@ -41,32 +42,39 @@
   [{:keys [db event-chan redis conf]} request]
   (let [{:keys [host id body json? user pl]} (common-of request)
         topics (actions/load-topics db 1)
+        hosted-pl     (host->pl->lang host)
+        platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
         top-disc (actions/load-discussions db)]
   (if json?
     (json-resp top-disc)
     (layout host 
-      [:div.row
-        [:div.btn-group
-            [:button.btn.btn-default.dropdown-toggle {:type :button :data-toggle :dropdown } "Topics" [:span.caret]]
-            [:ul.dropdown-menu
-            (for [t topics]
-              [:li [:a {:href (format "/topic/%s" (:slug t))} (:name t)]]
-              )]]
-        [:hr]
-      (for [t topics]
-        [:div.bs-callout.bs-callout-danger
-          [:h4 [:a {:href (format "/topic/%s" (:id t))} (:name t)]
-                [:a.pull-right.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
-          (for [x top-disc]
-              [:div.row
-                [:div.col-lg-6
-                  [:a {:href (str "/discussion/" (:id x))} (:title x)
-                  [:p {:style "color:gray"}
-                  (cutoff (get-in x [:post :text]) 30)]]]
-                [:div.col-lg-3 "Users"]
-                [:div.col-lg-1 "Count"]
-                [:div.col-lg-2 (:published_at x)]
-                ])])]))))
+      [:div.row 
+        [:div.col-lg-3
+          (left-menu host platform "open-source")]
+        [:div.col-lg-9
+          (panelx "Discussions" "" "" 
+          [:div.row
+            [:div.btn-group
+                [:button.btn.btn-default.dropdown-toggle {:type :button :data-toggle :dropdown } "Topics" [:span.caret]]
+                [:ul.dropdown-menu
+                (for [t topics]
+                  [:li [:a {:href (format "/topic/%s" (:slug t))} (:name t)]]
+                  )]]
+            [:hr]
+          (for [t topics]
+            [:div.bs-callout.bs-callout-danger
+              [:h4 [:a {:href (format "/topic/%s" (:id t))} (:name t)]
+                    [:a.pull-right.btn.btn-primary.btn-xs {:href "/discussion/new"} "Start a Discussion"]]
+              (for [x top-disc]
+                  [:div.row
+                    [:div.col-lg-6
+                      [:a {:href (str "/discussion/" (:id x))} (:title x)
+                      [:p {:style "color:gray"}
+                      (cutoff (get-in x [:post :text]) 30)]]]
+                    [:div.col-lg-3 "Users"]
+                    [:div.col-lg-1 "Count"]
+                    [:div.col-lg-2 (:published_at x)]
+                    ])])])]]))))
 
 (defn get-discussion 
   [{:keys [db event-chan redis conf]} request]

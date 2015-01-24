@@ -41,7 +41,6 @@ def deploy_assets():
   put("logback.xml", "/var/www/hackersome/logback.xml")
 
 @task
-@parallel
 def deploy():
   version = open("VERSION").readlines()[0]
   jar_file = "target/hsm.jar".format(version)

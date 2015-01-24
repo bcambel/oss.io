@@ -16,7 +16,7 @@
     [clojurewerkz.elastisch.query :as q]
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
-    [hsm.views :as views :refer [layout panel panelx render-user]]
+    [hsm.views :as views :refer [layout panel panelx render-user left-menu]]
     [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.integration.ghub :as gh]
     [hsm.cache :as cache]
@@ -57,8 +57,6 @@
             [:p {:style "color:gray"} (get x :description)]]]
         ])]])])
 
-
-
 (defn list-top-proj
   [{:keys [db event-chan redis]} request]
   (log/warn request)
@@ -85,22 +83,7 @@
               ; [:h1 "Top Projects"]
               [:div.row 
                 [:div.col-lg-3
-                  (panelx "Social" "" ""
-                  [:a.btn.btn-success {:href "#mc_embed _signup"} "Subscribe"]
-                  [:p "Join " [:b 917] " others"]
-                  [:p "No spamming. I promise!"]
-                  ; <a href="https://twitter.com/share" class="twitter-share-button" data-text="Top 400 #Python Projects"
-                  ;  data-via="pythonhackers" data-url="pythonhackers.com/open-source/" data-size="large" data-related="pythonhackers"
-                  ;  data-hashtags="python,hackers,github">Tell your friends</a>
-                  [:a.twitter-share-button {:href "https://twitter.com/share" 
-                    :data-text (format "Top %s Projects" platform)
-                    :data-via "pythonhackers" :data-url (format "%s/open-source" host) :data-size :large
-                    :data-hashtags "python,hackers,github"
-                    } "Tell your friends"]
-                  [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
-                  [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
-                  )
-                ]
+                  (left-menu host platform "open-source")]
                 [:div.col-lg-9
                   (view-fn top-projects keyset)]]
               )))))))

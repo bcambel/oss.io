@@ -4,9 +4,10 @@
     [clojure.tools.logging :as log]
     [hiccup.def                   :refer [defhtml]]
     [hsm.actions :as actions]
-    [hsm.views :refer [layout panel render-user]]
+    [hsm.views :refer [layout panel render-user left-menu]]
+    [hsm.helpers :refer [pl->lang host->pl->lang]]
     [hsm.ring :refer [json-resp html-resp redirect]]
-    [hsm.utils :refer [type-of id-of host-of body-of mapkeyw id-generate whois !nil?]]))
+    [hsm.utils :refer :all]))
 
 (defn add-p-coll
   [{:keys [db event-chan redis conf]} request]
@@ -139,6 +140,8 @@
   [{:keys [db event-chan redis conf]} request]
   (let [host (host-of request)
         is-json (type-of request :json)
+        hosted-pl     (host->pl->lang host)
+        platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
         colls (actions/load-collections db 10)
         coll-extras (actions/get-collection-extras-by-id db (map :id colls))]
     (let [colls (map (partial find-extra-of coll-extras) colls)]
@@ -146,17 +149,22 @@
       (if is-json
         (json-resp colls)
         (layout host
-          [:div.jumbotron
-            [:h3 "Create a List/Collection to group your projects together "]
-            [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
-              [:div.form-group
-              [:input.form-control {:type :text :name :name }]
-              [:input {:type :hidden :name :test :value 1}]]
-              [:button.btn.btn-primary {:type :submit} "Create"]]]
           [:div.row
-            (for [c colls]
-              [:div.col-lg-6
-                (render-collection c)])])))))
+            [:div.col-lg-3 
+              (left-menu host platform "collections")
+            ]
+            [:div.col-lg-9
+              [:div.jumbotron
+                [:h3 "Create a List/Collection to group your projects together "]
+                [:form {:action "/collections/create" :method "POST" :data-remote "true" :data-redirect "true" :id :create-coll}
+                  [:div.form-group
+                  [:input.form-control {:type :text :name :name }]
+                  [:input {:type :hidden :name :test :value 1}]]
+                  [:button.btn.btn-primary {:type :submit} "Create"]]]
+              [:div.row
+                (for [c colls]
+                  [:div.col-lg-6
+                    (render-collection c)])]]])))))
 
 (defn star-coll
   [{:keys [db event-chan redis conf]} request]

@@ -32,6 +32,21 @@
   [header & content]
     (panelx header "" ["panel-body"] content))
 
+(defhtml left-menu
+  [host platform page]
+  (panelx "Social" "" ""
+    [:a.btn.btn-success {:href "#mc_embed _signup"} "Subscribe"]
+    [:p "Join " [:b 917] " others"]
+    [:p "No spamming. I promise!"]
+    [:a.twitter-share-button {:href "https://twitter.com/share" 
+      :data-text (format "Top %s Projects" platform)
+      :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :large
+      :data-hashtags "python,hackers,github"
+      } "Tell your friends"]
+    [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
+    [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
+    ))
+
 (defhtml languages-pane
   []
   [:table.table
@@ -93,8 +108,8 @@
                       [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
-          [:div.col-lg-1.left-panel ""]
-          [:div.col-lg-9.col-lg-offset-1
+          ; [:div.col-lg-1.left-panel ""]
+          [:div.col-lg-10.col-lg-offset-1
             [:div.row {:style "padding-top:20px;"}
               content]]
           [:div.col-lg-1]
