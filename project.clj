@@ -63,7 +63,7 @@
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
-  ; :uberjar-name "hsm.jar"
+  :uberjar-name "hsm.jar"
   :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {

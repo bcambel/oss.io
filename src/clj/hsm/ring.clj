@@ -10,6 +10,7 @@
     [hsm.dev :refer [is-dev?]]
     )
   (:import
+    [java.net InetAddress]
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn wrap-log
@@ -48,7 +49,9 @@
   [handler]
   (fn [request]
      (let [response (handler request)]
-        (assoc-in response [:headers  "Pragma"] "no-cache"))))
+        (assoc-in response [:headers  "Pragma"] "no-cache")
+        (assoc-in response [:headers "X-Server-Name"] (.getHostName (InetAddress/getLocalHost)))
+        )))
 
 (defn json-resp
   "Generates JSON resp of given object, 
