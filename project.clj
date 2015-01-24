@@ -47,6 +47,7 @@
                 [org.clojure/tools.logging "0.3.1"]
                 ; [weasel "0.4.0-SNAPSHOT"]
                 [midje "1.6.3"]
+                [digest "1.4.4"]
                 [leiningen "2.5.0"]
                 [org.clojure/tools.nrepl "0.2.5"]
                 [raven-clj "1.2.0"]

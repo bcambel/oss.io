@@ -5,6 +5,7 @@ from fabtools import require
 
 env.user = 'root'
 env.use_ssh_config = True
+folder = "/var/www/hackersome"
 
 PACKAGES = []
 
@@ -36,19 +37,22 @@ def release(compile_app=True):
 
 @task
 def deploy_assets():
-  put("resources/public/css/style.css", "/var/www/hackersome/public/css/style.css")
-  put("resources/public/js/app.js", "/var/www/hackersome/public/js/app.js")
-  put("logback.xml", "/var/www/hackersome/logback.xml")
+  with cd(folder):
+    put("resources/public/css/style.css", "public/css/style.css")
+    put("resources/public/js/app.js", "public/js/app.js")
+    put("logback.xml", "logback.xml")
 
 @task
 def deploy():
+  sudo("mkdir -p {}".format(folder))
+
   version = open("VERSION").readlines()[0]
   jar_file = "target/hsm.jar".format(version)
-  put(jar_file, "/var/www/hackersome/hackersome-latest.jar")
+  put(jar_file, "{}/hackersome-latest.jar".format(folder))
 
   deploy_assets()
   
-  with cd("/var/www/hackersome"):
+  with cd(folder):
     try:
       sudo("mv hackersome.jar hackersome-old.jar")
     except:

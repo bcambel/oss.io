@@ -7,20 +7,28 @@
     [raven-clj.core               :refer  [capture]]
     [raven-clj.ring               :refer [capture-error]]
     [cheshire.core           :refer :all]
+    [digest]
     [hsm.dev :refer [is-dev?]]
     )
   (:import
     [java.net InetAddress]
+    [java.util UUID]
     [java.io ByteArrayInputStream ByteArrayOutputStream]))
+
+(defn assign-id
+  [request]
+    (assoc request :req-id (subs (digest/sha-256 (str (UUID/randomUUID))) 0 20)))
 
 (defn wrap-log
   [handler]
   (fn [request]
-    (log/info request)
-    (let [response (handler request)]
-      (log/info (str "[HTTP" (:status response)"]") (:uri request))
+    (let [ req (assign-id request)]
+      (log/info "[LOG]")
+      (log/info req)
+      (let [response (handler req)]
+        (log/info (str "[HTTP" (:status response)"]") (:uri req) (:req-id req))
       response
-    )))
+    ))))
 
 (defn wrap-exception-handler
   ""
@@ -49,9 +57,12 @@
   [handler]
   (fn [request]
      (let [response (handler request)]
-        (assoc-in response [:headers  "Pragma"] "no-cache")
-        (assoc-in response [:headers "X-Server-Name"] (.getHostName (InetAddress/getLocalHost)))
-        )))
+        (log/info "[NOCACHE]")
+        (-> response
+        (assoc-in [:headers  "Pragma"] "no-cache")
+        (assoc-in [:headers  "X-Req-ID"] (:req-id request))
+        (assoc-in [:headers "X-Server-Name"] (.getHostName (InetAddress/getLocalHost)))
+        ))))
 
 (defn json-resp
   "Generates JSON resp of given object, 
