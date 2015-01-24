@@ -1,4 +1,4 @@
-from fabric.api import run, sudo, env, task, local, put
+from fabric.api import run, sudo, env, task, local, put, parallel
 from fabric.context_managers import cd
 import logging
 from fabtools import require
@@ -41,9 +41,10 @@ def deploy_assets():
   put("logback.xml", "/var/www/hackersome/logback.xml")
 
 @task
+@parallel
 def deploy():
   version = open("VERSION").readlines()[0]
-  jar_file = "target/hackersome-{}-standalone.jar".format(version)
+  jar_file = "target/hsm.jar".format(version)
   put(jar_file, "/var/www/hackersome/hackersome-latest.jar")
 
   deploy_assets()
