@@ -84,7 +84,8 @@
             (views/layout host
               ; [:h1 "Top Projects"]
               [:div.row 
-                [:div.col-lg-2
+                [:div.col-lg-3
+                  (panelx "Social" "" ""
                   [:a.btn.btn-success {:href "#mc_embed _signup"} "Subscribe"]
                   [:p "Join " [:b 917] " others"]
                   [:p "No spamming. I promise!"]
@@ -98,8 +99,9 @@
                     } "Tell your friends"]
                   [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
                   [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
+                  )
                 ]
-                [:div.col-lg-10
+                [:div.col-lg-9
                   (view-fn top-projects keyset)]]
               )))))))
 
