@@ -53,7 +53,8 @@
 
 (defhtml render-repos
   [repos]
-  [:table.table (for [repo repos]
+  [:table.table 
+    (for [repo repos]
     [:tbody
       [:tr
         [:td {:rowspan 2} [:span (:watchers repo)]]
@@ -68,7 +69,7 @@
           [:p.gray (:description repo)]]]])])
 
 (defn get-user2
-  [{:keys [db event-chan redis conf]} request] 
+  [{:keys [db event-chan redis conf else]} request] 
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
@@ -82,11 +83,13 @@
         (json-resp {:ok 1})
         )
       (let [user-extras (actions/user-extras db id)
-            user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
+            ; user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
+            user-repos (actions/user-projects-es* else id 100)
             c-star (count (:starred user-extras))
             c-follow (count (:following user-extras))
             c-followers (count (:followers user-extras))
             org? (= (:type user) "Organization")]
+          (log/warn user-repos)
         (if is-json
           (json-resp user)
           (layout host
@@ -107,7 +110,7 @@
                   [:ul (for [star (take 10 (:starred user-extras))] 
                     [:li [:a {:href (str "/p/" star)} star]])])])
               [:div.col-lg-6
-              (panelx "User Repos" ["no-pad"]
+              (panelx "User Repos" ["no-pad"] ""
                 (render-repos user-repos)
                 )]]))))))
 

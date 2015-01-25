@@ -510,6 +510,19 @@
     (cql/select connection :topic
       (dbq/where [[:= :slug slug]]))))
 
+(defn user-projects-es*
+  [else user limit]
+  (log/warn "[ES_PROJ]" user )
+  (let [res (esd/search (:conn else) (:index else) "github_project"
+                 :sort [ { :watchers {:order :desc}}]
+                 :size limit
+                  :query (q/filtered 
+                          :filter   (q/term 
+                                        :owner (str/lower-case user))))
+          n (esrsp/total-hits res)
+          hits (esrsp/hits-from res)]
+    (map :_source hits)))
+
 (defn top-projects-es*
   [else platform limit]
   (let [res (esd/search (:conn else) (:index else) "github_project"
