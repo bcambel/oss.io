@@ -5,7 +5,7 @@ from fabtools import require
 
 env.user = 'root'
 env.use_ssh_config = True
-folder = "/var/www/hackersome"
+folder = "/var/www/hackersome/"
 
 PACKAGES = []
 
@@ -48,7 +48,7 @@ def deploy():
 
   version = open("VERSION").readlines()[0]
   jar_file = "target/hsm.jar".format(version)
-  put(jar_file, "{}/hackersome-latest.jar".format(folder))
+  put(jar_file, "{}hackersome-latest.jar".format(folder))
 
   deploy_assets()
   
