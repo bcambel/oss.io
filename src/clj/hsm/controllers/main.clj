@@ -5,7 +5,7 @@
     [hsm.views      :refer :all]
     [hsm.utils      :refer [host-of id-of cutoff pl->lang]]
     [hsm.conf       :refer [languages]]
-    [hsm.actions    :refer [list-top-proj list-top-disc list-top-user]]))
+    [hsm.actions    :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
 
 
 
@@ -17,12 +17,12 @@
         ))))
 
 (defn platform
-  [{:keys [db event-chan redis]} request]
+  [{:keys [db event-chan redis else]} request]
   (let [host (host-of request)
         pl   (pl->lang (id-of request :platform))
         top-disc (list-top-disc db pl 5)
         top-members (list-top-user db pl 5)
-        top-projects (list-top-proj db redis pl 100)]
+        top-projects (top-projects-es else pl 100)]
     (html-resp 
       (layout host
         [:div 

@@ -3,6 +3,7 @@
     [clojure.tools.logging :as log]
     [clojure.core.memoize :as memo]
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [cheshire.core :refer :all]
     [ring.util.response :as resp]
     [hiccup.core :as hic]
@@ -57,15 +58,16 @@
         ])]])])
 
 (defn list-top-proj
-  [{:keys [db event-chan redis]} request]
+  [{:keys [db event-chan redis else]} request]
   (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
         view         (get-in request [:params :view])
         view-fn     (if (= view "grid") grid-view list-view)]
     (log/info req-id platform hosted-pl host url)
     (when platform
-      (let [top-projects (actions/list-top-proj db redis platform limit-by)
+      (let [top-projects (actions/top-projects-es else platform limit-by)
+            ; top-projects (actions/list-top-proj db redis platform limit-by)
             keyset (keys (first top-projects))]
-        ; (log/warn cached-projects)
+        (log/warn top-projects)
         (if json?
           (json-resp top-projects)
           (html-resp
@@ -124,16 +126,16 @@
   "Temporary horrible searching logic.
   Will be replaced with proper ElasticSearch Solution"
   [{:keys [db event-chan redis else]} request]
-  (let [host        (host-of request)
-        is-json     (type-of request :json)
+  (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
         term        (get-in request [:query-params "q"])
-        hosted-pl   (host->pl->lang host)
-        platform    (or hosted-pl (pl->lang (id-of request :platform)))
         index-name  (:index else)
         es-conn     (:conn else)]
     (log/warn "TERML:" term)
     (let [res (esd/search es-conn index-name "github_project"
-                :query (q/query-string :query term))
+                
+                ;(q/query-string :query term))
+                :query  (q/filtered 
+                    :filter   (q/term :full_name (str/lower-case platform))))
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]
       (json-resp (map :_source hits)))))

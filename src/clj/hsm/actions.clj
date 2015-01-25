@@ -2,11 +2,17 @@
   (:require
     [clojure.core.memoize :as memo]
     [clojure.tools.logging :as log]
+    [clojure.string :as str]
     [schema.core :as s]
     [clojurewerkz.cassaforte.cql  :as cql]
     [clojurewerkz.cassaforte.query :as dbq]
     [qbits.hayt :as hayt]
     [qbits.hayt.dsl.statement :as hs]
+    [clojurewerkz.elastisch.rest :as esr]
+    [clojurewerkz.elastisch.rest.index :as esi]
+    [clojurewerkz.elastisch.rest.document :as esd]
+    [clojurewerkz.elastisch.rest.response :as esrsp]
+    [clojurewerkz.elastisch.query :as q]
     [hsm.utils :refer :all]
     [hsm.cache :as cache]))
 
@@ -503,3 +509,17 @@
   (first 
     (cql/select connection :topic
       (dbq/where [[:= :slug slug]]))))
+
+(defn top-projects-es*
+  [else platform limit]
+  (let [res (esd/search (:conn else) (:index else) "github_project"
+                 :sort [ { :watchers {:order :desc}}]
+                 :size limit
+                  :query (q/filtered 
+                          :filter   (q/term 
+                                        :language (str/lower-case platform))))
+          n (esrsp/total-hits res)
+          hits (esrsp/hits-from res)]
+    (map :_source hits)))
+
+(def top-projects-es (memo/ttl top-projects-es* :ttl/threshold 6000000 ))
