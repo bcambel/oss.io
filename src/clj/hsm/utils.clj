@@ -220,6 +220,26 @@
     (map #(char (Integer/parseInt % 16))
       (map (fn[x] (apply str x)) (partition 2 s)))))
 
+(defn hexify [s]
+  (apply str
+    (map #(format "%02x" (int %)) s)))
+
+(defn unhexify [hex]
+  (apply str
+    (map 
+      (fn [[x y]] (char (Integer/parseInt (str x y) 16))) 
+        (partition 2 hex))))
+
+(defn hexify2 [s]
+  (apply str (map #(format "%02x" %) (.getBytes s "UTF-8"))))
+
+(defn unhexify2 [s]
+  (let [bytes (into-array Byte/TYPE
+                 (map (fn [[x y]]
+                    (unchecked-byte (Integer/parseInt (str x y) 16)))
+                       (partition 2 s)))]
+    (String. bytes "UTF-8")))
+
 ;; Following functions borrowed+modified slightly from 
 ;; Peter Taoussanis <https://www.taoensso.com>
 ;; https://github.com/ptaoussanis/encore

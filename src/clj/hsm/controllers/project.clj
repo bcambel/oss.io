@@ -6,6 +6,7 @@
     [clojure.string :as str]
     [cheshire.core :refer :all]
     [ring.util.response :as resp]
+    [ring.util.codec :as codec]
     [hiccup.core :as hic]
     [hiccup.page :as hic.pg]
     [hiccup.element :as hic.el]
@@ -133,9 +134,10 @@
     (log/warn "TERML:" term)
     (let [res (esd/search es-conn index-name "github_project"
                 
-                ;(q/query-string :query term))
-                :query  (q/filtered 
-                    :filter   (q/term :full_name (str/lower-case platform))))
+                :query (q/query-string :query (codec/url-encode term)))
+                ; :query  (q/filtered 
+                ;     :filter   (q/term :full_name (str/lower-case platform)))
+
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]
       (json-resp (map :_source hits)))))
