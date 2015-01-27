@@ -34,10 +34,13 @@
 
 (defhtml left-menu
   [host platform page]
-  (panelx "Social" "" ""
-    [:a.btn.btn-success {:href "#mc_embed _signup"} "Subscribe"]
+  [:div.bs-callout.bs-callout-success ;{:style "background-color:#f4f4f4;" }
+  ; (panelx "Social" "" ""
+    [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe"]
+    [:hr]
     [:p "Join " [:b 917] " others"]
     [:p "No spamming. I promise!"]
+    [:hr]
     [:a.twitter-share-button {:href "https://twitter.com/share" 
       :data-text (format "Top %s Projects" platform)
       :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :large
@@ -45,7 +48,9 @@
       } "Tell your friends"]
     [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
     [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
-    ))
+    [:hr]
+    [:script#_carbonads_js {:type "text/javascript" :src "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=pythonhackerscom" }]
+    ])
 
 (defhtml languages-pane
   []
@@ -114,13 +119,26 @@
               content]]
           [:div.col-lg-1]
          ]
+        [:div#mc_embed_signup.modal.fade
+          [:div.modal-dialog
+            [:div.modal-content
+              [:form#mc-embedded-subscribe-form.form-inline {:novalidate "novalidate", :target "_blank", :name "mc-embedded-subscribe-form", :method "post", :action "http://pythonarticles.us7.list-manage.com/subscribe/post?u=ec40ca305ad5132552f8666a7&id=d588dd7362"}
+              [:div.modal-header [:button.close {:aria-hidden "true", :data-dismiss "modal", :type "button"} "×"] [:h4.modal-title "Newsletter Subscription"]]
+              [:div.modal-body [:p "Drop us your email and we will keep you updated.."]
+                  [:input#mce-EMAIL.form-control {:style "height:45px;font-size:1.5em;", :required "required", :placeholder "email address", :name "EMAIL", :value "", :type "text"}]
+                  [:br] [:br]
+                  [:p [:a.twitter-follow-button.pull-right {:data-lang :en :data-size :large :data-show-count :true
+                      :href "https://twitter.com/pythonhackers"} "Follow @pythonhackers"]]]
+              [:div.modal-footer [:button.btn.btn-default.pull-left {:data-dismiss "modal"} "Close"]
+          [:input#mc-embedded-subscribe.btn.btn-primary {:name "subscribe", :value "Subscribe", :type "submit"}]]]]]]
+
         [:script {:type "text/javascript"} "var session = {};"]
-        (include-js "//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js")
-        (include-js "//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js")
-        (include-js "//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")
-        (include-js "//cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.4/typeahead.bundle.min.js")
-        (include-js "//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js")
-        (include-js "//cdnjs.cloudflare.com/ajax/libs/bootstrap-markdown/2.8.0/js/bootstrap-markdown.js")
+        (include-js "//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"
+                    "//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"
+                    "//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"
+                    "//cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.4/typeahead.bundle.min.js"
+                    "//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"
+                    "//cdnjs.cloudflare.com/ajax/libs/bootstrap-markdown/2.8.0/js/bootstrap-markdown.js")
         (include-js "/js/app.js")
 
         (when (if (nil? is-dev?) true is-dev?)

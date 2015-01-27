@@ -123,6 +123,23 @@
           (actions/load-all-projects db 200))
         (json-resp {:ok 1})))))
 
+(defn transform-user
+  [x]
+  x)
+
+(defn update-user-search-index
+  [{:keys [db event-chan redis else]} request]
+  (let [index-name  (:index else)
+        es-conn     (:conn else)]
+    (if (nil? es-conn)
+      (json-resp {:ok false :reason "Conn failure..."})
+      (do
+        ; (when (esi/exists? es-conn index-name)
+          ; (esi/flush es-conn index-name :refresh true))
+        (mapv #(esd/create es-conn index-name "github_user" (transform-user %))
+          (actions/load-all-users db 200))
+        (json-resp {:ok 1})))))
+
 (defn search
   "Temporary horrible searching logic.
   Will be replaced with proper ElasticSearch Solution"

@@ -131,6 +131,7 @@
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (GET  "/search"                           request (c.pr/search specs request))
         (GET  "/search/update"                    request (c.pr/update-search specs request))
+        (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
 
         (route/not-found "Page not found")
         ))

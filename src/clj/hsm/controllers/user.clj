@@ -4,9 +4,10 @@
             [cheshire.core                :refer :all]
             [ring.util.response           :as resp]
             [hiccup.def                   :refer [defhtml]]
+            [clojurewerkz.elastisch.rest.document :as esd]
             [hsm.actions                  :as actions]
             [hsm.pipe.event               :as event-pipe]
-            [hsm.views                    :refer [layout panel panelx render-user]]
+            [hsm.views                    :refer [layout panel panelx render-user left-menu]]
             [hsm.ring                     :refer [json-resp html-resp redirect]]
             [hsm.integration.ghub         :as gh]
             [hsm.cache                    :as cache]
@@ -247,25 +248,31 @@
   [{:keys [db event-chan redis]} request])
 
 (defn some-user
-  [{:keys [db event-chan redis]} request]
-  (let [host (host-of request)
+  [{:keys [db event-chan redis else]} request]
+  (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
         limit-by 100
-        users (or (cache/retrieve redis :top-users)
-                  (actions/load-users db limit-by))
+        es-conn     (:conn else)
+        ; users (or (cache/retrieve redis :top-users)
+        ;           (actions/load-users db limit-by))
+         search-rez (esd/search es-conn (:index else) "github_user" :sort [ { :followers {:order :desc}}] :size 100)
+         users (map :_source (-> search-rez :hits :hits))
         is-json (type-of request :json)]
     (if is-json 
       (json-resp users)
       (html-resp 
         (layout host
-          [:div
-            [:table.table
-            (for [x users]
-                [:tr   
-                  [:td (:followers x)]
-                  [:td 
-                    [:a {:href (str "/user2/" (:login x))} (:login x)]
-                    [:nbsp]
-                    (:name x)
-                    [:p 
-                      [:a {:href (:blog x)} (:blog x)]
-                      (:email x)]]])]])))))
+          [:div.row
+            [:div.col-lg-3
+              (left-menu host platform "open-source")]
+            [:div.col-lg-9
+              [:table.table
+              (for [x users]
+                  [:tr
+                    [:td (:followers x)]
+                    [:td
+                      [:a {:href (str "/user2/" (:login x))} (:login x)]
+                      [:nbsp]
+                      (:name x)
+                      [:p
+                        [:a {:href (:blog x)} (:blog x)]
+                        (:email x)]]])]]])))))

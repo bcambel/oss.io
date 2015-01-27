@@ -384,3 +384,17 @@ color: #5bc0de;
 .md-editor > textarea { 
 padding-left : 10px;
 font-size:16px;}
+
+
+
+
+.carbon-text {
+display: block;
+font-size: 12px;
+color: gray;
+}
+
+.carbon-poweredby {
+  color: gray !important;
+  font-size: 12px;
+}

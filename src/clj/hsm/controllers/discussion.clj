@@ -13,28 +13,32 @@
 
 (defn get-topic
   [{:keys [db event-chan redis conf]} request]
-  (let [{:keys [host id body json? user pl]} (common-of request)
+  (let [{:keys [host id body json? user pl platform]} (common-of request)
         ; topic (actions/get-topic db (or pl 1) (Integer/parseInt id))
         topic (actions/get-topic-by-slug db id)
         top-disc (actions/load-discussions db)]
         (log/warn topic)
       (if json?
         (json-resp topic)
-        (layout host 
-          (panelx
-            [:h3 (:name topic)]
-            "" ""  
-            (for [x top-disc]
-              [:div.row 
-                [:div.col-lg-6 
-                  [:h4
-                    [:a {:href (str "/discussion/" (:id x)) :style "margin:bottom:10px;"} (:title x)] 
-                    [:p {:style "color:gray" } 
-                  (cutoff (get-in x [:post :text]) 200)]]]
-                [:div.col-lg-3 "Users"]
-                [:div.col-lg-1 "Count"]
-                [:div.col-lg-2 (:published_at x)]
-                ]))))))
+        (layout host
+          [:div.row
+            [:div.col-lg-3
+              (left-menu host platform "open-source")]
+            [:div.col-lg-9
+              (panelx
+                [:h3 (:name topic)]
+                "" ""
+                (for [x top-disc]
+                  [:div.row 
+                    [:div.col-lg-6 
+                      [:h4
+                        [:a {:href (str "/discussion/" (:id x)) :style "margin:bottom:10px;"} (:title x)] 
+                        [:p {:style "color:gray" } 
+                      (cutoff (get-in x [:post :text]) 200)]]]
+                    [:div.col-lg-3 "Users"]
+                    [:div.col-lg-1 "Count"]
+                    [:div.col-lg-2 (:published_at x)]
+                    ]))]]))))
 
 
 (defn load-discussions
@@ -77,7 +81,7 @@
 
 (defn get-discussion 
   [{:keys [db event-chan redis conf]} request]
-  (let [{:keys [host id body json? user]} (common-of request)
+  (let [{:keys [host id body json? user platform]} (common-of request)
         disc-id (BigInteger. id)
         discussion (actions/load-discussion db disc-id)
         posts (actions/load-discussion-posts db disc-id)]
@@ -86,10 +90,11 @@
       (json-resp discussion)
       (html-resp
           (layout host 
-            ; (panelx
                "" ""
             [:div.row 
-              [:div.col-lg-10
+              [:div.col-lg-3
+                (left-menu host platform "open-source")]
+              [:div.col-lg-9
                 [:div.bs-callout.bs-callout-danger {:style "background-color:#f4f4f4;" }
                   [:div.post-head.row 
                         [:div.col-lg-6

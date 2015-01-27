@@ -301,6 +301,12 @@
         conn (:connection db)]
     (cql/iterate-table conn :github_project :full_name batch-size)))
 
+(defn load-all-users
+  [db batch-size]
+  (let [batch-size (if (> batch-size 1000) 1000 batch-size)
+        conn (:connection db)]
+    (cql/iterate-table conn :github_user :login batch-size)))
+
 (defn ^:private fetch-top-proj
   [db redis language size]
   (log/warn "Start REDIS TOP PROJ Fetch" language)
