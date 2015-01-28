@@ -7,7 +7,8 @@ env.user = 'root'
 env.use_ssh_config = True
 folder = "/var/www/hackersome/"
 
-PACKAGES = []
+PACKAGES = ['openjdk-7-jre-headless','python-pip','dstat','htop','supervisor',
+            'libjna-java', 'libopts25','ntp', 'python-support']
 
 @task
 def install_packages():
@@ -26,6 +27,10 @@ def cassax(command='status'):
 def runx(command):
     run("{}".format(command))
 
+@task
+def set_up():
+  sudo("apt-get update --fix-missing")
+  require.deb.packages(PACKAGES)
 
 @task
 def compile():
