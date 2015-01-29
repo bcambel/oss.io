@@ -81,7 +81,7 @@
       (do 
         (future (gh/find-n-update db id conf))
         (Thread/sleep 2000)
-        (if is-json? 
+        (if is-json 
           (redirect (format "/user2/%s?json=1" id))
           (redirect (str "/user2/" id))))
         ; (json-resp {:ok 1})
