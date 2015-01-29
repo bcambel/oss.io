@@ -115,7 +115,7 @@
 
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
-        (GET  "/:platform/discussions"            request (c.d/discussions [db event-chan] request))
+        (GET  "/:platform/discussions"            request (c.d/discussions specs request))
 
         (GET  "/collections"                      request (c.coll/load-coll specs request))
         (POST "/collections/create"               request (c.coll/create-coll specs request))

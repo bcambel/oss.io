@@ -280,20 +280,16 @@
 (defn discussions
   [{:keys [db event-chan redis conf]} request]
   (log/warn request)
-  (let [host  (host-of request)
-        body (body-of request)
-        id (id-of request)
-        user (whois request)
-        pl (id-of request :platform)
-        is-json (type-of request :json)]
-    (when-let [discussion-list (actions/list-top-disc db pl 50)]
-      (if is-json
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)]
+    (when-let [discussion-list (actions/list-top-disc db platform 50)]
+      (if json?
         (json-resp discussion-list)
         (html-resp 
           (layout host 
             [:div
               [:div.row
-                (panel [:a {:href (format "/%s/discussions" pl)} "Discussions"]
+                (panel [:a {:href (format "/%s/discussions" platform)} "Discussions"]
                 [:ul {:style "list-style-type:none;padding-left:1px;" }
                   (for [x discussion-list]
                     [:li 
