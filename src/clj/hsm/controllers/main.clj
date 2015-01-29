@@ -1,11 +1,17 @@
 (ns hsm.controllers.main
   (:require 
-    [hiccup.def     :refer [defhtml]]
-    [hsm.ring       :refer [html-resp]]
-    [hsm.views      :refer :all]
-    [hsm.utils      :refer [host-of id-of cutoff pl->lang]]
-    [hsm.conf       :refer [languages]]
-    [hsm.actions    :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
+    [clojure.tools.logging        :as log]
+    [clojure.string :as str]
+    [hiccup.def                   :refer [defhtml]]
+    [markdown.core :refer [md-to-html-string]]
+    [clojurewerkz.elastisch.rest.document :as esd]
+    [clojurewerkz.elastisch.query :as q]
+    [clojurewerkz.elastisch.rest.response :as esrsp]
+    [hsm.ring                     :refer [html-resp json-resp]]
+    [hsm.views                    :refer :all]
+    [hsm.utils                    :refer [host-of id-of cutoff pl->lang common-of]]
+    [hsm.conf                     :refer [languages]]
+    [hsm.actions                  :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
 
 
 
@@ -49,3 +55,32 @@
                       [:p {:style "color:gray"} (cutoff (:description x) 50)]]
                       ]
                     )])]]]))))
+
+(defn tutorial
+  [{:keys [db event-chan redis else]} request]
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)
+        user (id-of request :user)
+        slug (format "%s/%s" user (id-of request :slug))
+        es-conn     (:conn else)]
+    (log/warn user slug)
+    (let [res (esd/search es-conn (:index else) "tutorial"
+              :query  (q/filtered 
+                    :filter   (q/term :owner (str/lower-case user))))
+          n (esrsp/total-hits res)
+          hits (esrsp/hits-from res)]
+      (if json?
+        (json-resp (map :_source hits))
+        (html-resp
+              (layout host 
+                [:div.row 
+                [:div.col-lg-3
+                  (left-menu host platform "open-source")]
+                [:div.col-lg-9
+                  (for [data (map :_source hits)]
+                    [:div (md-to-html-string (:content data))]
+                    )
+                  
+                  ]]
+
+    ))))))

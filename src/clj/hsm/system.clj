@@ -128,10 +128,12 @@
         (POST "/collections/:id/add"              request (c.coll/add-p-coll specs request))
         (POST "/collections/:id/delete"           request (c.coll/del-p-coll specs request))
 
+        (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
+
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (GET  "/search"                           request (c.pr/search specs request))
-        (GET  "/search/update"                    request (c.pr/update-search specs request))
-        (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
+        ; (GET  "/search/update"                    request (c.pr/update-search specs request))
+        ; (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
 
         (route/not-found "Page not found")
         ))
