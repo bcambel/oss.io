@@ -38,7 +38,7 @@
   ; (panelx "Social" "" ""
     [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe"]
     [:hr]
-    [:p "Join " [:b 917] " others"]
+    [:p "Join " [:b 926] " others"]
     [:p "No spamming. I promise!"]
     [:hr]
     [:a.twitter-share-button {:href "https://twitter.com/share" 
