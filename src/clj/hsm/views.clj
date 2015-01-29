@@ -100,7 +100,7 @@
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
                   [:li [:a {:href "/users"} "Users"]]
-                  [:li [:a {:href "/collections"} "Collections"]]
+                  ; [:li [:a {:href "/collections"} "Collections"]]
                   [:li [:a {:href "/discussions"} "Discussions"]]
                    [:li.dropdown
                      [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
