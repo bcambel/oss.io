@@ -84,11 +84,11 @@
       {:lang "en-US"}
       [:head
         [:meta {:charset "UTF-8"}]
-        [:meta {:name "robots" :content "noindex"}]
+        ; [:meta {:name "robots" :content "noindex"}]
         [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"}]
         [:meta {:content "IE=edge,chrome=1"
                 :http-equiv "X-UA-Compatible"}]
-        [:title "Hackersome"]
+        [:title (str website  " Hackersome")]
         (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")  
         (include-css "/css/style.css")]

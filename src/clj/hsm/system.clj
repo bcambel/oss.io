@@ -12,7 +12,7 @@
         [hsm.controllers.discussion   :as c.d]
         [hsm.controllers.main         :as c.m]
         [hsm.integration.ghub         :as ghub]
-        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log]]
+        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log redirect]]
         [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
@@ -95,7 +95,7 @@
         
         (GET  "/os/:user/:project"                request (c.pr/get-proj specs request))
         (GET  "/open-source/:user/:project"       request (c.pr/get-proj specs request))
-        (GET  "/open-source"                      request (c.pr/list-top-proj specs request))
+        (GET  "/open-source"                      request (redirect "/open-source/"))
         (GET  "/open-source/"                     request (c.pr/list-top-proj specs request))
         
         (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))

@@ -277,17 +277,18 @@
                 ]
   (layout host 
     [:div.row 
-              [:div.col-lg-3
-                (left-menu host platform "open-source")]
-              [:div.col-lg-9
-                [:div.bs-callout.bs-callout-danger
-                  [:p "Python Packages currently unavailable. Please follow the link below."]
-                  [:h3 [:a {:href (str "https://pypi.python.org/pypi/" proj)} (format "%s at PyPI" proj)]]]]])
+      [:div.col-lg-3
+        (left-menu host platform "open-source")]
+      [:div.col-lg-9
+        [:div.bs-callout.bs-callout-danger
+          [:p "Python Packages currently unavailable. Please follow the link below."]
+          [:h3 [:a {:href (str "https://pypi.python.org/pypi/" proj)} (format "%s at PyPI" proj)]]]]])
   ))
 (defn get-proj
   [{:keys [db event-chan redis]} request]
-  (let [host  (host-of request)
-        is-json (type-of request :json)
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)
+        
         id (format "%s/%s" (id-of request :user) (id-of request :project))
         force-sync (is-true (get-in request [:params :force-sync]))
         related-projects []
@@ -302,7 +303,7 @@
               contributor-count (count (:contributors proj-extras))
               owner (first (.split id "/"))
               owner-obj (actions/load-user2 db owner)]
-          (if is-json
+          (if json?
             (json-resp (assoc proj :owner owner-obj))
             (let [contributors (take 10 (:contributors proj-extras))
                   watchers (take 10 (:watchers proj-extras))
@@ -311,27 +312,30 @@
                   users (actions/load-users-by-id db people)
                   contributors (filter #(in? contributors (:login %)) users)
                   watchers (filter #(in? watchers (:login %)) users)
-                  stargazers (filter #(in? stargazers (:login %)) users)
-                  ]
+                  stargazers (filter #(in? stargazers (:login %)) users)]
             (html-resp
               (views/layout host
-                (project-header id proj admin? owner contributor-count watcher-count)
-                [:div.row
-                  [:div.col-lg-9
-                    (views/panel "READ ME"
-                      (get-project-readme* redis id))]
+                [:div.row 
                   [:div.col-lg-3
-                    (panel [:a {:href (str "/p/" id "/contributors")} [:span [:i.fa.fa-users] " Contributors" ]]
-                      (user-list contributors ))
-                    (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
-                      (user-list watchers))
-                    (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
-                      (user-list stargazers))                 
-                    (panel "Related Projects"
-                      [:ul
-                        (for [x related-projects]
-                          [:li
-                            [:a {:href (str "/p/"(:full_name x))} (:full_name x)
-                            [:p {:style "color:gray"} (cutoff (:description x) 50)]]
-                            ]
-                          )])]])))))))))
+                    (left-menu host platform "open-source")]
+                  [:div.col-lg-9
+                    (project-header id proj admin? owner contributor-count watcher-count)
+                    [:div.row
+                      [:div.col-lg-8
+                        (views/panel "READ ME"
+                          (get-project-readme* redis id))]
+                      [:div.col-lg-4
+                        (panel [:a {:href (str "/p/" id "/contributors")} [:span [:i.fa.fa-users] " Contributors" ]]
+                          (user-list contributors ))
+                        (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
+                          (user-list watchers))
+                        (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
+                          (user-list stargazers))                 
+                        (panel "Related Projects"
+                          [:ul
+                            (for [x related-projects]
+                              [:li
+                                [:a {:href (str "/p/"(:full_name x))} (:full_name x)
+                                [:p {:style "color:gray"} (cutoff (:description x) 50)]]
+                                ]
+                              )])]]]])))))))))

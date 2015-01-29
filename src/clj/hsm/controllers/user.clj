@@ -71,8 +71,8 @@
 
 (defn get-user2
   [{:keys [db event-chan redis conf else]} request] 
-  (let [id (id-of request)
-        host (host-of request)
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)
         user (actions/load-user2 db id)
         admin? false
         force-sync (is-true (get-in request [:params :force-sync]))
@@ -97,26 +97,31 @@
         (if is-json
           (json-resp user)
           (layout host
-            [:div.col-lg-3
-              (user-part id user admin? c-star c-follow c-followers)
-              (when-not org?
-                (do 
-                  (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
-                    [:ul.user-list
-                      (render-users db (take 10 (:following user-extras)))])
-                  (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
-                    [:ul.user-list
-                      (render-users db (take 10(:followers user-extras)))])))]
-            [:div.col-lg-9
-              (when-not org?
-                [:div.col-lg-6
-                (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-                  [:ul (for [star (take 10 (:starred user-extras))] 
-                    [:li [:a {:href (str "/p/" star)} star]])])])
-              [:div.col-lg-6
-              (panelx "User Repos" ["no-pad"] ""
-                (render-repos user-repos)
-                )]]))))))
+            [:div.row 
+                  [:div.col-lg-3
+                    (left-menu host platform "open-source")]
+                  [:div.col-lg-9
+                    [:div.row
+                      [:div.col-lg-4
+                        (user-part id user admin? c-star c-follow c-followers)
+                        (when-not org?
+                          (do 
+                            (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
+                              [:ul.user-list
+                                (render-users db (take 10 (:following user-extras)))])
+                            (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
+                              [:ul.user-list
+                                (render-users db (take 10(:followers user-extras)))])))]
+                      [:div.col-lg-8
+                        (when-not org?
+                          [:div.col-lg-6
+                          (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+                            [:ul (for [star (take 10 (:starred user-extras))] 
+                              [:li [:a {:href (str "/p/" star)} star]])])])
+                        [:div.col-lg-6
+                        (panelx "User Repos" ["no-pad"] ""
+                          (render-repos user-repos)
+                          )]]]]]))))))
 
 (defn sync-user2
   [[db event-chan] request] 
@@ -182,16 +187,17 @@
     (if is-json
       (json-resp (:followers user-extras))
       (layout host
-          [:div.col-lg-3
-            (user-part id user admin? c-star c-follow c-followers)]
-          [:div.col-lg-9
-          (when-not org?
-            [:div.col-lg-12
-            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
-              [:div.user-list.row
-                (for [x (fetch-users db (:followers user-extras))]
-                    [:div.col-lg-3.user-thumb
-                      (render-user x)])])])]))))
+          [:div.row 
+            [:div.col-lg-3
+              (user-part id user admin? c-star c-follow c-followers)]
+            [:div.col-lg-9
+            (when-not org?
+              [:div.col-lg-12
+              (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
+                [:div.user-list.row
+                  (for [x (fetch-users db (:followers user-extras))]
+                      [:div.col-lg-3.user-thumb
+                        (render-user x)])])])]]))))
 
 (defn user2-following
   [{:keys [db event-chan redis]} request]
