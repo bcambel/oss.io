@@ -62,7 +62,7 @@
 (def propert-ids 
   { "hackersome.com" "UA-57973731-1"
     "sweet.io" "UA-33058338-1"
-    "pythonhackers.com" "UA-42128994-1"
+    "pythonhackers.com" "UA-57973731-4"
     "clojurehackers.com" "UA-57973731-3"
     "dev.hackersome.com" "UA-57973731-1" })
 

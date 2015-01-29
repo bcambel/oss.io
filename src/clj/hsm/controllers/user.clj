@@ -74,15 +74,18 @@
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
-        admin? true
+        admin? false
         force-sync (is-true (get-in request [:params :force-sync]))
         is-json (type-of request :json)]
     (if (or force-sync (not (:full_profile user)))
       (do 
-        (gh/find-n-update db id conf)
-        ; (redirect (str "/user2/" id))
-        (json-resp {:ok 1})
-        )
+        (future (gh/find-n-update db id conf))
+        (Thread/sleep 2000)
+        (if is-json? 
+          (redirect (format "/user2/%s?json=1" id))
+          (redirect (str "/user2/" id))))
+        ; (json-resp {:ok 1})
+        
       (let [user-extras (actions/user-extras db id)
             ; user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
             user-repos (actions/user-projects-es* else id 100)
@@ -169,7 +172,7 @@
   (let [id (id-of request)
         host (host-of request)
         user (actions/load-user2 db id)
-        admin? true
+        admin? false
         user-extras (actions/user-extras db id)
         is-json (type-of request :json)
         c-star (count (:starred user-extras))

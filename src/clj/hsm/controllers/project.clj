@@ -200,7 +200,7 @@
          id (format "%s/%s" (id-of request :user) (id-of request :project))
          force-sync (is-true (get-in request [:params :force-sync]))
          related-projects []
-         admin? true
+         admin? false
          proj (first (actions/load-project db id))
          proj-extras (actions/load-project-extras db id)
          watcher-count (count (:watchers proj-extras))
@@ -272,8 +272,17 @@
   Somehow fetch the Python Package Projects. Same will go for Clojars."
   [{:keys [db event-chan redis]} request]
   (let [{:keys [host id body json? user platform 
-                req-id limit-by url hosted-pl]} (common-of request)]
-  (layout host "Project")
+                req-id limit-by url hosted-pl]} (common-of request)
+          proj (id-of request :project)
+                ]
+  (layout host 
+    [:div.row 
+              [:div.col-lg-3
+                (left-menu host platform "open-source")]
+              [:div.col-lg-9
+                [:div.bs-callout.bs-callout-danger
+                  [:p "Python Packages currently unavailable. Please follow the link below."]
+                  [:h3 [:a {:href (str "https://pypi.python.org/pypi/" proj)} (format "%s at PyPI" proj)]]]]])
   ))
 (defn get-proj
   [{:keys [db event-chan redis]} request]
@@ -282,7 +291,7 @@
         id (format "%s/%s" (id-of request :user) (id-of request :project))
         force-sync (is-true (get-in request [:params :force-sync]))
         related-projects []
-        admin? true]
+        admin? false]
     (let [proj (first (actions/load-project db id))]
       (if force-sync
         (do

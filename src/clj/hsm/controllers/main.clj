@@ -5,6 +5,7 @@
     [hiccup.def                   :refer [defhtml]]
     [markdown.core :refer [md-to-html-string]]
     [clojurewerkz.elastisch.rest.document :as esd]
+    [ring.util.codec :as codec]
     [clojurewerkz.elastisch.query :as q]
     [clojurewerkz.elastisch.rest.response :as esrsp]
     [hsm.ring                     :refer [html-resp json-resp]]
@@ -61,26 +62,28 @@
   (let [{:keys [host id body json? user platform 
                 req-id limit-by url hosted-pl]} (common-of request)
         user (id-of request :user)
-        slug (format "%s/%s" user (id-of request :slug))
+        slug  (format "%s-%s" user (id-of request :slug))
         es-conn     (:conn else)]
-    (log/warn user slug)
+    (log/warn user (codec/url-encode slug))
     (let [res (esd/search es-conn (:index else) "tutorial"
-              :query  (q/filtered 
-                    :filter   (q/term :owner (str/lower-case user))))
+              :query  (q/term :owner (codec/url-encode user)))
           n (esrsp/total-hits res)
-          hits (esrsp/hits-from res)]
+          pre-hits (esrsp/hits-from res) hits []]
+
+      (log/warn slug "=>" (map :slug (map :_source pre-hits)))
+      (let [filtered  (filter (fn[x] (println (:slug x) slug) (= (:slug x) slug)) (map :_source pre-hits))]
       (if json?
-        (json-resp (map :_source hits))
+        (json-resp filtered)
         (html-resp
               (layout host 
                 [:div.row 
                 [:div.col-lg-3
                   (left-menu host platform "open-source")]
                 [:div.col-lg-9
-                  (for [data (map :_source hits)]
+                  (for [data filtered]
                     [:div (md-to-html-string (:content data))]
                     )
                   
                   ]]
 
-    ))))))
+    )))))))
