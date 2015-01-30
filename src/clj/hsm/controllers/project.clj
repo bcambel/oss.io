@@ -68,7 +68,7 @@
       (let [top-projects (actions/top-projects-es else platform limit-by)
             ; top-projects (actions/list-top-proj db redis platform limit-by)
             keyset (keys (first top-projects))]
-        (log/warn top-projects)
+        ; (log/warn top-projects)
         (if json?
           (json-resp top-projects)
           (html-resp
@@ -77,8 +77,7 @@
                 [:div.col-lg-3
                   (left-menu host platform "open-source")]
                 [:div.col-lg-9
-                  (view-fn top-projects keyset)]]
-              )))))))
+                  (view-fn top-projects keyset)]])))))))
 
 (defn get-project-readme*
   "Fetch read me. Redis is used.
