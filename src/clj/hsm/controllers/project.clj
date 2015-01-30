@@ -195,8 +195,8 @@
 
 (defn get-project-*
   [mod-fn selector {:keys [db event-chan redis]} request]
-   (let [host  (host-of request)
-         is-json (type-of request :json)
+   (let [{:keys [host id body json? user platform
+                req-id limit-by url hosted-pl]} (common-of request)
          id (format "%s/%s" (id-of request :user) (id-of request :project))
          force-sync (is-true (get-in request [:params :force-sync]))
          related-projects []
@@ -207,11 +207,15 @@
          contributor-count (count (:contributors proj-extras))
          owner (first (.split id "/"))
          owner-obj (actions/load-user2 db owner)]
-      (if is-json
+      (if json?
         (json-resp (selector proj-extras));(assoc proj :owner owner-obj))
         (views/layout host
-          (project-header id proj admin? owner contributor-count watcher-count)
-          (mod-fn db selector id proj proj-extras)))))
+          [:div.row
+            [:div.col-lg-3
+              (left-menu host platform (str "p/" id))]
+            [:div.col-lg-9
+              (project-header id proj admin? owner contributor-count watcher-count)
+              (mod-fn db selector id proj proj-extras)]]))))
 
 (defhtml contribs
   [db selector id proj proj-extras]
