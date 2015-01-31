@@ -29,8 +29,19 @@ def runx(command):
 
 @task
 def set_up():
+  sudo("adduser cassa --system")
   sudo("apt-get update --fix-missing")
   require.deb.packages(PACKAGES)
+
+@task
+def rpm(license_key):
+  sudo("echo deb http://apt.newrelic.com/debian/ newrelic non-free >> /etc/apt/sources.list.d/newrelic.list")
+  sudo("wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -")
+  sudo("apt-get update --fix-missing")
+  sudo("apt-get install newrelic-sysmond")
+  sudo("nrsysmond-config --set license_key={}".format(license_key))
+  sudo("/etc/init.d/newrelic-sysmond start")
+
 
 @task
 def compile():

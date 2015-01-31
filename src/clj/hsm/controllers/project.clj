@@ -68,7 +68,6 @@
       (let [top-projects (actions/top-projects-es else platform limit-by)
             ; top-projects (actions/list-top-proj db redis platform limit-by)
             keyset (keys (first top-projects))]
-        ; (log/warn top-projects)
         (if json?
           (json-resp top-projects)
           (html-resp
