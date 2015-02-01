@@ -101,6 +101,7 @@
         (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))
         (GET  "/p/:user/:project/:mod"            request (c.pr/get-proj-module specs request))
         
+        (GET  "/python-packages/"                 request (c.pr/get-py-proj specs request))
         (GET  "/python-packages/:project"         request (c.pr/get-py-proj specs request))
         (GET  "/python-packages/:project/"        request (c.pr/get-py-proj specs request))
         (GET  "/top-python-contributors-developers" 

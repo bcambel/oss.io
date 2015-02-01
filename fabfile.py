@@ -75,6 +75,7 @@ def cassandra(ip_address):
 
   generate_cassandra_settings(ip_address)
 
+
 @task
 @parallel
 def install_redis():
@@ -87,9 +88,6 @@ def install_redis():
         sudo("make install")
     with cd("redis-2.8.19/utils"):
         sudo("./install_server.sh")
-
-
-  
 
 @task
 def cassandra_agent(datastax_master):
@@ -229,9 +227,9 @@ def deploy(git_version=None):
 
         sudo("mv hsm.jar hackersome.jar")
 
-    sudo("echo %s > VERSION" % git_version )
-    sudo("supervisorctl start prod_hackersome")
+        sudo("echo %s > VERSION" % git_version )
 
+    sudo("supervisorctl start prod_hackersome")
     time.sleep(10)
 
     def req():
@@ -248,10 +246,6 @@ def deploy(git_version=None):
             tries += 1
 
         time.sleep(tries*2)
-
-
-
-
 
 @task
 def hostname():
