@@ -68,7 +68,6 @@
 
 (defhtml render-user
   [x & {:keys [show-followers] :or {show-followers false}}]
-  (log/warn x)
   [:div.user-card
     [:a {:href (format "/user2/%s" (:login x)) :title (:name x)}
       [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
@@ -100,6 +99,7 @@
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
                   [:li [:a {:href "/users"} "Users"]]
+                  [:li [:a {:href "/open-source/"} "Top Projects"]]
                   ; [:li [:a {:href "/collections"} "Collections"]]
                   [:li [:a {:href "/discussions"} "Discussions"]]
                    [:li.dropdown

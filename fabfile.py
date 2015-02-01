@@ -3,6 +3,8 @@ from fabric.context_managers import cd
 from fabric.contrib.console import confirm
 import logging
 from fabtools import require
+import requests
+import time
 
 env.user = 'root'
 env.use_ssh_config = True
@@ -25,6 +27,7 @@ def cassax(command='status'):
     run("service cassandra {}".format(command))
 
 @task
+@parallel
 def runx(command):
     run("{}".format(command))
 
@@ -98,30 +101,57 @@ def release(compile_app=True):
 
 @task
 def deploy_assets():
-  with cd(folder):
-    put("resources/public/css/style.css", "public/css/style.css")
-    put("resources/public/js/app.js", "public/js/app.js")
-    put("logback.xml", "logback.xml")
+    with cd(folder):
+        put("resources/public/css/style.css", "public/css/style.css")
+        put("resources/public/js/app.js", "public/js/app.js")
+        put("logback.xml", "logback.xml")
 
 @task
-def deploy():
-  sudo("mkdir -p {}".format(folder))
+def deploy(git_version=None):
+    uberjar_template = "https://s3-us-west-1.amazonaws.com/hackersome.public/releases/{}/hsm.jar"
 
-  version = open("VERSION").readlines()[0]
-  jar_file = "target/hsm.jar".format(version)
-  put(jar_file, "{}hackersome-latest.jar".format(folder))
+    if git_version is None:
+        git_version = local("git rev-parse HEAD",capture=True)
 
-  deploy_assets()
-  
-  with cd(folder):
-    try:
-      sudo("mv hackersome.jar hackersome-old.jar")
-    except:
-      pass
+    uberjar = uberjar_template.format(git_version)
 
-    sudo("mv hackersome-latest.jar hackersome.jar")
+    rez = requests.head(uberjar)
+    assert rez.ok, "Uberjar not found {}\n{}".format(rez.status_code, uberjar)
 
-  sudo("supervisorctl restart prod_hackersome")
+    sudo("mkdir -p {}".format(folder))
+
+    deploy_assets()
+
+    with cd(folder):
+        sudo("wget {}".format(uberjar))
+        try:
+            sudo("mv hackersome.jar hackersome-old.jar")
+        except:
+            pass
+
+    sudo("mv hsm.jar hackersome.jar")
+
+    sudo("supervisorctl restart prod_hackersome")
+
+    time.sleep(10)
+
+    def req():
+        sudo("http head localhost:8080/")
+        sudo("http head localhost:8080/open-source/")
+
+    tries = 0
+    while tries < 5:
+        try:
+            req()
+            return True
+        except:
+            logging.warn("Retrying....")
+            tries += 1
+
+        time.sleep(tries*2)
+
+
+
 
 
 @task
