@@ -14,7 +14,7 @@ env.use_ssh_config = True
 folder = "/var/www/hackersome/"
 
 PACKAGES = ['openjdk-7-jre-headless','python-pip','dstat','htop','supervisor',
-            'libjna-java', 'libopts25','ntp', 'python-support']
+            'libjna-java', 'libopts25','ntp', 'python-support',]
 
 @task
 def install_packages():
@@ -74,6 +74,20 @@ def cassandra(ip_address):
   sudo("mv /etc/cassandra/cassandra.yaml /etc/cassandra/cassandra2.yaml")
 
   generate_cassandra_settings(ip_address)
+
+@task
+@parallel
+def install_redis():
+    require.deb.package(['tcl8.5'])
+    sudo("wget http://download.redis.io/releases/redis-2.8.19.tar.gz")
+    sudo("tar xzf redis-2.8.19.tar.gz")
+    with cd("redis-2.8.19"):
+        sudo("make")
+        sudo("make test")
+        sudo("make install")
+    with cd("redis-2.8.19/utils"):
+        sudo("./install_server.sh")
+
 
   
 
@@ -201,7 +215,8 @@ def deploy(git_version=None):
     
     sudo("supervisorctl stop prod_hackersome")
 
-    sudo("mkdir -p {}".format(folder))
+    sudo("mkdir -p {}public/css".format(folder))
+    sudo("mkdir -p {}public/js".format(folder))
 
     deploy_assets()
 
@@ -214,6 +229,7 @@ def deploy(git_version=None):
 
         sudo("mv hsm.jar hackersome.jar")
 
+    sudo("echo %s > VERSION" % git_version )
     sudo("supervisorctl start prod_hackersome")
 
     time.sleep(10)

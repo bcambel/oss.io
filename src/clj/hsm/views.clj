@@ -8,6 +8,8 @@
     [hsm.dev            :refer [is-dev?]]
     [hsm.conf           :refer [languages]]))
 
+(def VERSION (try (slurp "VERSION") (catch Throwable t)))
+
 (defhtml row-fluid
   [& content]
   [:div.row-fluid
@@ -119,6 +121,17 @@
               content]]
           [:div.col-lg-1]
          ]
+         [:footer.container-fluid.footer
+          [:div.col-lg-10.col-lg-offset-1
+          [:p "Designed, built and made in Amsterdam with all the love by" [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
+          [:p
+            "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" VERSION)]]
+          [:p
+          [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :large }]]
+          [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=large" 
+                    :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
+            ]
+         ]
         [:div#mc_embed_signup.modal.fade
           [:div.modal-dialog
             [:div.modal-content
@@ -127,8 +140,10 @@
               [:div.modal-body [:p "Drop us your email and we will keep you updated.."]
                   [:input#mce-EMAIL.form-control {:style "height:45px;font-size:1.5em;", :required "required", :placeholder "email address", :name "EMAIL", :value "", :type "text"}]
                   [:br] [:br]
-                  [:p [:a.twitter-follow-button.pull-right {:data-lang :en :data-size :large :data-show-count :true
-                      :href "https://twitter.com/pythonhackers"} "Follow @pythonhackers"]]]
+                  [:p [:a.twitter-follow-button.pull-right {:data-lang :en :data-show-count :true
+                      :href "https://twitter.com/pythonhackers"} "Follow @pythonhackers"]]
+
+                      ]
               [:div.modal-footer [:button.btn.btn-default.pull-left {:data-dismiss "modal"} "Close"]
           [:input#mc-embedded-subscribe.btn.btn-primary {:name "subscribe", :value "Subscribe", :type "submit"}]]]]]]
 
