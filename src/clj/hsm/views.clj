@@ -45,7 +45,7 @@
     [:hr]
     [:a.twitter-share-button {:href "https://twitter.com/share" 
       :data-text (format "Top %s Projects" platform)
-      :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :large
+      :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :normal
       :data-hashtags "python,hackers,github"
       } "Tell your friends"]
     [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]

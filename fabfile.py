@@ -244,6 +244,7 @@ def deploy(git_version=None):
         except:
             logging.warn("Retrying....")
             tries += 1
+            sudo("tail -10 /var/log/syslog")
 
         time.sleep(tries*2)
 

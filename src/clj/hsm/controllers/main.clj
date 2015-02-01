@@ -15,10 +15,19 @@
     [hsm.actions                  :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
 
 (defn homepage
-  [[db event-chan] request]
-  (let [host (host-of request)]
+  [[db event-chan redis else] request]
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)]
     (html-resp 
-      (layout host (languages-pane)))))
+      (layout host 
+        [:div.row
+          [:div.col-lg-2 ]
+          [:div.col-lg-10
+            [:div.jumbotron
+              [:h1 "Community for " platform " developers"]
+              [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe"]
+              [:h2 "Pssst, also check out these" [:a {:href "/open-source/"} " Top Projects"]]
+        ]]]))))
 
 (defn platform
   [{:keys [db event-chan redis else]} request]
