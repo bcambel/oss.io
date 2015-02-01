@@ -12,7 +12,8 @@
 
   (start [component]
     (log/info "Starting Cassandra database")
-    (let [conn (cc/connect [host])]
+    (let [hosts (vec (.split host ","))
+          conn (cc/connect hosts)]
       (db/create-or-use-keyspace conn keyspace)
       (assoc component :connection conn)))
 
