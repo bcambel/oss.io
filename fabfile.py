@@ -6,6 +6,9 @@ from fabtools import require
 import requests
 import time
 
+logging.basicConfig(format='[%(asctime)s](%(filename)s#%(lineno)d)%(levelname)-7s %(message)s',
+                    level=logging.INFO)
+
 env.user = 'root'
 env.use_ssh_config = True
 folder = "/var/www/hackersome/"
@@ -107,6 +110,84 @@ def deploy_assets():
         put("logback.xml", "logback.xml")
 
 @task
+def build(token,new_build=False):
+
+    build_url = "http://admin:%s@jenkins.hackersome.com/{}" % token
+    logging.warn("Triggering build using {}".format(token))
+
+    url = "http://jenkins.hackersome.com/buildByToken/build?job=hackersome&token=token123456"
+    logging.warn(url)
+    
+    if new_build:
+        build_req = requests.get(url)
+
+        if not build_req.ok:
+            logging.warn("Something went wrong..")
+            logging.error("%s - ",build_req.status_code)
+            return False
+        else:
+            logging.warn(build_req.text)
+        
+        time.sleep(10)
+
+    project_status_resp = requests.get(build_url.format("job/Hackersome/api/json"))
+    logging.warn("PROJECT %s", project_status_resp.status_code)
+    if project_status_resp.ok:
+        project_status = project_status_resp.json()
+        build_number = project_status.get("lastBuild",{}).get("number", -1)
+        logging.warn(project_status.get("lastBuild"))
+    else:
+        logging.warn(project_status_resp.text)
+        return False
+
+    # build_number = 11
+    session = requests.Session()
+
+    def req():
+        succeed = False;building = True;status = "?"
+        build_status_resp = session.get(build_url.format("job/Hackersome/{}/api/json".format(build_number)))
+        # logging.warn(build_status_resp.text)
+        if project_status_resp.ok:
+            build_stat = build_status_resp.json()
+            logging.warn("BUILD {id} - STATUS [{result}] in {duration}ms Progress?={building}  ".format(**build_stat))
+            succeed = build_stat.get("result") == "SUCCESS"
+            building = build_stat.get("building", True)
+            status = build_stat.get("result")
+
+        return succeed, building, status
+
+    tries = 0
+    succeed = False
+    building = True 
+    status = ""
+    
+    while building and (not succeed) and tries < 10:
+        try:
+            succeed, building, status = req()
+            if not building:
+                break
+        except Exception,ex:
+            logging.error(ex)
+            
+        logging.warn("Retrying.... %d", tries)
+        tries += 1
+
+        time.sleep(tries*3)
+
+    logging.info("To the next level now.. %s %s %s", succeed, building, status )
+    if succeed: 
+        if confirm("Would you like to deploy now ?"):
+            deploy()
+
+    
+
+def check_jar(uberjar_location):
+    rez = requests.head(uberjar_location)
+    logging.warn("Uberjar found {}\n{}".format(rez.status_code, uberjar_location))
+    return rez.ok 
+
+
+@task
 def deploy(git_version=None):
     uberjar_template = "https://s3-us-west-1.amazonaws.com/hackersome.public/releases/{}/hsm.jar"
 
@@ -115,8 +196,10 @@ def deploy(git_version=None):
 
     uberjar = uberjar_template.format(git_version)
 
-    rez = requests.head(uberjar)
-    assert rez.ok, "Uberjar not found {}\n{}".format(rez.status_code, uberjar)
+    if not check_jar(uberjar):
+        return False
+    
+    sudo("supervisorctl stop prod_hackersome")
 
     sudo("mkdir -p {}".format(folder))
 
@@ -129,9 +212,9 @@ def deploy(git_version=None):
         except:
             pass
 
-    sudo("mv hsm.jar hackersome.jar")
+        sudo("mv hsm.jar hackersome.jar")
 
-    sudo("supervisorctl restart prod_hackersome")
+    sudo("supervisorctl start prod_hackersome")
 
     time.sleep(10)
 

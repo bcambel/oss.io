@@ -3,6 +3,7 @@
 		[clojure.tools.logging					:as log 	]
 		[hsm.schema 										:as db 		]
 		[clojurewerkz.cassaforte.client :as cc 		]
+    [clojurewerkz.cassaforte.policies   :as cp]
     [clojurewerkz.cassaforte.cql    :as cql 	]
     [clojurewerkz.cassaforte.query 	:as dbq		]
     [com.stuartsierra.component 		:as component]))
@@ -15,6 +16,8 @@
     (let [hosts (vec (.split host ","))
           conn (cc/connect hosts)]
       (db/create-or-use-keyspace conn keyspace)
+      (cp/round-robin-policy)
+      (cp/exponential-reconnection-policy 100 1000)
       (assoc component :connection conn)))
 
   (stop [component]
