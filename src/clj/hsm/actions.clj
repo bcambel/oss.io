@@ -355,6 +355,7 @@
   [db proj-list]
   (let [conn (:connection db)]
     (cql/select conn :github_project
+      (dbq/limit 100)
       (dbq/where [[:in :full_name proj-list]]))))
 
 (defn load-projects-by-int-id
@@ -362,6 +363,7 @@
   (let [conn (:connection db)]
     ;; FIX THIS SHIT!@!@!@!
      (mapcat #(cql/select conn :github_project
+            (dbq/limit 1000)
             (dbq/where [[:= :id %]]))
       proj-list)))
 
@@ -424,6 +426,7 @@
   (log/warn "Fetching user-ids" user-ids)
   (let [conn (:connection db)]
     (cql/select conn :github_user
+        (dbq/limit 100)
         (dbq/where [[:in :login user-ids]]))))
 
 (defn fetch-top-users
