@@ -423,11 +423,13 @@
 
 (defn load-users-by-id
   [db user-ids]
-  (log/warn "Fetching user-ids" user-ids)
-  (let [conn (:connection db)]
+  (let [user-ids (max-element user-ids 100)
+        conn (:connection db)]
+    (log/warn "Fetching user-ids" user-ids)
     (cql/select conn :github_user
         (dbq/limit 100)
-        (dbq/where [[:in :login user-ids]]))))
+        (dbq/where [[:in :login user-ids]]))
+    ))
 
 (defn fetch-top-users
   [db limit-by top-n]

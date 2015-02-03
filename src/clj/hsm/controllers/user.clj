@@ -93,7 +93,7 @@
             c-follow (count (:following user-extras))
             c-followers (count (:followers user-extras))
             org? (= (:type user) "Organization")]
-          (log/warn user-repos)
+          ; (log/warn user-repos)
         (if is-json
           (json-resp user)
           (layout host

@@ -13,12 +13,19 @@
 
   (start [component]
     (log/info "Starting Cassandra database")
-    (let [hosts (vec (.split host ","))
-          conn (cc/connect hosts)]
-      (db/create-or-use-keyspace conn keyspace)
-      (cp/round-robin-policy)
-      (cp/exponential-reconnection-policy 100 1000)
-      (assoc component :connection conn)))
+    (let [hosts (vec (.split host ","))]
+      (try
+        (let [conn (cc/connect hosts {
+              :load-balancing-policy (cp/round-robin-policy)
+              :reconnection-policy (cp/exponential-reconnection-policy 100 1000)
+              :retry-policy (cp/retry-policy :downgrading-consistency)
+              } )]
+          (db/create-or-use-keyspace conn keyspace)
+          (assoc component :connection conn))
+        (catch Throwable t
+          (log/error t)
+          )
+        )))
 
   (stop [component]
     (log/info "Stopping database")

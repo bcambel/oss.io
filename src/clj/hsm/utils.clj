@@ -165,7 +165,6 @@
 (defn type-of
   "Request Type check"
   [request mode]
-  (log/warn request)
   (or
     (is-true (get-in request [:params mode]))
     (= (name mode) (get-in request [:params :format]))
@@ -239,6 +238,14 @@
                     (unchecked-byte (Integer/parseInt (str x y) 16)))
                        (partition 2 s)))]
     (String. bytes "UTF-8")))
+
+(defn max-element [v n]
+  (let [size (count v)]
+    (if (> size n)
+      (do
+        (log/info (format "Size: %d reduced to %d" size n))
+        (subvec v 0 n))
+      v)))
 
 ;; Following functions borrowed+modified slightly from 
 ;; Peter Taoussanis <https://www.taoensso.com>

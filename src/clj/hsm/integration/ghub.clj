@@ -80,7 +80,7 @@
         user-list (keys users)
         existing-users (find-existing-users conn user-list)
         [_ not-in-db both-exists] (diff (set existing-users) (set user-list))]
-    (log/warn "already exists" both-exists)
+    ; (log/warn "already exists" both-exists)
     (when-not (empty? not-in-db)
       (log/warn not-in-db))
     (vals (select-keys users not-in-db))))
@@ -108,7 +108,7 @@
                           (map name ghub-proj-fields))) coll))
         project-ids (mapv #(get % "full_name") projects)
         existing-projects (or (find-existing-projects conn project-ids) [])]
-        (log/warn "EXISTING" existing-projects project-ids)
+        ; (log/warn "EXISTING" existing-projects project-ids)
     (let [[not-in-db _ both-exists] (diff (set project-ids) (set existing-projects))]
       (log/warn "NOT-DB" not-in-db)
       (let [missing-projects (filter #(in? not-in-db (get % "full_name")) projects)]
