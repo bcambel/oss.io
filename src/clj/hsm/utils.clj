@@ -189,7 +189,7 @@
     :id (id-of request)
     :host-pl hosted-pl
     :url (:uri request)
-    :platform      (or (or hosted-pl (pl->lang (id-of request :platform)) ) "Python")
+    :platform      (or (or (pl->lang (id-of request :platform)) hosted-pl ) "Python")
     :json? (type-of request :json)
     :user (whois request)
     :limit-by     (or (Integer/parseInt (or (get-in request [:params :limit]) "100")) 100)
