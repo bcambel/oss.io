@@ -71,8 +71,10 @@
         (if json?
           (json-resp top-projects)
           (html-resp
-            (views/layout {:website host :platform platform}
-              [:div.row 
+            (views/layout {:website host :platform platform
+                           :description (format "Top %s Projects, most popular %s projects, favourite %s projects "
+                                          platform platform platform)}
+              [:div.row
                 [:div.col-lg-3
                   (left-menu host platform "open-source")]
                 [:div.col-lg-9

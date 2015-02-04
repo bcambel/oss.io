@@ -79,7 +79,7 @@
     ])
 
 (defhtml layout
-  [{:keys [website platform title description]} & content]
+  [{:keys [website platform title description keywords]} & content]
   (let [property-id (get property-ids website)]
     (html5
       {:lang "en-US"}
@@ -91,6 +91,7 @@
                 :http-equiv "X-UA-Compatible"}]
         [:title (or title (format "Top %s Projects - Hackersome" platform))]
         [:meta {:name "description" :content description}]
+        [:meta {:name "keywords" :content (or keywords description)}]
         (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")  
         (include-css "/css/style.css")]

@@ -37,7 +37,10 @@
         top-members (list-top-user db pl 5)
         top-projects (top-projects-es else pl 100)]
     (html-resp 
-      (layout {:website host :title (format "%s Project index" pl) :platform platform}
+      (layout {:website host
+              :title (format "Top %s Project index" pl)
+              :description (format "Top %s Project index, %s discussions, %s users" pl pl pl)
+              :platform platform}
         [:div 
           [:h1 (str "Welcome to " pl)]
           [:div.row
