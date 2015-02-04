@@ -37,7 +37,7 @@
         top-members (list-top-user db pl 5)
         top-projects (top-projects-es else pl 100)]
     (html-resp 
-      (layout host
+      (layout {:website host :title (format "%s Project index" pl) :platform platform}
         [:div 
           [:h1 (str "Welcome to " pl)]
           [:div.row
@@ -78,18 +78,16 @@
 
       (log/warn slug "=>" (map :slug (map :_source pre-hits)))
       (let [filtered  (filter (fn[x] (println (:slug x) slug) (= (:slug x) slug)) (map :_source pre-hits))]
-      (if json?
-        (json-resp filtered)
-        (html-resp
-              (layout host 
-                [:div.row 
-                [:div.col-lg-3
-                  (left-menu host platform "open-source")]
-                [:div.col-lg-9
-                  (for [data filtered]
-                    [:div (md-to-html-string (:content data))]
-                    )
-                  
-                  ]]
 
-    )))))))
+        (if json?
+          (json-resp filtered)
+          (html-resp
+            (layout {:website host :title (str platform " " (:title (first filtered)) " Tutorial") :platform platform}  
+              [:div.row 
+              [:div.col-lg-3
+                (left-menu host platform "open-source")]
+              [:div.col-lg-9
+                (for [data filtered]
+                  [:div 
+                    [:h3 (:title data)]
+                    [:div (md-to-html-string (:content data))]])]])))))))

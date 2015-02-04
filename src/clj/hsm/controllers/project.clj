@@ -71,7 +71,7 @@
         (if json?
           (json-resp top-projects)
           (html-resp
-            (views/layout host
+            (views/layout {:website host :platform platform}
               [:div.row 
                 [:div.col-lg-3
                   (left-menu host platform "open-source")]
@@ -207,7 +207,10 @@
          owner-obj (actions/load-user2 db owner)]
       (if json?
         (json-resp (selector proj-extras));(assoc proj :owner owner-obj))
-        (views/layout host
+        (views/layout {:website host
+                       :title (str (:name proj) " - " (:description proj))
+                       :platform platform
+                       :description (:description proj)}
           [:div.row
             [:div.col-lg-3
               (left-menu host platform (str "p/" id))]
@@ -315,8 +318,11 @@
                   contributors (filter #(in? contributors (:login %)) users)
                   watchers (filter #(in? watchers (:login %)) users)
                   stargazers (filter #(in? stargazers (:login %)) users)]
+                  (log/warn proj)
             (html-resp
-              (views/layout host
+              (views/layout {:website host :platform platform 
+                             :title (:description proj) 
+                             :description (:description proj)}
                 [:div.row 
                   [:div.col-lg-3
                     (left-menu host platform "open-source")]

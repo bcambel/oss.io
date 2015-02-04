@@ -61,7 +61,7 @@
     [:tr [:td
     [:a {:href (format "/%s/top-projects" lang)} lang]]])])
 
-(def propert-ids 
+(def property-ids 
   { "hackersome.com" "UA-57973731-1"
     "sweet.io" "UA-33058338-1"
     "pythonhackers.com" "UA-57973731-4"
@@ -79,8 +79,8 @@
     ])
 
 (defhtml layout
-  [website & content]
-  (let [property-id (get propert-ids website)]
+  [{:keys [website platform title description]} & content]
+  (let [property-id (get property-ids website)]
     (html5
       {:lang "en-US"}
       [:head
@@ -89,7 +89,8 @@
         [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"}]
         [:meta {:content "IE=edge,chrome=1"
                 :http-equiv "X-UA-Compatible"}]
-        [:title (str website  " Top Projects - Hackersome" )]
+        [:title (or title (format "Top %s Projects - Hackersome" platform))]
+        [:meta {:name "description" :content description}]
         (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")  
         (include-css "/css/style.css")]

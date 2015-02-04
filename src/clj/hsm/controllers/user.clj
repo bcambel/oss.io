@@ -269,7 +269,7 @@
     (if is-json 
       (json-resp users)
       (html-resp 
-        (layout host
+        (layout {:website host :title "Top Users" :platform platform}
           [:div.row
             [:div.col-lg-3
               (left-menu host platform "open-source")]

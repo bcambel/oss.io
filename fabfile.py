@@ -187,9 +187,9 @@ def build(token,new_build=False):
         time.sleep(tries*3)
 
     logging.info("To the next level now.. %s %s %s", succeed, building, status )
-    if succeed: 
-        if confirm("Would you like to deploy now ?"):
-            deploy()
+    # if succeed: 
+    #     if confirm("Would you like to deploy now ?"):
+    #         deploy()
 
     
 
@@ -200,6 +200,7 @@ def check_jar(uberjar_location):
 
 
 @task
+@parallel
 def deploy(git_version=None):
     uberjar_template = "https://s3-us-west-1.amazonaws.com/hackersome.public/releases/{}/hsm.jar"
 

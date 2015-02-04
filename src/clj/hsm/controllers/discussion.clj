@@ -50,7 +50,7 @@
         top-disc (actions/load-discussions db)]
   (if json?
     (json-resp top-disc)
-    (layout host 
+    (layout {:website host :title "Top Discussions" :platform platform}
       [:div.row 
         [:div.col-lg-3
           (left-menu host platform "open-source")]
@@ -286,7 +286,7 @@
       (if json?
         (json-resp discussion-list)
         (html-resp 
-          (layout host 
+          (layout {:website host :title "Top Discussions" :platform platform}
             [:div
               [:div.row
                 (panel [:a {:href (format "/%s/discussions" platform)} "Discussions"]
