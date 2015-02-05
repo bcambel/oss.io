@@ -280,8 +280,10 @@
                     [:td (:followers x)]
                     [:td
                       [:a {:href (str "/user2/" (:login x))} (:login x)]
-                      [:nbsp]
+                      [:br]
                       (:name x)
                       [:p
                         [:a {:href (:blog x)} (:blog x)]
-                        (:email x)]]])]]])))))
+                        [:br]
+                        (when (:email x)[:a {:href (:email x)} (:email x)])
+                        ]]])]]])))))

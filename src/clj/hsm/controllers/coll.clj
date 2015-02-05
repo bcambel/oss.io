@@ -96,17 +96,19 @@
 
 (defn get-coll
   [{:keys [db event-chan redis conf]} request]
-  (let [host (host-of request)
-        is-json? (type-of request :json)
-        id (BigInteger. (id-of request))
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)
+        id (BigInteger. id)
         coll (first (actions/get-collection db id))
         coll-extra (actions/get-collection-extra db id)
         coll (merge coll {:stargazers (count (:stargazers coll-extra)) :forks  (count (:forks coll-extra))})
-        coll-followers (partial actions/load-users-by-id db) ]
+        coll-followers (partial actions/load-users-by-id db) 
+        coll-name (:name coll)]
     (log/warn coll-extra)
-    (if is-json?
+    (if json?
       (json-resp coll)
-      (layout host
+      (layout {:website host :title (format "%s - Collections of %s projects" coll-name platform)
+                :keywords (format "Developer Community, Top Projects, Top %s Projects, Projects of %s" platform coll-name) }
         (render-collection coll)
         [:hr]
         (let [stargazers (coll-followers (vec (:stargazers coll-extra)))]
@@ -147,7 +149,7 @@
       (log/warn colls)
       (if is-json
         (json-resp colls)
-        (layout host
+        (layout {:website host :title (format "Collections of %s projects" platform)}
           [:div.row
             [:div.col-lg-3 
               (left-menu host platform "collections")
