@@ -129,13 +129,14 @@
           [:p
             "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" VERSION)]]
           [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
-
+          [:hr]
           [:p
             [:a.twitter-share-button {:href "https://twitter.com/share" 
               :data-text "Top Projects on"
               :data-via "pythonhackers" :data-size :normal
               } "Tell your friends"]
             [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :normal }]]
+          [:hr]
           [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal" 
                     :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
           [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal" 
