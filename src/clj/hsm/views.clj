@@ -196,6 +196,18 @@
               suggestion: Handlebars.compile('<p><strong>{{watchers}}</strong>- {{full_name}}</p>')}
             });
 !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
-          "
+var clicky_site_ids = clicky_site_ids || [];
+clicky_site_ids.push(100814776);
+(function() {
+  var s = document.createElement('script');
+  s.type = 'text/javascript';
+  s.async = true;
+  s.src = '//static.getclicky.com/js';
+  ( document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0] ).appendChild( s );
+})();"
           )
-        ])[:img {:src "http://strck.hackersome.com/pixel.gif" :alt ""}]])))
+        ])
+    [:img {:src "http://strck.hackersome.com/pixel.gif" :alt ""}]
+  "<a title='Web Analytics' href='http://clicky.com/100814776'><img alt='Web Analytics' src='//static.getclicky.com/media/links/badge.gif' border='0' /></a>
+<noscript><p><img alt='Clicky' width='1' height='1' src='//in.getclicky.com/100814776ns.gif' /></p></noscript>"
+])))
