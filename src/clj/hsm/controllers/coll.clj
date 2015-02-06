@@ -4,7 +4,7 @@
     [clojure.tools.logging :as log]
     [hiccup.def                   :refer [defhtml]]
     [hsm.actions :as actions]
-    [hsm.views :refer [layout panel render-user left-menu]]
+    [hsm.views :refer [layout panel render-user left-menu panelx]]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.utils :refer :all]))
 
@@ -53,14 +53,23 @@
       (actions/update-collection db id new-items)
       (redirect (format "/collections/%s%s" id (if is-json "?json=1" ""))))))
 
+
+
 (def submit-form "$(this).parent('form').submit();return false;")
 
+(defn render-delete-action-button 
+  [id item]
+  [:form {:method "POST" :action (format "/collections/%s/delete" id)}
+    [:input {:type "hidden" :name :project :value item}]
+    [:a.btn.btn-default.btn-xs.pull-right {:href "#" :onclick submit-form }
+      [:i.fa.fa-minus-circle.red]]])
+
 (defhtml render-collection
-  [c]
+  [c projects detailed]
     [:div.panel.panel-default
       [:div.panel-heading
         [:h3 {:style "display:inline;"}
-          [:a {:href (str "/collections/" (:id c))}(:name c)]
+          [:a {:href (str "/collections/" (:id c))} (:name c)]
         [:div.button-group.pull-right.actions
           [:form { :action (str "/collections/" (:id c) "/star") :data-remote "true"  :method "POST" }
             [:a.gh-btn {:href "#" :onclick submit-form}
@@ -76,14 +85,19 @@
       [:div.panel-body
         [:p (:description c)]
         (for [item (keys (:items c))]
-          (let [el (get item (:items c))]
+          (let [el (get item (:items c)) 
+                proj (get projects item)]
             [:div.row.coll-row
-              [:h4 
-                [:a.pull-left {:href (str "/p/" (str item el))} (str item el)]]
-              [:form {:method "POST" :action (format "/collections/%s/delete" (:id c))}
-                [:input {:type "hidden" :name :project :value item}]
-                [:a {:href "#" :onclick submit-form }
-                  [:i.fa.fa-minus-circle.red]]]]))]
+              [:div.col-lg-12
+                [:h4
+                  [:a.pull-left.gray {:href (str "/p/" (str item el))} (str item el) ]]
+                  (render-delete-action-button (:id c) item)]
+            [:div.col-lg-8
+                [:p [:b (:watchers proj)] " follows this project"]
+                [:p (:description proj)]
+                [:hr]
+                ]
+                  ))]
         [:div.panel-footer
           [:a.green {:href "#" :onclick "$(this).parent().find('form').toggle()"} "Add New"]
           [:form {:method "POST" :action (format "/collections/%s/add" (:id c)) :style "display:none;"}
@@ -94,6 +108,17 @@
           [:a.red.pull-right {:href (format "/collections/%s/rm" (:id c)) :rel "nofollow" } "Delete"]
               ]])
 
+(defn load-projects-of-collections
+  [db project-items]
+  (let [projects (vec (keys project-items))]
+    (log/warn project-items)
+    (log/warn projects)
+    (let [project-map (apply merge (map #(hash-map (:full_name %) %) (actions/load-projects-by-id db projects)))]
+      (log/warn project-map)
+      project-map
+    ))
+  )
+
 (defn get-coll
   [{:keys [db event-chan redis conf]} request]
   (let [{:keys [host id body json? user platform 
@@ -102,22 +127,24 @@
         coll (first (actions/get-collection db id))
         coll-extra (actions/get-collection-extra db id)
         coll (merge coll {:stargazers (count (:stargazers coll-extra)) :forks  (count (:forks coll-extra))})
-        coll-followers (partial actions/load-users-by-id db) 
+        coll-followers (partial actions/load-users-by-id db)
+        projects (load-projects-of-collections db (:items coll))
         coll-name (:name coll)]
     (log/warn coll-extra)
     (if json?
       (json-resp coll)
       (layout {:website host :title (format "%s - Collections of %s projects" coll-name platform)
                 :keywords (format "Developer Community, Top Projects, Top %s Projects, Projects of %s" platform coll-name) }
-        (render-collection coll)
-        [:hr]
+        [:div.row
+          [:div.col-lg-6
+            (render-collection coll projects true)]
+        [:div.col-lg-6
         (let [stargazers (coll-followers (vec (:stargazers coll-extra)))]
-          (panel "Stargazers"
+          (panelx "Stargazers" [:a {:href (format "/collections/%s/stargazers" id) :style "text-align:center;display:block;"} "See more"] ""
             [:div.row.user-list 
               (for [x (reverse (sort-by :followers stargazers))]
-                [:div.col-lg-3.user-thumb
-                  (render-user x)])]))
-        ))))
+                [:div.col-lg-6.user-thumb
+                  (render-user x)])]))]]))))
   
 
 (defn create-coll
@@ -165,7 +192,7 @@
               [:div.row
                 (for [c colls]
                   [:div.col-lg-6
-                    (render-collection c)])]]])))))
+                    (render-collection c {} false)])]]])))))
 
 (defn star-coll
   [{:keys [db event-chan redis conf]} request]
