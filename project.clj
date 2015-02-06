@@ -53,6 +53,7 @@
                 [org.clojure/tools.nrepl "0.2.5"]
                 [raven-clj "1.2.0"]
                 [markdown-clj "0.9.62"]
+                [factual/durable-queue "0.1.3"]
                 ]
 
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
