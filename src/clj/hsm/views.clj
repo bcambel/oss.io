@@ -80,6 +80,19 @@
       [:span.followers.pull-right (:followers x)])
     ])
 
+(defhtml embedded
+  [& content]
+  (html5
+    {:lang "en-US"}
+    [:head
+      [:meta {:charset "UTF-8"}]
+      (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+      (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")]
+    [:body
+      content
+      [:img {:src "http://strck.hackersome.com/pixel.gif?embedded=1" :alt ""}]]))
+
+
 (defhtml layout
   [{:keys [website platform title description keywords]} & content]
   (let [property-id (get property-ids website)]

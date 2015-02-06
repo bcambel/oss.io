@@ -121,6 +121,7 @@
         (GET  "/collections"                      request (c.coll/load-coll specs request))
         (POST "/collections/create"               request (c.coll/create-coll specs request))
         (GET  "/collections/:id"                  request (c.coll/get-coll specs request))
+        (GET  "/collections/:id/embed"            request (c.coll/get-coll-embed specs request))
         (GET  "/collections/:id/rm"               request (c.coll/rm-coll specs request))
         (GET  "/collections/:id/stargazers"       request (c.coll/coll-stargazers specs request))
         (GET  "/collections/:id/forks"            request (c.coll/coll-forks specs request))
