@@ -86,11 +86,17 @@
       [:p (:description c)]
       (for [item (keys (:items c))]
         (let [el (get item (:items c)) 
-              proj (get projects item)]
+              proj (get projects item)
+              proj-name (or (:name proj) (second (vec (.split item "/"))))
+              full-name (or (:full_name proj) item)
+              proj-owner (first (vec (.split full-name "/")))]
           [:div.row.coll-row
             [:div.col-lg-12
               [:h4
-                [:a.pull-left.gray {:href (str "/p/" (str item el))} (str item el) ]]
+                [:a.gray {:href (str "/user2/" proj-owner)} 
+                  (str proj-owner " ") ] [:span " / "]
+                [:a.gray {:href (str "/p/" (str item el))} 
+                  proj-name ]]
                 (render-delete-action-button (:id c) item)]
             [:div.col-lg-8
               [:p [:b (:watchers proj)] " follows this project"]

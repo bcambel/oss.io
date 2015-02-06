@@ -1,6 +1,7 @@
 (ns hsm.controllers.user
   (:require [clojure.tools.logging        :as log]
             [clojure.java.io              :as io]
+            [clojure.string               :as str]
             [cheshire.core                :refer :all]
             [ring.util.response           :as resp]
             [hiccup.def                   :refer [defhtml]]
@@ -96,7 +97,7 @@
           ; (log/warn user-repos)
         (if is-json
           (json-resp user)
-          (layout host
+          (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
             [:div.row 
                   [:div.col-lg-3
                     (left-menu host platform "open-source")]
@@ -114,11 +115,11 @@
                                 (render-users db (take 10(:followers user-extras)))])))]
                       [:div.col-lg-8
                         (when-not org?
-                          [:div.col-lg-6
+                          [:div.col-lg-12
                           (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
                             [:ul (for [star (take 10 (:starred user-extras))] 
                               [:li [:a {:href (str "/p/" star)} star]])])])
-                        [:div.col-lg-6
+                        [:div.col-lg-12
                         (panelx "User Repos" ["no-pad"] ""
                           (render-repos user-repos)
                           )]]]]]))))))
@@ -167,10 +168,7 @@
 (defn get-user-activity
   [[db event-chan] request]
   (let [host  (host-of request)
-        body (body-of request)]
-
-        )
-  )
+        body (body-of request)]))
 
 (defn user2-follower
   [{:keys [db event-chan redis]} request]
@@ -186,7 +184,10 @@
         org? (= (:type user) "Organization")]
     (if is-json
       (json-resp (:followers user-extras))
-      (layout host
+      (layout {:website host 
+              :title (format "%s - %s " (:login user) (:name user))
+              :desription (format "%s (%s) followed by these users " (:login user) (:name user))
+              :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])}
           [:div.row 
             [:div.col-lg-3
               (user-part id user admin? c-star c-follow c-followers)]
@@ -213,7 +214,11 @@
         org? (= (:type user) "Organization")]
     (if is-json
       (json-resp (:following user-extras))
-      (layout host
+      (layout {:website host 
+               :title (format "%s (%s) following these users " (:login user) (:name user))
+                :description (format "%s (%s) following these users " (:login user) (:name user))
+                :keywords (str/join "," [(:login user) (:name user) (format "%s following" (:name user))])
+             }
           [:div.col-lg-3
             (user-part id user admin? c-star c-follow c-followers)]
           [:div.col-lg-9
@@ -240,12 +245,12 @@
         org? (= (:type user) "Organization")]
     (if is-json
           (json-resp (:starred user-extras))
-          (layout host
+          (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
               [:div.col-lg-3
                 (user-part id user admin? c-star c-follow c-followers)]
               [:div.col-lg-9
               (when-not org?
-                [:div.col-lg-6
+                [:div.col-lg-10
                 (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
                   (render-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:starred user-extras))))))
                   )])]))))
