@@ -97,20 +97,25 @@
                   (str proj-owner " ") ] [:span " / "]
                 [:a.gray {:href (str "/p/" (str item el))} 
                   proj-name ]]
-                (render-delete-action-button (:id c) item)]
+                (when detailed
+                  [:div (render-delete-action-button (:id c) item)])]
             [:div.col-lg-8
-              [:p [:b (:watchers proj)] " follows this project"]
-              [:p (:description proj)]
-              [:hr]
-              ]]))
+              (when detailed
+                [:div 
+                  [:p [:b (:watchers proj)] " follows this project"]
+                  [:p (:description proj)]
+                  [:hr]])
+              ]]))]
       [:div.panel-footer
+        (when detailed
+          [:div
         [:a.green {:href "#" :onclick "$(this).parent().find('form').toggle()"} "Add New"]
         [:form {:method "POST" :action (format "/collections/%s/add" (:id c)) :style "display:none;"}
           [:div#remote
             [:input.typeahead {:type "text" :name :project :placeholder "Type to find project"}]]
             [:a.btn.btn-default {:href "#" :rel "nofollow" :onclick submit-form} "Add"]]
-        [:a.red.pull-right {:href (format "/collections/%s/rm" (:id c)) :rel "nofollow" } "Delete"]
-            ]]])
+        [:a.red.pull-right {:href (format "/collections/%s/rm" (:id c)) :rel "nofollow" } "Delete"]])
+            ]])
 
 (defn load-projects-of-collections
   [db project-items]
