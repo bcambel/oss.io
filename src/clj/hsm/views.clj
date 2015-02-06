@@ -10,6 +10,8 @@
 
 (def VERSION (try (slurp "VERSION") (catch Throwable t)))
 
+(def SHORTVERSION (try (subs VERSION 0 8) (catch Throwable t VERSION) ))
+
 (defhtml row-fluid
   [& content]
   [:div.row-fluid
@@ -127,7 +129,7 @@
           [:div.col-lg-10.col-lg-offset-1
           [:p "Designed, built and made in Amsterdam with all the love by" [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
           [:p
-            "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" VERSION)]]
+            "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
           [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
           [:hr]
           [:p
