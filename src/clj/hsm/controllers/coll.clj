@@ -97,7 +97,7 @@
                 [:p (:description proj)]
                 [:hr]
                 ]
-                  ))]
+                  ]))
         [:div.panel-footer
           [:a.green {:href "#" :onclick "$(this).parent().find('form').toggle()"} "Add New"]
           [:form {:method "POST" :action (format "/collections/%s/add" (:id c)) :style "display:none;"}
