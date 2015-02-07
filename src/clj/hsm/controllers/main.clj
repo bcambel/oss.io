@@ -26,7 +26,7 @@
             [:div.jumbotron
               [:h1 "Community for " platform " developers"]
               [:hr]
-              [:p "Currently under high development. We will keep you updated if you " [:a {:href "#mc_embed_signup"} "subscribe now!"]]
+              [:p "Currently under high development. We will keep you updated if you " [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
               [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe free"]
               [:h2 "Pssst, also check out these" 
                 [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"] " or "
