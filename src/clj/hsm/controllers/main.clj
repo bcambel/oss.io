@@ -98,7 +98,8 @@
   (let [{:keys [host id body json? user platform 
                 req-id limit-by url hosted-pl]} (common-of request)
         user (id-of request :user)
-        slug  (format "%s-%s" user (id-of request :slug))
+        orig-slug (id-of request :slug)
+        slug  (format "%s-%s" user orig-slug)
         es-conn     (:conn else)]
     (log/warn user (codec/url-encode slug))
     (let [res (esd/search es-conn (:index else) "tutorial"
@@ -115,13 +116,14 @@
             (layout {:website host :title (str platform " " (:title (first filtered)) " Tutorial") :platform platform}  
               [:div.row 
               [:div.col-lg-3
-                (left-menu host platform "open-source")]
+                (left-menu host platform (str "/tutorial/"user"/"orig-slug))]
               [:div.col-lg-9
                 [:h4 [:a {:href "/tutorial/"} "< All Tutorials"]]
+                [:hr]
                 (for [data filtered]
-                  [:div 
-                    [:h3 (:title data)]
-                    [:div (md-to-html-string (:content data))]])]])))))))
+                  (panel
+                    [:h1 (:title data)]
+                    [:div (md-to-html-string (:content data))]))]])))))))
 
 (defn all-tutorial
   [{:keys [db event-chan redis else]} request]
@@ -142,7 +144,7 @@
             (layout {:website host :title (str platform " " (:title (first filtered)) " Tutorial") :platform platform}  
               [:div.row 
               [:div.col-lg-3
-                (left-menu host platform "open-source")]
+                (left-menu host platform "tutorial")]
               [:div.col-lg-9
                 (for [data filtered]
 
