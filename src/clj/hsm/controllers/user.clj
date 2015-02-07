@@ -100,7 +100,7 @@
           (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
             [:div.row 
                   [:div.col-lg-3
-                    (left-menu host platform "open-source")]
+                    (left-menu host platform (str "/user2/" id))]
                   [:div.col-lg-9
                     [:div.row
                       [:div.col-lg-4
