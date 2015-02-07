@@ -132,6 +132,8 @@
         (POST "/collections/:id/delete"           request (c.coll/del-p-coll specs request))
 
         (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
+        (GET  "/tutorial/"                        request (c.m/all-tutorial specs request))
+        (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))
 
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
         (GET  "/search"                           request (c.pr/search specs request))
