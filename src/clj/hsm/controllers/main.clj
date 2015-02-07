@@ -15,7 +15,7 @@
     [hsm.actions                  :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
 
 (defn homepage
-  [[db event-chan redis else] request]
+  [{:keys [db event-chan redis else]} request]
   (let [{:keys [host id body json? user platform 
                 req-id limit-by url hosted-pl]} (common-of request)]
     (html-resp 
@@ -29,6 +29,23 @@
               [:h2 "Pssst, also check out these" [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"]]
         ]]]))))
 
+(defn about
+  [{:keys [db event-chan redis else]} request]
+  (let [{:keys [host id body json? user platform 
+                req-id limit-by url hosted-pl]} (common-of request)]
+    (html-resp 
+      (layout {:website host :title (format "Community for %s developers" platform) :keywords "Developer Community, Top Projects," }
+        [:div.row
+          [:div.col-lg-2 ]
+          [:div.col-lg-10
+            [:div.jumbotron
+              [:h1 "About Hackersome"] [:h3 platform " hackers platform"]
+              [:hr ]
+              [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe"]
+              [:h2 "Pssst, also check out these" [:a {:href "/open-source/?utm_source=about_page_link"} " Top Projects"]]
+        ]]]))))
+
+
 (defn platform
   [{:keys [db event-chan redis else]} request]
   (let [host (host-of request)
@@ -40,7 +57,7 @@
       (layout {:website host
               :title (format "Top %s Project index" pl)
               :description (format "Top %s Project index, %s discussions, %s users" pl pl pl)
-              :platform platform}
+              :platform pl}
         [:div 
           [:h1 (str "Welcome to " pl)]
           [:div.row

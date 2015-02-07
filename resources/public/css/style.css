@@ -6,6 +6,21 @@ h1 {
 p {
   font-size: 16px;
 }
+
+.rotated{
+
+  -webkit-transform: rotate(-7deg);
+  -moz-transform: rotate(-7deg);
+  -o-transform: rotate(-7deg);
+
+  transition: all 0.7s ease;
+  -webkit-transition: all 0.7s ease;
+}
+
+.rotated:hover{
+  text-shadow: 0px 0 15px #fff;
+}
+
 .panel ul {
   list-style-type: none;
   padding-left:1px;

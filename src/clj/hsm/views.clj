@@ -114,7 +114,8 @@
          [:div.nav.navbar-default
           [:div.container
              [:div.navbar-header
-                [:a.navbar-brand {:href (format "http://%s" website)} "Hackersome"]]
+                [:span.rotated.orange (format "%s" (str "(" platform ")"))]
+                [:a.navbar-brand {:href (format "http://%s" website)}  "Hackersome" ]]
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
                   [:li [:a {:href "/users"} "Users"]]
