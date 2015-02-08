@@ -159,6 +159,15 @@
       (layout {:website host :title (format "%s - Collections of %s projects" coll-name platform)
                 :keywords (format "Developer Community, Top Projects, Top %s Projects, Projects of %s" platform coll-name) }
         [:div.row
+          [:div.col-lg-2
+            (left-menu host platform  (str "/collections/" id ))
+          ]
+          [:div.col-lg-10
+            [:div.row
+            [:div.col-lg-12
+            [:h1 (str "Collection of " (:name coll))]
+            [:p (format "Has starred by %d people. And %d people forked this collection" (:stargazers coll) (:forks coll))]
+            ]
           [:div.col-lg-6
             (render-collection coll projects {:detailed true})]
         [:div.col-lg-6
@@ -167,7 +176,7 @@
             [:div.row.user-list 
               (for [x (reverse (sort-by :followers stargazers))]
                 [:div.col-lg-6.user-thumb
-                  (render-user x)])]))]]))))
+                  (render-user x)])]))]]]]))))
   
 
 (defn create-coll
