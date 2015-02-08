@@ -38,12 +38,13 @@
 
 (defhtml left-menu
   [host platform page]
-  [:div.bs-callout.bs-callout-success ;{:style "background-color:#f4f4f4;" }
-  ; (panelx "Social" "" ""
-    [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe"]
+  [:div.bs-callout.bs-callout-success ;{:style "background-color:#f7f7f7;" }
+  
+    [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
+    [:p {:style "margin-top:10px"} "Join " [:b 935] " others. No spamming." [:br][:b "I promise!"]]
+    [:p "We are currently under high development. "[:a {:href "https://github.com/bcambel/hackersome?utm_source=left_menu_link"} "Follow us at github."]]
     [:hr]
-    [:p "Join " [:b 926] " others"]
-    [:p "No spamming. I promise!"]
+    [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?utm_source=left_menu_link"}  "Check these awesome tutorials"]]
     [:hr]
     [:a.twitter-share-button {:href "https://twitter.com/share" 
       :data-text (format "Top %s Projects" platform)
@@ -52,6 +53,7 @@
       } "Tell your friends"]
     [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
     [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
+
     [:hr]
     [:script#_carbonads_js {:type "text/javascript" :src "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=pythonhackerscom" }]
     ])
@@ -195,11 +197,12 @@
           
           "
 !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
-
-!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error('Segment snippet included twice.');else{analytics.invoked=!0;analytics.methods=['trackSubmit','trackClick','trackLink','trackForm','pageview','identify','group','track','ready','alias','page','once','off','on'];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement('script');e.type='text/javascript';e.async=!0;e.src=('https:'===document.location.protocol?'https://':'http://')+'cdn.segment.com/analytics.js/v1/'+t+'/analytics.min.js';var n=document.getElementsByTagName('script')[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION='3.0.1';
+"
+(when-not is-dev?
+"!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error('Segment snippet included twice.');else{analytics.invoked=!0;analytics.methods=['trackSubmit','trackClick','trackLink','trackForm','pageview','identify','group','track','ready','alias','page','once','off','on'];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement('script');e.type='text/javascript';e.async=!0;e.src=('https:'===document.location.protocol?'https://':'http://')+'cdn.segment.com/analytics.js/v1/'+t+'/analytics.min.js';var n=document.getElementsByTagName('script')[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION='3.0.1';
   analytics.load('eqMNHeqB0Ukx8AWah4nKiwFwaxbeJlGg');
   analytics.page();}}();
-"
+")
           )
         ])
     [:img {:src "http://strck.hackersome.com/pixel.gif" :alt ""}]])))
