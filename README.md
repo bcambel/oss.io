@@ -52,27 +52,6 @@ The call to `(startup {})` does two things, it starts the webserver at port
 10554, . Give them some time to start.
 
 
-## Trying it out
-
-If all is well you now have a browser window saying 'Hello Chestnut',
-and a REPL prompt that looks like `cljs.user=>`.
-
-Open `resources/public/css/style.css` and change some styling of the
-H1 element. Notice how it's updated instantly in the browser.
-
-Open `src/cljs/hsui/core.cljs`, and change `dom/h1` to
-`dom/h2`. As soon as you save the file, your browser is updated.
-
-In the REPL, type
-
-```
-(ns hsm.core)
-(swap! app-state assoc :text "Interactivity FTW")
-```
-
-Notice again how the browser updates.
-
-
 Docker
 ---------------
 
