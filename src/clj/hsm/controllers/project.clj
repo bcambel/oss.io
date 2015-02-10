@@ -324,7 +324,12 @@
             (html-resp
               (views/layout {:website host :platform platform 
                              :title (:description proj) 
-                             :description (:description proj)}
+                             :description (:description proj)
+                             ; replace this with a multiplication or combination
+                              :keywords (format "%s project, %s %s, %s tutorial, %s documentation, %s examples" 
+                                          (:language proj) (:language proj) (:name proj) (:name proj) 
+                                          (:name proj) (:name proj) )
+                           }
                 [:div.row 
                   [:div.col-lg-3
                     (left-menu host platform "open-source")]

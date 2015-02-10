@@ -30,7 +30,7 @@
               [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe free"]
               [:h2 "Pssst, also check out these" 
                 [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"] " or "
-                [:a.green {:href "/users/?utm_source=main_page_link"} " Top Users"]
+                [:a.green {:href "/users?utm_source=main_page_link"} " Top Users"]
                 ]
               [:hr]
               [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :large }]

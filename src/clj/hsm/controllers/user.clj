@@ -279,16 +279,18 @@
             [:div.col-lg-3
               (left-menu host platform "open-source")]
             [:div.col-lg-9
-              [:table.table
+              [:table.table.table-striped
               (for [x users]
                   [:tr
-                    [:td (:followers x)]
+                    [:td [:h4 (:followers x)]]
                     [:td
+                      [:img.img-rounded.img-responsive.pull-left {:src (:image x) :style "width:64px;margin-right:10px;"}]
                       [:a {:href (str "/user2/" (:login x))} (:login x)]
                       [:br]
                       (:name x)
                       [:p
                         [:a {:href (:blog x)} (:blog x)]
+
                         [:br]
                         (when (:email x)[:a {:href (:email x)} (:email x)])
                         ]]])]]])))))
