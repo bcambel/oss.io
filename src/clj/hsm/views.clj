@@ -136,7 +136,7 @@
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           ; [:div.col-lg-1.left-panel ""]
-          [:div.col-lg-10.col-lg-offset-1
+          [:div.col-lg-11
             [:div.row {:style "padding-top:20px;"}
               content]]
           [:div.col-lg-1]
