@@ -124,15 +124,18 @@
                   [:li [:a {:href "/open-source/"} "Top Projects"]]
                   ; [:li [:a {:href "/collections"} "Collections"]]
                   [:li [:a {:href "/discussions"} "Discussions"]]
+
                    [:li.dropdown
                      [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
                      [:ul.dropdown-menu
                        (for [lang languages]
-                         [:li [:a {:href (format "/%s/index" lang) } lang]])]]]
-                  [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
-                    [:div.form-group 
-                      [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]]
-                      [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
+                         [:li [:a {:href (format "/%s/index" lang) } lang]])]]
+                  [:li [:a {:href "/about"} "About"]]
+                  ]
+                  ; [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
+                  ;   [:div.form-group 
+                  ;     [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]]
+                  ;     [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           ; [:div.col-lg-1.left-panel ""]
