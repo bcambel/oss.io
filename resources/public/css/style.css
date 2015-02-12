@@ -6,6 +6,29 @@ h1 {
 p {
   font-size: 16px;
 }
+.navbar-default {
+  background-color:#424345;
+}
+
+.navbar-default .navbar-brand{
+  color:#39CCCC;
+}
+.navbar-default .navbar-brand:hover{
+  color:#39CCCC;
+  -webkit-transform: rotate(-7deg);
+  -moz-transform: rotate(-7deg);
+  -o-transform: rotate(-7deg);
+
+  transition: all 0.7s ease;
+  -webkit-transition: all 0.7s ease;
+}
+.navbar-default .navbar-nav>li>a{
+  color:white;
+}
+.navbar-default .navbar-nav>li>a:hover,.navbar-default .navbar-nav>li>a:focus,
+.navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus{
+  color:#39CCCC;
+}
 
 .rotated{
 
