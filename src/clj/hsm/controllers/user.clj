@@ -102,6 +102,9 @@
                   [:div.col-lg-3
                     (left-menu host platform (str "/user2/" id))]
                   [:div.col-lg-9
+                  [:div.alert.alert-info
+                    [:p (format "The following user is not a member of the %s community. 
+                          Below data is part of publicly available Github API." platform)]]
                     [:div.row
                       [:div.col-lg-4
                         (user-part id user admin? c-star c-follow c-followers)
