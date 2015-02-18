@@ -113,7 +113,11 @@
         (if json?
           (json-resp filtered)
           (html-resp
-            (layout {:website host :title (str platform " " (:title (first filtered)) " Tutorial") :platform platform}  
+            (layout {:website host 
+                      :title (str platform " " (:title (first filtered)) " Tutorial") 
+                      :description (format "%s Tutorial" (:title (first filtered)))
+                      :keywords (str (:keywords (first filtered)) "," platform " tutorial")
+                      :platform platform}  
               [:div.row 
               [:div.col-lg-3
                 (left-menu host platform (str "/tutorial/"user"/"orig-slug))]
