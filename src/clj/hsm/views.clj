@@ -120,8 +120,8 @@
                 [:a.navbar-brand {:href (format "http://%s" website)}  "Hackersome" ]]
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
-                  [:li [:a {:href "/users"} "Users"]]
-                  [:li [:a {:href "/open-source/"} "Top Projects"]]
+                  [:li [:a {:href "/users?utm_source=top_menu_link"} "Users"]]
+                  [:li [:a {:href "/open-source/?utm_source=top_menu_link"} "Top Projects"]]
                   ; [:li [:a {:href "/collections"} "Collections"]]
                   [:li [:a {:href "/discussions"} "Discussions"]]
 
