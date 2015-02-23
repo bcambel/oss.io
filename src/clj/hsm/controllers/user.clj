@@ -1,6 +1,7 @@
 (ns hsm.controllers.user
   (:require [clojure.tools.logging        :as log]
             [clojure.java.io              :as io]
+            [clojure.core.memoize         :as memo]
             [clojure.string               :as str]
             [cheshire.core                :refer :all]
             [ring.util.response           :as resp]
@@ -70,6 +71,20 @@
           [:td
           [:p.gray (:description repo)]]]])])
 
+(defn opt-out-list*
+  []
+  (let [text (vec (.split (slurp "opt-out.txt") "\n"))] 
+    (println "OPT-OUT USERS" text) 
+    text))
+
+(def opt-out-list (memo/memo opt-out-list*))
+
+(defn opted-out?
+  [user]
+  (let [opted-out-users (opt-out-list)]
+  (log/info "Checking user.." user opted-out-users)
+  (in? opted-out-users user)))
+
 (defn get-user2
   [{:keys [db event-chan redis conf else]} request] 
   (let [{:keys [host id body json? user platform 
@@ -78,54 +93,57 @@
         admin? false
         force-sync (is-true (get-in request [:params :force-sync]))
         is-json (type-of request :json)]
-    (if (or force-sync (not (:full_profile user)))
-      (do 
-        (future (gh/find-n-update db id conf))
-        (Thread/sleep 2000)
-        (if is-json 
-          (redirect (format "/user2/%s?json=1" id))
-          (redirect (str "/user2/" id))))
-        ; (json-resp {:ok 1})
-        
-      (let [user-extras (actions/user-extras db id)
-            ; user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
-            user-repos (actions/user-projects-es* else id 100)
-            c-star (count (:starred user-extras))
-            c-follow (count (:following user-extras))
-            c-followers (count (:followers user-extras))
-            org? (= (:type user) "Organization")]
-          ; (log/warn user-repos)
-        (if is-json
-          (json-resp user)
-          (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
-            [:div.row 
-                  [:div.col-lg-3
-                    (left-menu host platform (str "/user2/" id))]
-                  [:div.col-lg-9
-                  [:div.alert.alert-info
-                    [:p (format "The following user is not a member of the %s community. 
-                          Below data is part of publicly available Github API." platform)]]
-                    [:div.row
-                      [:div.col-lg-4
-                        (user-part id user admin? c-star c-follow c-followers)
-                        (when-not org?
-                          (do 
-                            (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
-                              [:ul.user-list
-                                (render-users db (take 10 (:following user-extras)))])
-                            (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
-                              [:ul.user-list
-                                (render-users db (take 10(:followers user-extras)))])))]
-                      [:div.col-lg-8
-                        (when-not org?
+    (if (opted-out? id) 
+      (layout {:website host :title "User does not exist"} "User opted-out.")
+      (if (or force-sync (not (:full_profile user)))
+        (do 
+          ; (future (gh/find-n-update db id conf))
+          (Thread/sleep 2000)
+          ; (if is-json 
+          ;   (redirect (format "/user2/%s?json=1" id))
+          ;   (redirect (str "/user2/" id)))
+          )
+          ; (json-resp {:ok 1})
+          
+        (let [user-extras (actions/user-extras db id)
+              ; user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
+              user-repos (actions/user-projects-es* else id 100)
+              c-star (count (:starred user-extras))
+              c-follow (count (:following user-extras))
+              c-followers (count (:followers user-extras))
+              org? (= (:type user) "Organization")]
+            ; (log/warn user-repos)
+          (if is-json
+            (json-resp user)
+            (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
+              [:div.row 
+                    [:div.col-lg-3
+                      (left-menu host platform (str "/user2/" id))]
+                    [:div.col-lg-9
+                    [:div.alert.alert-info
+                      [:p (format "The following user is not a member of the %s community. 
+                            Below data is part of publicly available Github API." platform)]]
+                      [:div.row
+                        [:div.col-lg-4
+                          (user-part id user admin? c-star c-follow c-followers)
+                          (when-not org?
+                            (do 
+                              (panel [:a {:href (format "/user2/%s/following" (:login user))} (str "Following: " c-follow)]
+                                [:ul.user-list
+                                  (render-users db (take 10 (:following user-extras)))])
+                              (panel [:a {:href (format "/user2/%s/followers" (:login user))} (str "Followers: " c-followers) ]
+                                [:ul.user-list
+                                  (render-users db (take 10(:followers user-extras)))])))]
+                        [:div.col-lg-8
+                          (when-not org?
+                            [:div.col-lg-12
+                            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+                              [:ul (for [star (take 10 (:starred user-extras))] 
+                                [:li [:a {:href (str "/p/" star)} star]])])])
                           [:div.col-lg-12
-                          (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-                            [:ul (for [star (take 10 (:starred user-extras))] 
-                              [:li [:a {:href (str "/p/" star)} star]])])])
-                        [:div.col-lg-12
-                        (panelx "User Repos" ["no-pad"] ""
-                          (render-repos user-repos)
-                          )]]]]]))))))
+                          (panelx "User Repos" ["no-pad"] ""
+                            (render-repos user-repos)
+                            )]]]]])))))))
 
 (defn sync-user2
   [[db event-chan] request] 
