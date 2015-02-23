@@ -70,7 +70,18 @@
     "sweet.io" "UA-33058338-1"
     "pythonhackers.com" "UA-57973731-4"
     "clojurehackers.com" "UA-57973731-3"
-    "dev.hackersome.com" "UA-57973731-1" })
+    "dev.hackersome.com" "UA-57973731-1"
+    "oss.io" "UA-57973731-5" })
+
+(def disqus-ids 
+{
+  "pythonhackers.com" "pythonhackers"
+  "clojurehackers.com" "clojurehackers"
+  "hackersome.com" "hackersome"
+  "dev.hackersome.com" "hackersome"
+  "sweet.io" "sweetio"
+  "oss.io" "ossio"
+  })
 
 (defhtml render-user
   [x & {:keys [show-followers] :or {show-followers false}}]
@@ -141,7 +152,9 @@
           ; [:div.col-lg-1.left-panel ""]
           [:div.col-lg-11
             [:div.row {:style "padding-top:20px;"}
-              content]]
+              content
+
+              [:div#disqus_thread.col-lg-10.col-lg-offset-2]]]
           [:div.col-lg-1]
          ]
          [:footer.container-fluid.footer
@@ -198,9 +211,13 @@
       ga('create', '%s', 'auto');
       ga('send', 'pageview');" property-id)
           
-          "
-!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
-"
+          "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');"
+          (format 
+          "(function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//%s.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();" (or (get disqus-ids website) "hackersome"))
 (when-not is-dev?
 "!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error('Segment snippet included twice.');else{analytics.invoked=!0;analytics.methods=['trackSubmit','trackClick','trackLink','trackForm','pageview','identify','group','track','ready','alias','page','once','off','on'];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement('script');e.type='text/javascript';e.async=!0;e.src=('https:'===document.location.protocol?'https://':'http://')+'cdn.segment.com/analytics.js/v1/'+t+'/analytics.min.js';var n=document.getElementsByTagName('script')[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION='3.0.1';
   analytics.load('eqMNHeqB0Ukx8AWah4nKiwFwaxbeJlGg');

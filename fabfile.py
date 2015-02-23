@@ -120,6 +120,7 @@ def deploy_assets():
         put("resources/public/css/style.css", "public/css/style.css")
         put("resources/public/js/app.js", "public/js/app.js")
         put("logback.xml", "logback.xml")
+        put("opt-out.txt", "opt-out.txt")
 
 @task
 def build(token,new_build=False):
