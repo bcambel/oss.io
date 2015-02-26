@@ -55,7 +55,7 @@
     [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
 
     [:hr]
-    [:script#_carbonads_js {:type "text/javascript" :src "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=pythonhackerscom" }]
+    [:script#_carbonads_js {:type "text/javascript" :src (format "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=%s" (s/replace host #"\." "")) }]
     ])
 
 (defhtml languages-pane
