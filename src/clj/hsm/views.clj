@@ -159,7 +159,7 @@
          ]
          [:footer.container-fluid.footer
           [:div.col-lg-10.col-lg-offset-1
-          [:p "Designed, built and made in Amsterdam with all the love by" [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
+          [:p "Designed, built and made in Amsterdam with all the love by " [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
           [:p
             "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
           [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
