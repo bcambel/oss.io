@@ -71,7 +71,9 @@
     "pythonhackers.com" "UA-57973731-4"
     "clojurehackers.com" "UA-57973731-3"
     "dev.hackersome.com" "UA-57973731-1"
-    "oss.io" "UA-57973731-5" })
+    "oss.io" "UA-57973731-5"
+    "java-hackers.com" "UA-57973731-6"
+     })
 
 (def disqus-ids 
 {
