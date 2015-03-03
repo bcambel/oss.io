@@ -162,24 +162,25 @@
          ]
          [:footer.container-fluid.footer
           [:div.col-lg-10.col-lg-offset-1
-          [:p "Designed, built and made in Amsterdam with all the love by " [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
-          [:p
-            "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
-          [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
-          [:hr]
-          (when-not is-dev?
-          [:p
-            [:a.twitter-share-button {:href "https://twitter.com/share" 
-              :data-text "Top Projects on"
-              :data-via "pythonhackers" :data-size :normal
-              } "Tell your friends"]
-            [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :normal }]]
-          [:hr]
-          [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal" 
-                    :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
-          [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal" 
-                    :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}])
-            ]
+            [:p "Designed, built and made in Amsterdam with all the love by " [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
+            [:p
+              "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
+            [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
+            [:hr]
+            (when-not is-dev?
+              [:div
+                [:p
+                  [:a.twitter-share-button {:href "https://twitter.com/share" 
+                    :data-text "Top Projects on"
+                    :data-via "pythonhackers" :data-size :normal
+                    } "Tell your friends"]
+                  [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :normal }]]
+                [:hr]
+                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal" 
+                          :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
+                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal" 
+                          :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
+            ])]
          ]
         [:div#mc_embed_signup.modal.fade
           [:div.modal-dialog
