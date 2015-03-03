@@ -38,10 +38,11 @@
 
 (defhtml left-menu
   [host platform page]
+  (log/info "LEFT-MENU" host)
   [:div.bs-callout.bs-callout-success ;{:style "background-color:#f7f7f7;" }
   
     [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
-    [:p {:style "margin-top:10px"} "Join " [:b 953] " others. No spamming." [:br][:b "I promise!"]]
+    [:p {:style "margin-top:10px"} "Join " [:b 1028] " others. No spamming." [:br][:b "I promise!"]]
     [:p "We are currently under high development. "[:a {:href "https://github.com/bcambel/hackersome?utm_source=left_menu_link"} "Follow us at github."]]
     [:hr]
     [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?utm_source=left_menu_link"}  "Check these awesome tutorials"]]
