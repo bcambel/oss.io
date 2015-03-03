@@ -167,6 +167,7 @@
             "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
           [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
           [:hr]
+          (when-not is-dev?
           [:p
             [:a.twitter-share-button {:href "https://twitter.com/share" 
               :data-text "Top Projects on"
@@ -177,7 +178,7 @@
           [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal" 
                     :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
           [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal" 
-                    :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
+                    :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}])
             ]
          ]
         [:div#mc_embed_signup.modal.fade
@@ -213,19 +214,23 @@
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
       ga('create', '%s', 'auto');
       ga('send', 'pageview');" property-id)
-          
+
           "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');"
+          (when-not is-dev?
           (format 
           "(function() {
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
             dsq.src = '//%s.disqus.com/embed.js';
             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();" (or (get disqus-ids website) "hackersome"))
+        })();" (or (get disqus-ids website) "hackersome")))
 (when-not is-dev?
 "!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error('Segment snippet included twice.');else{analytics.invoked=!0;analytics.methods=['trackSubmit','trackClick','trackLink','trackForm','pageview','identify','group','track','ready','alias','page','once','off','on'];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement('script');e.type='text/javascript';e.async=!0;e.src=('https:'===document.location.protocol?'https://':'http://')+'cdn.segment.com/analytics.js/v1/'+t+'/analytics.min.js';var n=document.getElementsByTagName('script')[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION='3.0.1';
   analytics.load('eqMNHeqB0Ukx8AWah4nKiwFwaxbeJlGg');
   analytics.page();}}();
 ")
+(format`
+"window.jstag=function(e){var t=!1,n=window,r=document,i='/js/io',s=Array.prototype.slice,o=e.url||'';return n.jstag||{load:function(){var e,s=r.getElementsByTagName('script')[0];return t=!0,'JSON'in n&&Array.prototype.forEach||(i+='w'),r.getElementById(i)?this:(e=r.createElement('script'),e.id=i,e.src=o+i+'.min.js',s.parentNode.insertBefore(e,s),this)},_q:[],_c:e,bind:function(e){this._q.push([e,s.call(arguments,1)])},ready:function(){this._q.push(['ready',s.call(arguments)])},send:function(){return t||this.load(),this._q.push(['ready','send',s.call(arguments)]),this},ts:(new Date).getTime()}
+}({cid:'report',url:'//%s/',path:'',idpath:''});" (if is-dev? "dev.strck.hackersome.com" "strck.hackersome.com"))
           )
         ])
     [:img {:src "http://strck.hackersome.com/pixel.gif" :alt ""}]])))
