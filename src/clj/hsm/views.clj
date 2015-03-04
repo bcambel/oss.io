@@ -36,6 +36,13 @@
   [header & content]
     (panelx header "" ["panel-body"] content))
 
+(defn get-placement
+  [host]
+  (let [placement (s/replace host #"\." "")]
+    (if (= placement "pythonhackerscom")
+      placement
+      "hackersomecom")))
+
 (defhtml left-menu
   [host platform page]
   (log/info "LEFT-MENU" host)
@@ -56,7 +63,7 @@
     [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
 
     [:hr]
-    [:script#_carbonads_js {:type "text/javascript" :src (format "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=%s" (s/replace host #"\." "")) }]
+    [:script#_carbonads_js {:type "text/javascript" :src (format "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=%s" (get-placement host)) }]
     ])
 
 (defhtml languages-pane
@@ -164,7 +171,7 @@
           [:div.col-lg-10.col-lg-offset-1
             [:p "Designed, built and made in Amsterdam with all the love by " [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
             [:p
-              "Running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
+              website " running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
             [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
             [:hr]
             (when-not is-dev?
