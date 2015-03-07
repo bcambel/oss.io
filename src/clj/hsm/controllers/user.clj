@@ -97,12 +97,11 @@
       (layout {:website host :title "User does not exist"} "User opted-out.")
       (if (or force-sync (not (:full_profile user)))
         (do 
-          ; (future (gh/find-n-update db id conf))
+          (future (gh/find-n-update db id conf))
           (Thread/sleep 2000)
-          ; (if is-json 
-          ;   (redirect (format "/user2/%s?json=1" id))
-          ;   (redirect (str "/user2/" id)))
-          )
+          (if is-json 
+            (redirect (format "/user2/%s?json=1" id))
+            (redirect (str "/user2/" id))))
           ; (json-resp {:ok 1})
           
         (let [user-extras (actions/user-extras db id)
@@ -203,23 +202,25 @@
         c-follow (count (:following user-extras))
         c-followers (count (:followers user-extras))
         org? (= (:type user) "Organization")]
-    (if is-json
-      (json-resp (:followers user-extras))
-      (layout {:website host 
-              :title (format "%s - %s " (:login user) (:name user))
-              :desription (format "%s (%s) followed by these users " (:login user) (:name user))
-              :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])}
-          [:div.row 
-            [:div.col-lg-3
-              (user-part id user admin? c-star c-follow c-followers)]
-            [:div.col-lg-9
-            (when-not org?
-              [:div.col-lg-12
-              (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
-                [:div.user-list.row
-                  (for [x (fetch-users db (:followers user-extras))]
-                      [:div.col-lg-3.user-thumb
-                        (render-user x)])])])]]))))
+    (if (opted-out? id) 
+      (layout {:website host :title "User does not exist"} "User opted-out.")
+      (if is-json
+        (json-resp (:followers user-extras))
+        (layout {:website host 
+                :title (format "%s - %s " (:login user) (:name user))
+                :desription (format "%s (%s) followed by these users " (:login user) (:name user))
+                :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])}
+            [:div.row 
+              [:div.col-lg-3
+                (user-part id user admin? c-star c-follow c-followers)]
+              [:div.col-lg-9
+              (when-not org?
+                [:div.col-lg-12
+                (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Followers " c-followers) ]
+                  [:div.user-list.row
+                    (for [x (fetch-users db (:followers user-extras))]
+                        [:div.col-lg-3.user-thumb
+                          (render-user x)])])])]])))))
 
 (defn user2-following
   [{:keys [db event-chan redis]} request]
@@ -233,24 +234,26 @@
         c-follow (count (:following user-extras))
         c-followers (count (:followers user-extras))
         org? (= (:type user) "Organization")]
-    (if is-json
-      (json-resp (:following user-extras))
-      (layout {:website host 
-               :title (format "%s (%s) following these users " (:login user) (:name user))
-                :description (format "%s (%s) following these users " (:login user) (:name user))
-                :keywords (str/join "," [(:login user) (:name user) (format "%s following" (:name user))])
-             }
-          [:div.col-lg-3
-            (user-part id user admin? c-star c-follow c-followers)]
-          [:div.col-lg-9
-          (when-not org?
-            [:div.col-lg-12
-            (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Following " c-follow) ]
-              [:div.user-list.row
-                (for [x (fetch-users db (:following user-extras))]
-                    [:div.col-lg-3.user-thumb
-                      (render-user x)])]
-              )])]))))
+    (if (opted-out? id) 
+      (layout {:website host :title "User does not exist"} "User opted-out.")
+      (if is-json
+        (json-resp (:following user-extras))
+        (layout {:website host 
+                 :title (format "%s (%s) following these users " (:login user) (:name user))
+                  :description (format "%s (%s) following these users " (:login user) (:name user))
+                  :keywords (str/join "," [(:login user) (:name user) (format "%s following" (:name user))])
+               }
+            [:div.col-lg-3
+              (user-part id user admin? c-star c-follow c-followers)]
+            [:div.col-lg-9
+            (when-not org?
+              [:div.col-lg-12
+              (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Following " c-follow) ]
+                [:div.user-list.row
+                  (for [x (fetch-users db (:following user-extras))]
+                      [:div.col-lg-3.user-thumb
+                        (render-user x)])]
+                )])])))))
 
 (defn user2-starred
   [{:keys [db event-chan redis]} request]
@@ -264,17 +267,19 @@
         c-follow (count (:following user-extras))
         c-followers (count (:followers user-extras))
         org? (= (:type user) "Organization")]
-    (if is-json
-          (json-resp (:starred user-extras))
-          (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
-              [:div.col-lg-3
-                (user-part id user admin? c-star c-follow c-followers)]
-              [:div.col-lg-9
-              (when-not org?
-                [:div.col-lg-10
-                (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
-                  (render-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:starred user-extras))))))
-                  )])]))))
+    (if (opted-out? id) 
+      (layout {:website host :title "User does not exist"} "User opted-out.")
+      (if is-json
+            (json-resp (:starred user-extras))
+            (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
+                [:div.col-lg-3
+                  (user-part id user admin? c-star c-follow c-followers)]
+                [:div.col-lg-9
+                (when-not org?
+                  [:div.col-lg-10
+                  (panel [:a {:href (format "/user2/%s/starred" (:login user))} (str "Starred " c-star) ]
+                    (render-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:starred user-extras))))))
+                    )])])))))
 
 (defn user2-contrib
   [{:keys [db event-chan redis]} request])
