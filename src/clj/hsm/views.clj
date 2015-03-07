@@ -81,16 +81,18 @@
     "dev.hackersome.com" "UA-57973731-1"
     "oss.io" "UA-57973731-5"
     "java-hackers.com" "UA-57973731-6"
+    "answer.io" "UA-57973731-7"
      })
 
 (def disqus-ids 
 {
   "pythonhackers.com" "pythonhackers"
-  "clojurehackers.com" "clojurehackers"
-  "hackersome.com" "hackersome"
+  "clojurehackers.com" "pythonhackers"
+  "hackersome.com" "pythonhackers"
   "dev.hackersome.com" "hackersome"
   "sweet.io" "sweetio"
   "oss.io" "ossio"
+  "answer.io" "pythonhackers"
   })
 
 (defhtml render-user
