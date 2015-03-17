@@ -99,7 +99,7 @@
   [x & {:keys [show-followers] :or {show-followers false}}]
   [:div.user-card
     [:a {:href (format "/user2/%s" (:login x)) :title (:name x)}
-      [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
+      ; [:img.img-rounded {:src (:image x) :style "width:36px;height:36px;"}]
       [:span.name (:login x)]]
     (when show-followers
       [:span.followers.pull-right (:followers x)])

@@ -34,16 +34,18 @@
 
 (defhtml user-part
   [id user admin? c-star c-follow c-followers]
-  (panel [:a {:href (str "/user2/" id)} (:login user)]
-    [:img.img-responsive.img-rounded {:src (:image user)}]
-    [:h3 [:span (:login user)]
-      [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]]
-    [:h5 [:span (:name user)]]
-    [:p [:a {:href (:blog user)}(:blog user)]]
-    [:p (:company user)]
-    [:p (:location user)]
-    [:p (:type user)]
-    [:a {:href (str "mailto://" (:email user))} (:email user)]
+  (panel "A User" ;[:a {:href (str "/user2/" id)} (:login user)]
+    ; [:img.img-responsive.img-rounded {:src (:image user)}]
+    [:h3 ;[:span (:login user)]
+      "A User"
+      ; [:a.pad10 {:href (str "https://github.com/" (:login user))} [:i.fa.fa-github]]
+      ]
+    [:h5 "A User"] ;[:span (:name user)]]
+    ; [:p [:a {:href (:blog user)}(:blog user)]]
+    ; [:p (:company user)]
+    ; [:p (:location user)]
+    ; [:p (:type user)]
+    ; [:a {:href (str "mailto://" (:email user))} (:email user)]
     [:hr]
 
     [:h3 [:a {:href (str "/user2/" id "/starred")} c-star ]" starred "]
@@ -114,7 +116,8 @@
             ; (log/warn user-repos)
           (if is-json
             (json-resp user)
-            (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
+            (layout {:website host :title "A User" ;(format "%s - %s " (:login user) (:name user))
+          }
               [:div.row 
                     [:div.col-lg-3
                       (left-menu host platform (str "/user2/" id))]
@@ -207,9 +210,10 @@
       (if is-json
         (json-resp (:followers user-extras))
         (layout {:website host 
-                :title (format "%s - %s " (:login user) (:name user))
-                :desription (format "%s (%s) followed by these users " (:login user) (:name user))
-                :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])}
+                :title "A User" ;(format "%s - %s " (:login user) (:name user))
+                ; :desription (format "%s (%s) followed by these users " (:login user) (:name user))
+                ; :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])
+              }
             [:div.row 
               [:div.col-lg-3
                 (user-part id user admin? c-star c-follow c-followers)]
@@ -239,9 +243,9 @@
       (if is-json
         (json-resp (:following user-extras))
         (layout {:website host 
-                 :title (format "%s (%s) following these users " (:login user) (:name user))
-                  :description (format "%s (%s) following these users " (:login user) (:name user))
-                  :keywords (str/join "," [(:login user) (:name user) (format "%s following" (:name user))])
+                 :title "A User" ;(format "%s (%s) following these users " (:login user) (:name user))
+                  ; :description (format "%s (%s) following these users " (:login user) (:name user))
+                  ; :keywords (str/join "," [(:login user) (:name user) (format "%s following" (:name user))])
                }
             [:div.col-lg-3
               (user-part id user admin? c-star c-follow c-followers)]
@@ -271,7 +275,9 @@
       (layout {:website host :title "User does not exist"} "User opted-out.")
       (if is-json
             (json-resp (:starred user-extras))
-            (layout {:website host :title (format "%s - %s " (:login user) (:name user))}
+            (layout {:website host :title "A User"
+                ; (format "%s - %s " (:login user) (:name user))
+              }
                 [:div.col-lg-3
                   (user-part id user admin? c-star c-follow c-followers)]
                 [:div.col-lg-9
@@ -310,7 +316,7 @@
                   [:tr
                     [:td [:h4 (:followers x)]]
                     [:td
-                      [:img.img-rounded.img-responsive.pull-left {:src (:image x) :style "width:64px;margin-right:10px;"}]
+                      ; [:img.img-rounded.img-responsive.pull-left {:src (:image x) :style "width:64px;margin-right:10px;"}]
                       [:a {:href (str "/user2/" (:login x))} (:login x)]
                       [:br]
                       (:name x)
