@@ -212,7 +212,8 @@
         (layout {:website host 
                 :title "A User" ;(format "%s - %s " (:login user) (:name user))
                 ; :desription (format "%s (%s) followed by these users " (:login user) (:name user))
-                ; :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])}
+                ; :keywords (str/join "," [(:login user) (:name user) (format "%s followers" (:name user))])
+              }
             [:div.row 
               [:div.col-lg-3
                 (user-part id user admin? c-star c-follow c-followers)]
