@@ -6,6 +6,9 @@
 
 [![Coverage Status](https://coveralls.io/repos/bcambel/hackersome/badge.png)](https://coveralls.io/r/bcambel/hackersome)
 
+
+[![](http://strck.hackersome.com/pixel.gif)]()
+
 A Community project for developers, entreprenuers, hustlers. Hackersome is the umbrella project name, and includes the following portals
 
 - [Python Hackers](http://pythonhackers.com)
