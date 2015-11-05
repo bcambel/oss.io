@@ -13,38 +13,15 @@
     [clojurewerkz.elastisch.rest.document :as esd]
     [clojurewerkz.elastisch.rest.response :as esrsp]
     [clojurewerkz.elastisch.query :as q]
+    [clojure.java.jdbc :as jdbc]
+    [honeysql.core :as sql]
+    [honeysql.helpers :refer :all]
     [hsm.utils :refer :all]
-    [hsm.cache :as cache]))
+    [hsm.cache :as cache]
+    [hsm.system.pg :refer [pg-db]]))
 
 (declare list-top-proj**)
 (declare load-projects-by-int-id)
-
-;; USER
-(defn follow-user
-  [db user current-user]
-  (let [conn (:connection db)]
-    (cql/atomic-batch conn
-          (dbq/queries
-            (hs/insert :user_follower 
-                (dbq/values {:user_id user 
-                             :follower_id current-user 
-                             :created_at (now->ep)}))
-            (hs/insert :user_following 
-                (dbq/values {:user_id current-user 
-                             :following_id user 
-                             :created_at (now->ep)}))))))
-
-(defn unfollow-user
-  [db user current-user]
-  (let [conn (:connection db)]
-    (cql/atomic-batch conn
-          (dbq/queries
-            (hs/delete :user_follower
-                (dbq/values {:user_id user
-                             :follower_id current-user }))
-            (hs/delete :user_following
-                (dbq/values {:user_id current-user
-                             :following_id user}))))))
 
 (defn load-user
   [db user-id]
@@ -92,191 +69,7 @@
 ;; DISCUSS
 (def Discussion {:title s/Str :post s/Str})
 
-(defn create-discussion
-  [db platform user data]
-  ; (log/warn "[CREATE-DISC]" data)
-  (try 
-    (s/validate Discussion data)
-    ; this is stupid. Must not fail here!!
-    ; #<IllegalArgumentException java.lang.IllegalArgumentException: 
-    ; Don't know how to create ISeq from: schema.utils$result_builder$conjer__777>
-    (catch Throwable t (log/error "[CREATE-DISC-VAL]" t)))
-
-  (let [conn (:connection db)
-        post (:post data)
-
-        post-info {:id (id-generate) :user_id user :text post}
-        additional {:id (id-generate) 
-                    :published_at (now->ep)
-                    :user_id user 
-                    :platform_id platform
-                    :post_id (:id post-info)}
-        discussion-info (merge additional (dissoc data :post))]
-    (log/warn "[CREATE-DISC]" post-info)
-    (log/warn "[CREATE-DISC]" discussion-info)
-    (cql/atomic-batch conn
-      (dbq/queries
-        (hs/insert :post (dbq/values post-info))
-        (hs/insert :discussion (dbq/values discussion-info))))
-    ;; COUNTER COLUMN OPs are not supported in Batch; so CANNOT 
-    ;; add this update into the atomic-batch.
-    (cql/update conn :post_counter 
-       {
-        :karma (dbq/increment-by 1)
-        :up_votes (dbq/increment-by 1)
-        :views (dbq/increment-by 1)}
-      (dbq/where {:id (:id post-info)}))
-    additional))
-
 (def Post {:text s/Str})
-
-(defn new-discussion-post
-  [db user disc-id post]
-  (let [conn (:connection db)
-        post-id (id-generate)
-        post-data (merge post {:id post-id :user_id user })]
-        (log/warn post post-data)
-    (cql/atomic-batch conn
-      (dbq/queries
-        (hs/insert :post (dbq/values post-data))
-        (hs/insert :discussion_post
-          (dbq/values { :post_id post-id
-                        :user_id user
-                        :disc_id disc-id }))))
-
-    (cql/update conn :post_counter 
-      {:karma (dbq/increment-by 1)
-       :up_votes (dbq/increment-by 1)
-       :views (dbq/increment-by 1)}
-      (dbq/where [[:= :id post-id]]))
-    post-id))
-
-(defn load-post
-  [db post-id]
-  (let [conn (:connection db)]
-    (first (or (cql/select conn :post 
-      (dbq/where [[= :id post-id]])) []))))
-
-(defn load-posts-by-ids
-  [{:keys [connection]} post-id-list]
-  (cql/select connection :post 
-    (dbq/where [[:in :id post-id-list]])))
-
-(defn load-discussions
-  [db]
-  (let [conn (:connection db)]
-    (let [discussions (cql/select conn :discussion)
-          posts (load-posts-by-ids db (map :post_id discussions))]
-      (map #(assoc % :post (first (filter (fn[x] (= (:id x) (:post_id %))) posts)))  
-        discussions))))
-
-(defn load-discussion
-  [db disc-id]
-  (let [conn (:connection db)]
-    (when-let [discussion (first (cql/select conn :discussion
-                    (dbq/where [[= :id disc-id] [= :platform_id 1]])))]
-      (log/warn discussion)
-      (let [post-id (:post_id discussion)]
-        (assoc discussion :post (load-post db post-id))))))
-
-(defn follow-discussion
-  [db disc-id user-id]
-  (let [conn (:connection db)]
-    (cql/atomic-batch conn
-      (dbq/queries
-        ;; TODO: Add UserDiscussion table
-        (hs/insert :discussion_follower
-          (dbq/values { :created_at (now->ep)
-                        :user_id user-id
-                        :disc_id disc-id }))))))
-
-(defn unfollow-discussion
-  [db disc-id user-id]
-  (let [conn (:connection db)]
-    (cql/delete conn
-      :discussion_follower
-      {:user_id user-id
-        :disc_id disc-id})))
-
-(defn load-discussion-posts
-  [db disc-id]
-  (let [conn (:connection db)]
-    (when-let [post-ids (mapv :post_id
-                          (cql/select conn :discussion_post
-                            (dbq/where [[= :disc_id disc-id]])))]
-    (log/warn "Found " post-ids)
-      (cql/select conn :post (dbq/where [[:in :id post-ids]])))))
-
-(defn delete-discussion [id])
-
-;; POST Related
-
-(defn update-post
-  [{:keys [connection]} post-id data]
-  (cql/update connection :post
-    data
-    (dbq/where [[:= :id post-id]])))
-
-(defn create-post
-  [db post user]
-  (s/validate Post post)
-  (let [conn (:connection db)
-        post-id (id-generate)
-        post-data (merge post {:id post-id 
-                               :user_id user 
-                               :created_at (now->ep) })]
-      ;; counter column updates cannot be batched with normal statements
-      ;; we have to execute 2 queries to satisfy our req.
-      ;; might throw the counter update task into a Worker Queue
-      (cql/insert conn :post post-data)
-      (cql/update conn :post_counter
-         {:karma (dbq/increment-by 1)
-          :up_votes (dbq/increment-by 1)
-          :views (dbq/increment-by 1)}
-        (dbq/where {:id post-id}))
-    post-id
-    ))
-
-(defn edit-post [db data])
-
-(defn upvote-post [db post user]
-  (let [conn (:connection db)]
-    (cql/insert conn :post_vote {
-      :post_id post
-      :user_id user
-      :created_at (now->ep)
-      :positive true})))
-
-(defn delete-post 
-  [{:keys [connection]} post-id]
-  (cql/delete connection :post 
-    (dbq/where [[:= :id post-id]])
-    )
-  )
-
-(defn create-link
-  [db link-data user]
-  (let [conn (:connection db)]
-    (cql/insert conn :link
-      (merge link-data {
-        :id (id-generate)
-        :submit_by user
-        :created_at (now->ep)}))))
-
-(defn get-link
-  [db link-id user]
-    (let [conn (:connection db)]
-      (when-let [link (first
-                        (cql/select conn :link 
-                          (dbq/where [[= :id link-id]])))]
-        (when-not (empty? link)
-          (merge link
-            (first (cql/select conn :post_counter
-                      (dbq/where [[= :id link-id]]))))))))
-(defn list-links 
-  [db time-filter user]
-  (let [conn (:connection db)]
-    (cql/select conn :link)))
 
 (defn stringify-id
   [dict]
@@ -291,7 +84,7 @@
         limit-by (if (> limit-by 100) 100 limit-by)]
     (when-let [projects (cql/select conn :github_project
                           (dbq/limit 10000) ; place a hard limit
-                           (when-not (nil? platform) (dbq/where 
+                           (when-not (nil? platform) (dbq/where
                                         [[= :language platform]])))]
       projects)))
 
@@ -319,7 +112,7 @@
       found-projects)))
 
 (defn list-top-proj*
-  "List top projects; 
+  "List top projects;
   Results will be fetched from redis"
   [db redis platform limit-by]
   (let [cached-projects (fetch-top-proj db redis platform limit-by)]
@@ -347,9 +140,16 @@
 (defn load-project
   [db proj]
   (let [conn (:connection db)]
-    (cql/select conn :github_project
-      (dbq/limit 1)
-      (dbq/where [[= :full_name proj]]))))
+    (jdbc/query pg-db (-> (select :*)
+                       (from :github_project)
+                       (where [:= :full_name proj])
+                       (limit 1)
+                       (sql/build)
+                       (sql/format :quoting :ansi)))
+    ; (cql/select conn :github_project
+    ;   (dbq/limit 1)
+    ;   (dbq/where [[= :full_name proj]]))
+    ))
 
 (defn load-projects-by-id
   [db proj-list]
@@ -374,19 +174,6 @@
       (dbq/limit 1)
       (dbq/where [[= :proj proj]])))))
 
-(defn list-top-disc
-  [db platform limit-by]
-  (log/warn "[TOP-DISC] Fetching " platform limit-by)
-  (let [conn (:connection db)
-        limit-by (if (> limit-by 100) 100 limit-by)]
-    (when-let [discussions (cql/select conn :discussion 
-      (dbq/limit limit-by))]
-      ; TODO: horrible to do this way. 
-      ; Cache these top project IDs by platform
-      ; and do a quick load
-      (doall (map #(load-discussion db (:id %)) discussions)
-    ))))
-
 (defn list-top-user
   [db platform limit-by]
   (log/warn "[TOP-USER] Fetching " platform limit-by)
@@ -410,13 +197,13 @@
 
 (defn top-users-in
   [users limit-by]
-  (take limit-by 
+  (take limit-by
     (reverse (sort-by :followers users))))
 
 (defn top-users
   [db limit-by top-n]
   (let [conn (:connection db)
-        users (cql/select conn :github_user 
+        users (cql/select conn :github_user
                 (dbq/limit limit-by)
                 (dbq/columns :login :followers))]
     (top-users-in users top-n)))
@@ -444,82 +231,9 @@
                       (dbq/columns :login :followers :name :email :blog)
                       (dbq/limit 1000)
                       (dbq/where [[= :full_profile true]]))]
-      (mapv #(select-keys % [:login :followers :name :email :blog]) 
+      (mapv #(select-keys % [:login :followers :name :email :blog])
         (top-users-in users limit-by)))))
 
-(defn load-collections
-  [db limit-by]
-  (let [conn (:connection db)]
-      (cql/select conn :collection)))
-
-(defn create-collection
-  [db data]
-  (let [conn (:connection db)]
-    (cql/insert conn
-      :collection data)
-    (cql/insert conn 
-      :collection_list { :id (:id data)})))
-
-(defn update-collection
-  [{:keys [connection]} id items]  
-  (cql/update connection :collection 
-    {:items items}
-    (dbq/where [[:= :id id]])))
-
-(defn get-collection
-  [{:keys [connection]} id]
-  (cql/select connection :collection
-    (dbq/limit 1)
-    (dbq/where [[:= :id id]])))
-
-(defn get-collection-extras-by-id
-  [{:keys [connection]} id-list]
-  (cql/select connection :collection_list
-    (dbq/limit 1000)
-    (dbq/where [[:in :id id-list]])))
-
-(defn get-collection-extra
-  [{:keys [connection]} id]
-  (first 
-    (cql/select connection :collection_list
-      (dbq/limit 1)
-      (dbq/where [[:= :id id]]))))
-
-(defn add-collection-fork
-  [{:keys [connection]} id fork-id]
-  (cql/update connection :collection_list
-    {:forks [+ #{(str fork-id)}]}
-    (dbq/where [[:= :id id]])))
-
-(defn delete-collection
-  [{:keys [connection]} id]
-  (cql/delete connection :collection
-    (dbq/where [[:= :id id]])))
-
-(defn star-collection
-  [{:keys [connection]} id user-set]
-  (cql/update connection :collection_list
-    {:stargazers [+ user-set]}
-    (dbq/where [[:= :id id]])))
-
-(defn load-topics
-  [{:keys [connection]} pl]
-  (cql/select connection :topic
-    (dbq/where [[:= :platform_id pl]])))
-
-(defn get-topic
-  [{:keys [connection]} pl id]
-  (first 
-    (cql/select connection :topic
-      (dbq/where [
-        [:= :platform_id pl]
-        [:= :id id]]))))
-
-(defn get-topic-by-slug
-  [{:keys [connection]} slug]
-  (first 
-    (cql/select connection :topic
-      (dbq/where [[:= :slug slug]]))))
 
 (defn user-projects-es*
   [else user limit]
@@ -527,8 +241,8 @@
   (let [res (esd/search (:conn else) (:index else) "github_project"
                  :sort [ { :watchers {:order :desc}}]
                  :size limit
-                  :query (q/filtered 
-                          :filter   (q/term 
+                  :query (q/filtered
+                          :filter   (q/term
                                         :owner (str/lower-case user))))
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]
@@ -539,8 +253,8 @@
   (let [res (esd/search (:conn else) (:index else) "github_project"
                  :sort [ { :watchers {:order :desc}}]
                  :size limit
-                  :query (q/filtered 
-                          :filter   (q/term 
+                  :query (q/filtered
+                          :filter   (q/term
                                         :language (str/lower-case platform))))
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]

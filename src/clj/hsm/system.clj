@@ -5,11 +5,8 @@
         [clojurewerkz.cassaforte.cql  :as cql]
         [clojure.tools.logging        :as log]
         [hsm.dev                      :refer :all]
-        [hsm.controllers.user         :as c.u]
-        [hsm.controllers.post         :as c.p]
+        [hsm.controllers.user         :as c.u]       
         [hsm.controllers.project      :as c.pr]
-        [hsm.controllers.coll         :as c.coll]
-        [hsm.controllers.discussion   :as c.d]
         [hsm.controllers.main         :as c.m]
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log redirect]]
@@ -58,20 +55,6 @@
         (GET  "/"                                 request (c.m/homepage specs request))
         (GET  "/about"                            request (c.m/about specs request))
         (GET  "/test"                             request (sample-conn db request))
-        ; (POST "/user/create"                    request (c.u/create-user [db event-chan] request))
-        (POST "/post/create"                      request (c.p/create-post [db event-chan] request))
-        (GET  "/topic/:id"                        request (c.d/get-topic specs request))
-        (GET  "/discussions"                      request (c.d/load-discussions specs request))
-        (GET  "/discussion/new"                   request (c.d/new-discussion specs request))
-        (POST "/discussion/create"                request (c.d/create-discussion specs request))
-        (GET  "/discussion/:id"                   request (c.d/get-discussion specs request))
-        (GET  "/discussion/:id/posts"             request (c.d/get-discussion-posts specs request))
-        (POST "/discussion/:id/post/create"       request (c.d/post-discussion specs request))
-        (POST "/discussion/:id/post/:pid/delete"  request (c.d/rm-post-discussion specs request))
-        (GET  "/discussion/:id/post/:pid/edit"    request (c.d/edit-post-discussion specs request))
-        (POST "/discussion/:id/post/:pid/edit"    request (c.d/update-post-discussion specs request))
-        (POST "/discussion/:id/follow"            request (c.d/follow-discussion specs request))
-        (POST "/discussion/:id/unfollow"          request (c.d/unfollow-discussion specs request))
 
         (GET  "/users"                            request (c.u/some-user specs request))
         (GET  "/user2/:id"                        request (c.u/get-user2 specs request))
@@ -81,19 +64,7 @@
         (GET  "/user2/:id/starred"                request (c.u/user2-starred specs request))
         (GET  "/user2/:id/contrib"                request (c.u/user2-contrib specs request))
         (GET  "/user2/:id/activity"               request (c.u/user2-activity specs request))
-        
-        (GET  "/user/:id"                         request (c.u/get-user [db event-chan] request))
-        (GET  "/user/:id/activity"                request (c.u/get-user-activity [db event-chan] request))
-        (POST "/user/:id/follow"                  request (c.u/follow-user [db event-chan] request))
-        (POST "/user/:id/unfollow"                request (c.u/unfollow-user [db event-chan] request))
-        (GET  "/user/:id/followers"               request (c.u/get-user-followers [db event-chan] request))
-        (GET  "/user/:id/following"               request (c.u/get-user-following [db event-chan] request))
-        
-        (POST "/link/create"                      request (c.p/create-link [db event-chan] request))
-        (POST "/link/:id/upvote"                  request (c.p/upvote-link [db event-chan] request))
-        (GET  "/link/:id"                         request (c.p/show-link [db event-chan] request))
-        (GET  "/links/:date"                      request (c.p/list-links [db event-chan] request))
-        
+       
         (GET  "/os/:user/:project"                request (c.pr/get-proj specs request))
         (GET  "/open-source/:user/:project"       request (c.pr/get-proj specs request))
         (GET  "/open-source"                      request (redirect "/open-source/"))
@@ -117,20 +88,7 @@
 
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
-        (GET  "/:platform/discussions"            request (c.d/discussions specs request))
-
-        (GET  "/collections"                      request (c.coll/load-coll specs request))
-        (POST "/collections/create"               request (c.coll/create-coll specs request))
-        (GET  "/collections/:id"                  request (c.coll/get-coll specs request))
-        (GET  "/collections/:id/embed"            request (c.coll/get-coll-embed specs request))
-        (GET  "/collections/:id/rm"               request (c.coll/rm-coll specs request))
-        (GET  "/collections/:id/stargazers"       request (c.coll/coll-stargazers specs request))
-        (GET  "/collections/:id/forks"            request (c.coll/coll-forks specs request))
-        (POST "/collections/:id/star"             request (c.coll/star-coll specs request))
-        (POST "/collections/:id/fork"             request (c.coll/fork-coll specs request))
-        (POST "/collections/:id/add"              request (c.coll/add-p-coll specs request))
-        (POST "/collections/:id/delete"           request (c.coll/del-p-coll specs request))
-
+        
         (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
         (GET  "/tutorial/"                        request (c.m/all-tutorial specs request))
         (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))

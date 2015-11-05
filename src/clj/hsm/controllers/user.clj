@@ -116,8 +116,8 @@
             ; (log/warn user-repos)
           (if is-json
             (json-resp user)
-            (layout {:website host :title "A User" ;(format "%s - %s " (:login user) (:name user))
-          }
+            (layout {:website host :title "A User"} ;(format "%s - %s " (:login user) (:name user))
+          
               [:div.row 
                     [:div.col-lg-3
                       (left-menu host platform (str "/user2/" id))]
@@ -163,19 +163,6 @@
     (actions/create-user db user-data)
     (event-pipe/create-user event-chan user-data)
     (json-resp { :ok body })))
-
-(defn ^:private follow-user-actions
-  [func act-name [db event-chan] request]
-  (let [host  (host-of request)
-        body (body-of request)
-        current-user 243975551163827208
-        id (BigInteger. (id-of request))]
-    (func db id current-user)
-    (event-pipe/follow-user-event act-name event-chan {:current-user current-user :user id})
-    (json-resp {:ok 1})))
-
-(def follow-user (partial follow-user-actions actions/follow-user :follow-user))
-(def unfollow-user (partial follow-user-actions actions/unfollow-user :unfollow-user))
 
 (defn ^:private get-user-detail
   [func [db event-chan] request]

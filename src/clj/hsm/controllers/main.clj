@@ -12,7 +12,7 @@
     [hsm.views                    :refer :all]
     [hsm.utils                    :refer [host-of id-of cutoff pl->lang common-of]]
     [hsm.conf                     :refer [languages]]
-    [hsm.actions                  :refer [list-top-proj list-top-disc list-top-user top-projects-es]]))
+    [hsm.actions                  :refer [list-top-proj list-top-user top-projects-es]]))
 
 (defn homepage
   [{:keys [db event-chan redis else]} request]
@@ -60,7 +60,6 @@
   [{:keys [db event-chan redis else]} request]
   (let [host (host-of request)
         pl   (pl->lang (id-of request :platform))
-        top-disc (list-top-disc db pl 5)
         top-members (list-top-user db pl 5)
         top-projects (top-projects-es else pl 100)]
     (html-resp 
@@ -71,13 +70,6 @@
         [:div 
           [:h1 (str "Welcome to " pl)]
           [:div.row
-            [:div.col-lg-4
-              (panel [:a {:href (format "/%s/discussions" pl)} "Discussions"]
-                [:ul {:style "list-style-type:none;padding-left:1px;" }
-                  (for [x top-disc]
-                    [:li 
-                      [:a {:href (str "/discussion/" (:id x))} (:title x) 
-                        [:p {:style "color:gray" } (get-in x [:post :text])]]])])]
             [:div.col-lg-4
               (panel [:a {:href (format "/%s/members" pl)} "Members"]
                 [:ul {:style "list-style-type:none;padding-left:1px;" }

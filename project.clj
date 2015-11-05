@@ -14,7 +14,7 @@
                 [compojure "1.3.1"]
                 [bidi "1.12.0"]
                 [enlive "1.1.5"]
-                [clj-http "1.0.1"]              
+                [clj-http "1.0.1"]
                 [clj-time "0.8.0"]
                 ; [figwheel "0.1.4-SNAPSHOT"]
                 [environ "1.0.0"]
@@ -54,6 +54,10 @@
                 [raven-clj "1.2.0"]
                 [markdown-clj "0.9.62"]
                 [factual/durable-queue "0.1.3"]
+
+                [org.clojure/java.jdbc "0.4.2"]
+                [honeysql "0.6.2"]
+                [org.postgresql/postgresql "9.4-1205-jdbc41"]
                 ]
 
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
@@ -74,9 +78,9 @@
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
               :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
-              :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"} 
+              :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"}
               :main {:main hsm.server :uberjar-name "hsm.jar"}
-              
+
               :dev {
                   :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                     :repl-options {:init-ns hsm.server
@@ -85,7 +89,7 @@
                     :plugins [[lein-midje "3.1.3"]
                                 [lein-figwheel "0.1.4-SNAPSHOT"]
                               ]
-                    :dependencies [[midje "1.7.0-SNAPSHOT"] 
+                    :dependencies [[midje "1.7.0-SNAPSHOT"]
                                    [org.xerial.snappy/snappy-java "1.0.5"]]
                     :figwheel {:http-server-root "public"
                               :port 3449
