@@ -16,6 +16,7 @@
     [clojure.java.jdbc :as jdbc]
     [honeysql.core :as sql]
     [honeysql.helpers :refer :all]
+    [clj-kryo.core :as kryo]
     [hsm.utils :refer :all]
     [hsm.cache :as cache]
     [hsm.system.pg :refer [pg-db]]))
@@ -41,30 +42,30 @@
         user-info (merge additional user-data)]
     (cql/insert conn :user user-info)))
 
-(defn load-user-activity
-  [db user-id])
+; (defn load-user-activity
+;   [db user-id])
 
-(defn load-user-followers
-  [db user-id]
-  (let [conn (:connection db)]
-    (cql/select conn :user_follower
-      (dbq/columns :follower_id)
-      (dbq/where [[= :user_id user-id]]))))
+; (defn load-user-followers
+;   [db user-id]
+;   (let [conn (:connection db)]
+;     (cql/select conn :user_follower
+;       (dbq/columns :follower_id)
+;       (dbq/where [[= :user_id user-id]]))))
 
-(defn load-user-following
-  [db user-id]
-  (let [conn (:connection db)]
-    (map :following_id (cql/select conn :user_following
-      (dbq/columns :following_id)
-      (dbq/where [[= :user_id user-id]])))))
+; (defn load-user-following
+;   [db user-id]
+;   (let [conn (:connection db)]
+;     (map :following_id (cql/select conn :user_following
+;       (dbq/columns :following_id)
+;       (dbq/where [[= :user_id user-id]])))))
 
-(defn get-profile
-  [db user visitor])
+; (defn get-profile
+;   [db user visitor])
 
-(defn get-profile-by-nick
-  [nick visitor]
-  (let [user nick]
-    (get-profile user)))
+; (defn get-profile-by-nick
+;   [nick visitor]
+;   (let [user nick]
+;     (get-profile user)))
 
 ;; DISCUSS
 (def Discussion {:title s/Str :post s/Str})
@@ -77,22 +78,22 @@
 
 
 
-(defn load-projects*
-  [db platform limit-by]
-  (log/info "[LIST-PROJ] Fetching " platform limit-by)
-  (let [conn (:connection db)
-        limit-by (if (> limit-by 100) 100 limit-by)]
-    (when-let [projects (cql/select conn :github_project
-                          (dbq/limit 10000) ; place a hard limit
-                           (when-not (nil? platform) (dbq/where
-                                        [[= :language platform]])))]
-      projects)))
+; (defn load-projects*
+;   [db platform limit-by]
+;   (log/info "[LIST-PROJ] Fetching " platform limit-by)
+;   (let [conn (:connection db)
+;         limit-by (if (> limit-by 100) 100 limit-by)]
+;     (when-let [projects (cql/select conn :github_project
+;                           (dbq/limit 10000) ; place a hard limit
+;                            (when-not (nil? platform) (dbq/where
+;                                         [[= :language platform]])))]
+;       projects)))
 
-(defn load-all-projects
-  [db batch-size]
-  (let [batch-size (if (> batch-size 100) 100 batch-size)
-        conn (:connection db)]
-    (cql/iterate-table conn :github_project :full_name batch-size)))
+; (defn load-all-projects
+;   [db batch-size]
+;   (let [batch-size (if (> batch-size 100) 100 batch-size)
+;         conn (:connection db)]
+;     (cql/iterate-table conn :github_project :full_name batch-size)))
 
 (defn load-all-users
   [db batch-size]
@@ -120,20 +121,20 @@
         cached-projects
         (list-top-proj** db platform limit-by))))
 
-(defn list-top-proj**
-  "Given platform/language returns top n projects.
-  TODO: DELETE THIS"
-  [db platform limit-by]
-  (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
-  (let [conn (:connection db)
-        limit-by (if (> limit-by 100) 100 limit-by)]
-    (when-let [projects (cql/select conn :github_project
-                        (dbq/limit 10000) ; place a hard limit
-                          (dbq/where [[= :language platform]]))]
-      (map
-        stringify-id
-        (take limit-by (reverse
-                          (sort-by :watchers projects)))))))
+; (defn list-top-proj**
+;   "Given platform/language returns top n projects.
+;   TODO: DELETE THIS"
+;   [db platform limit-by]
+;   (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
+;   (let [conn (:connection db)
+;         limit-by (if (> limit-by 100) 100 limit-by)]
+;     (when-let [projects (cql/select conn :github_project
+;                         (dbq/limit 10000) ; place a hard limit
+;                           (dbq/where [[= :language platform]]))]
+;       (map
+;         stringify-id
+;         (take limit-by (reverse
+;                           (sort-by :watchers projects)))))))
 
 (def list-top-proj (memo/ttl list-top-proj* :ttl/threshold 6000000 ))
 
@@ -174,6 +175,21 @@
       (dbq/limit 1)
       (dbq/where [[= :proj proj]])))))
 
+(defn load-project-extras*
+  [db proj]
+  (let [proj-extras (first (jdbc/query pg-db
+                      (-> (select :*)
+                       (from :github_project_list)
+                       (where [:= :proj proj])
+                       (limit 1)
+                       (sql/build)
+                       (sql/format :quoting :ansi))))]
+    (merge proj-extras
+      { :watchers (if-not (nil? (:watchers proj-extras)) (-> (:watchers proj-extras) (kryo/deserialize)) #{})
+        :contributors (if-not (nil? (:contributors proj-extras)) (-> (:contributors proj-extras) (kryo/deserialize)) #{})
+        :stargazers (if-not (nil? (:stargazers proj-extras)) (-> (:stargazers proj-extras) (kryo/deserialize)) #{})
+        })))
+
 (defn list-top-user
   [db platform limit-by]
   (log/warn "[TOP-USER] Fetching " platform limit-by)
@@ -186,8 +202,18 @@
 (defn load-user2
   [db user-id]
   (let [conn (:connection db)]
-      (first (cql/select conn :github_user
-        (dbq/where [[= :login user-id]])))))
+      (->
+      (jdbc/query pg-db (-> (select :*)
+                       (from :github_user)
+                       (where [:= :login user-id])
+                       (limit 1)
+                       (sql/build)
+                       (sql/format :quoting :ansi)))
+      first)
+      ; (first (cql/select conn :github_user
+      ;   (dbq/where [[= :login user-id]])))
+
+      ))
 
 (defn user-extras
   [db user-id]

@@ -131,7 +131,7 @@
         [:title (or title (format "Top %s Projects - Hackersome" platform))]
         [:meta {:name "description" :content description}]
         [:meta {:name "keywords" :content (or keywords description)}]
-        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.5/paper/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
         (include-css "/css/style.css")]
        [:body

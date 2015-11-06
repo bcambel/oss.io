@@ -1,5 +1,5 @@
 (ns hsm.controllers.project
-  (:require 
+  (:require
     [clojure.tools.logging :as log]
     [clojure.core.memoize :as memo]
     [clojure.java.io :as io]
@@ -30,9 +30,9 @@
 (defn grid-view
   [top-projects keyset]
   [:table {:class "table table-striped table-hover"}
-    [:thead 
-      [:tr 
-        (for [header keyset] 
+    [:thead
+      [:tr
+        (for [header keyset]
         [:th header])]]
     [:tbody
       (for [x top-projects]
@@ -53,7 +53,7 @@
       (for [x top-projects]
         [:tr
           [:td (get x :watchers)]
-          [:td  
+          [:td
             [:a { :href (format "/p/%s" (get x :full_name))} (get x :full_name)
             [:p {:style "color:gray"} (get x :description)]]]
         ])]])])
@@ -90,7 +90,7 @@
     (if (!nil? cached)
       cached
       (let [readme (gh/project-readme proj)]
-        (try 
+        (try
           (cache/setup redis cache-key readme)
           (catch Throwable t (log/error t)))
         readme
@@ -99,9 +99,9 @@
 (defn get-project-readme
   "Memoized Project README.
   Might take a while if Github is reached."
-  [redis proj] 
-  (memo/memo 
-    (fn[] 
+  [redis proj]
+  (memo/memo
+    (fn[]
       (get-project-readme redis proj))))
 
 (defn transform-project
@@ -111,6 +111,7 @@
       (assoc :owner (first (vec (.split (:full_name data) "/")))))))
 
 (defn update-search
+  "Refactor later to remove all this bulk op"
   [{:keys [db event-chan redis else]} request]
   (let [index-name  (:index else)
         es-conn     (:conn else)]
@@ -119,8 +120,8 @@
       (do
         (when (esi/exists? es-conn index-name)
           (esi/flush es-conn index-name :refresh true))
-        (mapv #(esd/create es-conn index-name "github_project" (transform-project %))
-          (actions/load-all-projects db 200))
+        ; (mapv #(esd/create es-conn index-name "github_project" (transform-project %))
+        ;   (actions/load-all-projects db 200))
         (json-resp {:ok 1})))))
 
 (defn transform-user
@@ -150,9 +151,9 @@
         es-conn     (:conn else)]
     (log/warn "TERML:" term)
     (let [res (esd/search es-conn index-name "github_project"
-                
+
                 :query (q/query-string :query (codec/url-encode term)))
-                ; :query  (q/filtered 
+                ; :query  (q/filtered
                 ;     :filter   (q/term :full_name (str/lower-case platform)))
 
           n (esrsp/total-hits res)
@@ -168,8 +169,8 @@
       [:h3 [:i.fa.fa-star] [:a {:href (str "/p/" id "/stargazers")}(:watchers proj)]]
       [:form {:action "/ajax/project/follow" :method "POST"}
         [:input {:type "hidden" :value (:id proj)}]
-          
-        [:button.btn.btn-primary {:type "submit"} "Love It"]]
+
+        [:button.btn.btn-primary {:type "submit"} "Follow"]]
         (when admin?
           [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])
         ]
@@ -178,16 +179,16 @@
         [:a {:href (str "/user2/" owner)} owner]
         [:span " / "]
         [:a {:href (str "/p/" id)} [:span  (:name proj)]]
-        
+
         [:a.pad10 {
             :href (str "https://github.com/" (:full_name proj))
             :title "View on Github"}
           [:i.fa.fa-github]]]
       [:a {:href (:homepage proj)}]
-      [:div.icons 
-        [:a {:href (str "/p/" id "/watchers")} 
+      [:div.icons
+        [:a {:href (str "/p/" id "/watchers")}
           [:span [:i.fa.fa-bullhorn] watcher-count]]
-        [:a {:href (str "/p/" id "/contributors")} 
+        [:a {:href (str "/p/" id "/contributors")}
           [:span [:i.fa.fa-users] contributor-count]]]
       [:span.label.label-warning (:language proj)]
       [:p.lead (:description proj)]]])
@@ -202,7 +203,7 @@
          related-projects []
          admin? false
          proj (first (actions/load-project db id))
-         proj-extras (actions/load-project-extras db id)
+         proj-extras (actions/load-project-extras* db id)
          watcher-count (count (:watchers proj-extras))
          contributor-count (count (:contributors proj-extras))
          owner (first (.split id "/"))
@@ -225,7 +226,7 @@
   (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
     (panel [:span [:i.fa.fa-users] " Contributors" ]
-      [:div.row.user-list 
+      [:div.row.user-list
         (for [x (reverse (sort-by :followers users))]
           [:div.col-lg-3.user-thumb
             (render-user x)])])))
@@ -235,7 +236,7 @@
   (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
     (panel "Watchers"
-      [:div.row.user-list 
+      [:div.row.user-list
         (for [x (reverse (sort-by :followers users))]
           [:div.col-lg-3.user-thumb
             (render-user x)])])))
@@ -258,7 +259,7 @@
 (defhtml user-list
   [users]
   [:ul (for [x (reverse (sort-by :followers users))]
-    [:li.user-thumb 
+    [:li.user-thumb
     (render-user x)])])
 
 (defn get-proj-module
@@ -278,12 +279,12 @@
   "Temporary solution till there is a proper solution.
   Somehow fetch the Python Package Projects. Same will go for Clojars."
   [{:keys [db event-chan redis]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
           proj (id-of request :project)
                 ]
-  (layout host 
-    [:div.row 
+  (layout host
+    [:div.row
       [:div.col-lg-3
         (left-menu host platform "open-source")]
       [:div.col-lg-9
@@ -293,9 +294,9 @@
   ))
 (defn get-proj
   [{:keys [db event-chan redis]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
-        
+
         id (format "%s/%s" (id-of request :user) (id-of request :project))
         force-sync (is-true (get-in request [:params :force-sync]))
         related-projects []
@@ -305,7 +306,7 @@
         (do
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
-        (let [proj-extras (actions/load-project-extras db id)
+        (let [proj-extras (actions/load-project-extras* db id)
               watcher-count (count (:watchers proj-extras))
               contributor-count (count (:contributors proj-extras))
               owner (first (.split id "/"))
@@ -322,15 +323,15 @@
                   stargazers (filter #(in? stargazers (:login %)) users)]
                   (log/warn proj)
             (html-resp
-              (views/layout {:website host :platform platform 
-                             :title (:description proj) 
+              (views/layout {:website host :platform platform
+                             :title (:description proj)
                              :description (:description proj)
                              ; replace this with a multiplication or combination
-                              :keywords (format "%s project, %s %s, %s tutorial, %s documentation, %s examples" 
-                                          (:language proj) (:language proj) (:name proj) (:name proj) 
+                              :keywords (format "%s project, %s %s, %s tutorial, %s documentation, %s examples"
+                                          (:language proj) (:language proj) (:name proj) (:name proj)
                                           (:name proj) (:name proj) )
                            }
-                [:div.row 
+                [:div.row
                   [:div.col-lg-3
                     (left-menu host platform "open-source")]
                   [:div.col-lg-9
@@ -345,7 +346,7 @@
                         (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
                           (user-list watchers))
                         (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
-                          (user-list stargazers))                 
+                          (user-list stargazers))
                         (panel "Related Projects"
                           [:ul
                             (for [x related-projects]

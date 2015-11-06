@@ -58,6 +58,8 @@
                 [org.clojure/java.jdbc "0.4.2"]
                 [honeysql "0.6.2"]
                 [org.postgresql/postgresql "9.4-1205-jdbc41"]
+                [org.clojars.runa/clj-kryo "1.5.0"]
+                [byte-streams "0.2.0"]
                 ]
 
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]

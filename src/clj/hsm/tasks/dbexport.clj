@@ -2,8 +2,13 @@
   (:require
     [hsm.conf :as conf]
     [com.stuartsierra.component :as component]
+    [clojurewerkz.cassaforte.cql  :as cql]
+    [clojure.java.jdbc :as jdbc]
     [hsm.system :as system]
+    [hsm.system.pg :refer [pg-db]]
     [hsm.schema :as schema]
+    [clj-kryo.core :as kryo]
+     [clojure.tools.logging        :as log]
     [cheshire.core :refer :all])
   (:gen-class))
 
@@ -15,12 +20,6 @@
     (spit (format output (int (/ idx 10000))) (generate-string (vec prior-queue)))
     (log/info "Written " n)
     (.clear prior-queue)))
-
-(defn check-size [n]
-  (when (> (.size prior-queue) n)
-        (insert-recs (vec prior-queue))
-        (log/info "Written " n)
-        (.clear prior-queue)))
 
 (defn sync-data
   [sys n-read n-write table field output ]
@@ -41,6 +40,7 @@
   ;   (insert-recs (map #(into {} % ) (vec (.toArray prior-queue)))))
 
 
+(map #())
 
 (defn import-data []
   (for [idx (range 0 150 10)]
@@ -50,7 +50,7 @@
   (for [idx (range 1 896)]
     (let [data (parse-string (slurp (format "hackersome_data/export_part%s.json" idx)))
           data (map #(assoc % "description" (.replace (or (:description %) "") "\u0000" "")) data)]
-      (apply (partial j/insert! pg-db :github_project) data)
+      (apply (partial jdbc/insert! pg-db :github_project) data)
       nil
       )))
 
