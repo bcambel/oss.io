@@ -51,9 +51,6 @@
     [:h3 [:a {:href (str "/user2/" id "/starred")} c-star ]" starred "]
     [:h3 [:a {:href (str "/user2/" id "/following")} c-follow ]" following "]
     [:h3 [:a {:href (str "/user2/" id "/followers")} c-followers ]" followers "]
-
-    (when admin?
-      [:a.btn.btn-danger.btn-sm {:href (format "/user2/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])
     ))
 
 (defhtml render-repos

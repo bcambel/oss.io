@@ -1,9 +1,11 @@
 (ns hsm.integration.ghub
     "Fetch repository information from github"
-    (:require 
+    (:require
       [clojure.string                 :as s]
       [clojure.tools.logging          :as log]
-      [tentacles.search               :as gh-search]
+      [clojure.java.jdbc              :as jdbc]
+      [honeysql.core                  :as sql]
+      [honeysql.helpers               :refer :all]
       [clojurewerkz.cassaforte.cql    :as cql]
       [clojurewerkz.cassaforte.query  :as dbq]
       [qbits.hayt.dsl.statement       :as hs]
@@ -12,13 +14,16 @@
       [environ.core                   :refer [env]]
       [hsm.utils                      :refer :all]
       [hsm.conf                       :as conf]
+      [hsm.system.pg                  :refer [pg-db]]
       )
     (:use [slingshot.slingshot :only [throw+ try+]]
       [clojure.data :only [diff]]))
 
 (def ghub-root "https://api.github.com")
 
-(def api-params (format "client_id=%s&client_secret=%s" (env :client-id) (env :client-secret)))
+(def api-params (format "client_id=%s&client_secret=%s"
+                  (env :client-id)
+                  (env :client-secret)))
 
 (def ghub-url*
   (str ghub-root "/search/repositories"
@@ -30,10 +35,14 @@
 (def header-settings
   {:socket-timeout 10000 :conn-timeout 10000})
 
-(def ghub-proj-fields [:id :name :fork :watchers :open_issues :language :description :full_name :homepage])
+(def base-user-fields ["id" "login" "type"])
+
+(def ghub-proj-fields
+  [:id :name :fork :watchers :open_issues
+   :language :description :full_name :homepage])
 
 (def user-fields
-  [:id :login :type :name :company :blog 
+  [:id :login :type :name :company :blog
   :location :email :public_repos :public_gists
   :followers :following :avatar_url] )
 
@@ -43,21 +52,21 @@
 
 (defn get-url
   [url & options]
-  (let [{:keys [header safe care conf] :or {header header-settings safe false care true conf (get-config)}} options]
+  (let [{:keys [header safe care conf]
+         :or {header header-settings safe false care true conf (get-config)}} options]
     (try+
-      (client/get (format "%s&client_id=%s&client_secret=%s" url (:github-client conf) (:github-secret conf)) 
+      (client/get (format "%s&client_id=%s&client_secret=%s" url
+                    (:github-client conf) (:github-secret conf))
         header)
       (catch [:status 403] {:keys [request-time headers body]}
         (log/warn "403" request-time headers))
       (catch [:status 404] {:keys [request-time headers body]}
         (log/warn "NOT FOUND" url request-time headers body))
       (catch Object _
-        (when care 
+        (when care
           (log/error (:throwable &throw-context) "Unexpected Error"))
         (when-not safe
           (throw+))))))
-
-(def base-user-fields ["id" "login" "type"])
 
 (defn user-data
   [m]
@@ -67,19 +76,30 @@
 
 (defn find-existing-users
   [conn user-list]
-  (mapv :login (cql/select conn :github_user
-    (dbq/columns :login)
-    (dbq/where [[:in :login user-list]]))))
+  ; (mapv :login (cql/select conn :github_user
+  ;   (dbq/columns :login)
+  ;   (dbq/where [[:in :login user-list]])
+  ;   )
+  ; )
+  (map :login (jdbc/query pg-db
+    (->(select :login)
+       (from :github_user)
+       (where [:in :login user-list])
+       (limit 1e6)
+       (sql/build)
+       (sql/format :quoting :ansi))))
+  )
 
 (defn find-users
-  "Given all the projects which contains **`owner`** field, 
+  "Given all the projects which contains **`owner`** field,
   extract those and construct a hash-map by login id."
   [conn coll]
-  (let [users (apply merge 
+  (let [users (apply merge
                 (map #(hash-map (get % "login") %) coll))
         user-list (keys users)
         existing-users (find-existing-users conn user-list)
-        [_ not-in-db both-exists] (diff (set existing-users) (set user-list))]
+        [_ not-in-db both-exists] (diff (set existing-users)
+                                        (set user-list))]
     ; (log/warn "already exists" both-exists)
     (when-not (empty? not-in-db)
       (log/warn not-in-db))
@@ -87,24 +107,32 @@
 
 (defn find-existing-projects
   [conn project-list]
-    (let [projects (mapv :full_name 
-                    (cql/select conn :github_project
-                      (dbq/columns :full_name)
-                      (dbq/where [[:in :full_name project-list]])))]
-      (log/warn "Found projects: %d" (count projects))
+    (let [projects (map :full_name
+                      (jdbc/query pg-db
+                      (->(select :full_name)
+                         (from :github_project)
+                         (where [:in :full_name project-list])
+                         (limit 1e6)
+                         (sql/build)
+                         (sql/format :quoting :ansi))))]
+      (log/warn (format "Found projects: %d" (count projects)))
       projects))
 
 (defn insert-users
   [conn coll]
-  (when-let [users (mapv #(assoc % :full_profile false) 
+  (when-let [users (mapv #(assoc % :full_profile false)
                       (find-users conn coll))]
     (when-not (empty? users)
-      (cql/insert-batch conn :github_user users))))
+      (log/info "INSERT USERS" users)
+      (apply (partial jdbc/insert! pg-db :github_user) users)
+      ; (cql/insert-batch conn :github_user users)
+
+      )))
 
 (defn insert-projects
   [conn coll]
-  (let [projects (doall (map (fn[item] 
-                          (select-keys item 
+  (let [projects (doall (map (fn[item]
+                          (select-keys item
                           (map name ghub-proj-fields))) coll))
         project-ids (mapv #(get % "full_name") projects)
         existing-projects (or (find-existing-projects conn project-ids) [])]
@@ -114,43 +142,44 @@
       (let [missing-projects (filter #(in? not-in-db (get % "full_name")) projects)]
         (when (> (count missing-projects) 0)
           (log/info (format "Inserting %d projects" (count missing-projects)))
-          (cql/insert-batch conn :github_project missing-projects))))))
+          ; (cql/insert-batch conn :github_project missing-projects)
+          (apply (partial jdbc/insert! pg-db :github_project) missing-projects))))))
 
 (defn insert-records
   [conn coll]
-  (insert-projects conn coll) 
+  (insert-projects conn coll)
   (insert-users conn (map user-data coll)))
 
 (defn find-next-url
   "Figure out the next url to call
-  <https://api.github.com/search/repositories?q=...&page=2>; 
+  <https://api.github.com/search/repositories?q=...&page=2>;
   rel=\"next\", <https://api.github.com/search/repositories?q=+...&page=34>; rel=\"last\"
   "
   [stupid-header]
   (when (!nil? stupid-header)
-    (try 
+    (try
       (let [[next-s last-s] (.split stupid-header ",")
             next-page (vec (.split next-s ";"))
             is-next (.contains (last next-page) "next")]
-        (when is-next 
+        (when is-next
           (s/replace (subs (first next-page) 1) ">" "")))
       (catch Throwable t
-        (log/warn "FUCK" t stupid-header)))))
+        (log/warn t stupid-header)))))
 
 (defn fetch-url
   [url]
-  (try 
+  (try
     (let [response (get-url url :header header-settings)]
         (if (nil? response)
           {:success false :next-url nil :data nil :reason "Empty Response"}
-          (do 
+          (do
             (let [repos (parse-string (:body response))
-                  next-url (find-next-url 
+                  next-url (find-next-url
                       (-> response :headers (get "link")))]
               (log/debug (:headers response))
               {:success true :next-url next-url :data repos}))))
     (catch Throwable t
-      (do 
+      (do
         (throw+ t)
         {:success false :reason (.getMessage t) :repos [] :next-url nil }))))
 
@@ -158,7 +187,7 @@
   [db language max-iter]
   (let [max-iter (or max-iter 10000)
         conn (:connection db)]
-    (loop [url (format ghub-url* language) 
+    (loop [url (format ghub-url* language)
            looped 1]
       (log/warn (format "Loop %d. %s" looped url))
       (let [{:keys [success next-url data]} (fetch-url url)
@@ -175,10 +204,22 @@
                      ghub-root user-login (env :client-id) (env :client-secret))
         response (get-url url :header header-settings)]
       (when (!nil? response)
-        (let [user-data (parse-string (:body response))]
-          (when-let [user-info (select-keys user-data (map name user-fields))]
+        (let [user-data (parse-string (:body response) true)]
+          (when-let [user-info (select-keys user-data user-fields)]
             (log/warn (format "%s -> %s" user-login user-info))
             user-info)))))
+
+(defn expand-project
+  [proj]
+  (let [url (format "%s/repos/%s?"
+                     ghub-root proj (env :client-id) (env :client-secret))
+        response (get-url url :header header-settings)]
+       (log/info (:headers response))
+      (when (!nil? response)
+        (let [proj-data (parse-string (:body response) true)]
+          (when-let [proj-info (select-keys proj-data ghub-proj-fields)]
+            (log/warn (format "%s -> %s" proj proj-info))
+            proj-info)))))
 
 (defn user-starred
   [db user-login max-iter]
@@ -192,9 +233,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             repos data]
         (when-not (empty? repos)
-          (cql/update conn :github_user_list
-            {:starred [+ (set (mapv #(get % "full_name") repos))]}
-            (dbq/where [[:= :user user-login]]))
+          ;; INSERT
+          ; (cql/update conn :github_user_list
+          ;   {:starred [+ (set (mapv #(get % "full_name") repos))]}
+          ;   (dbq/where [[:= :user user-login]]))
+
           (insert-records conn repos)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -211,9 +254,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             repos data]
         (when-not (empty? repos)
-          (cql/update conn :github_user_list
-            {:repos [+ (set (mapv #(get % "full_name") repos))]}
-            (dbq/where [[:= :user user-login]]))
+          ;; INSERT
+          ; (cql/update conn :github_user_list
+          ;   {:repos [+ (set (mapv #(get % "full_name") repos))]}
+          ;   (dbq/where [[:= :user user-login]]))
+
           (insert-records conn repos)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -221,7 +266,7 @@
 (defn project-stargazers
   [db project-name max-iter]
   (let [conn (:connection db)
-        max-iter (or max-iter 10000)
+        max-iter (or max-iter 1e3)
         start-url (format "%s/repos/%s/stargazers?per_page=100"
                       ghub-root project-name (env :client-id) (env :client-secret))]
     (loop [url start-url
@@ -230,9 +275,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_project_list
-            {:stargazers [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :proj project-name]]))
+          ;; INSERT
+          ; (cql/update conn :github_project_list
+          ;   {:stargazers [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :proj project-name]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -249,9 +296,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_project_list
-            {:watchers [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :proj project-name]]))
+          ;; INSERT
+          ; (cql/update conn :github_project_list
+          ;   {:watchers [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :proj project-name]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -268,9 +317,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_project_list
-            {:contributors [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :proj project-name]]))
+          ;; INSERT
+          ; (cql/update conn :github_project_list
+          ;   {:contributors [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :proj project-name]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -287,9 +338,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_org_members
-            {:members [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :org org]]))
+          ;; INSERT
+          ; (cql/update conn :github_org_members
+          ;   {:members [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :org org]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
@@ -298,7 +351,7 @@
   [db user-login max-iter]
   (let [conn (:connection db)
         max-iter (or max-iter 10000)
-        start-url (format "%s/users/%s/followers?per_page=100" 
+        start-url (format "%s/users/%s/followers?per_page=100"
                       ghub-root user-login (env :client-id) (env :client-secret))]
     (loop [url start-url
            looped 1]
@@ -306,16 +359,18 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_user_list
-            {:followers [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :user user-login]]))
+          ;; INSERT
+          ; (cql/update conn :github_user_list
+          ;   {:followers [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :user user-login]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
 (defn project-readme
   [proj]
-  (let [url (format "%s/repos/%s/readme?" 
+  (let [url (format "%s/repos/%s/readme?"
                       ghub-root proj (env :client-id) (env :client-secret))
         req-header (merge {:accept "application/vnd.github.VERSION.html"} header-settings)]
     (when-let [resp (get-url url :header req-header)]
@@ -334,21 +389,24 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          (cql/update conn :github_user_list
-            {:following [+ (set (mapv #(get % "login") users))]}
-            (dbq/where [[:= :user user-login]]))
+          ;; INSERT
+          ; (cql/update conn :github_user_list
+          ;   {:following [+ (set (mapv #(get % "login") users))]}
+          ;   (dbq/where [[:= :user user-login]]))
+
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
             (recur next-url (inc looped))))))))
 
 (defn enhance-user
   [db user-login max-iter]
-  (doall 
+  (doall
     (pmap #(% db user-login max-iter)
       [user-following user-followers user-starred user-repos])))
 
 (defn enhance-proj
   [db proj max-iter]
+  (update-project db proj)
   (doall
     (pmap #(% db proj max-iter)
       [project-watchers project-stargazers project-contrib])))
@@ -359,25 +417,44 @@
     (-> user-data
       (assoc :image (:avatar_url user-data))
       (assoc :full_profile true)
-      (dissoc :avatar_url)
-      (dissoc :login))))
+      (dissoc :avatar_url))))
 
 (defn user-list
-  [conn n] 
-  (mapv :login
-    (cql/select conn :github_user 
-      (dbq/columns :login)
-      (dbq/limit n) 
-      (dbq/where [[:= :full_profile false]]))))
+  [conn n]
+  ; (mapv :login
+  ;   (cql/select conn :github_user
+  ;     (dbq/columns :login)
+  ;     (dbq/limit n)
+  ;     (dbq/where [[:= :full_profile false]])))
+  )
 
-(defn find-n-update
-  [db x conf]
+(defn find-n-update-user
+  [db x enhance?]
     (when-let [user (find-user x)]
       (log/warn "USER:" user)
-      (cql/update (:connection db) :github_user
-        user 
-        (dbq/where [[= :login x]]))
-      (enhance-user db x 1000)))
+      (jdbc/execute! pg-db
+          (-> (update :github_user)
+              (sset user)
+              (where [:= :login x])
+              (sql/format :quoting :ansi)))
+      (when enhance?
+        (enhance-user db x 1000)
+      )))
+
+(defn update-project
+  [db proj]
+  (when-let [projx (expand-project proj)]
+    (let [update-query (-> (update :github_project)
+                            (sset (dissoc projx :full_name))
+                            (where [:= :full_name proj])
+                            (sql/build)
+                            (sql/format :quoting :ansi)
+                           )]
+    (log/info projx)
+    (log/warn (first update-query))
+    (jdbc/execute! pg-db update-query)
+    )
+  ))
 
 (defn sync-users
   [db n]
@@ -386,7 +463,7 @@
     (loop [users (user-list conn n)
            looped 1]
       (log/warn (format "Loop: %d Found %d users" looped (count users)))
-      (doall 
-        (map #(find-n-update db %) users ))
+      (doall
+        (map #(find-n-update-user db % true) users ))
       (Thread/sleep 5000)
       (recur (user-list conn n) (inc looped)))))

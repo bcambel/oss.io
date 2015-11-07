@@ -5,11 +5,12 @@
         [clojurewerkz.cassaforte.cql  :as cql]
         [clojure.tools.logging        :as log]
         [hsm.dev                      :refer :all]
-        [hsm.controllers.user         :as c.u]       
+        [hsm.controllers.user         :as c.u]
         [hsm.controllers.project      :as c.pr]
         [hsm.controllers.main         :as c.m]
         [hsm.integration.ghub         :as ghub]
-        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler wrap-nocache wrap-log redirect]]
+        [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
+                                              wrap-nocache wrap-log redirect]]
         [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
@@ -64,31 +65,31 @@
         (GET  "/user2/:id/starred"                request (c.u/user2-starred specs request))
         (GET  "/user2/:id/contrib"                request (c.u/user2-contrib specs request))
         (GET  "/user2/:id/activity"               request (c.u/user2-activity specs request))
-       
+
         (GET  "/os/:user/:project"                request (c.pr/get-proj specs request))
         (GET  "/open-source/:user/:project"       request (c.pr/get-proj specs request))
         (GET  "/open-source"                      request (redirect "/open-source/"))
         (GET  "/open-source/"                     request (c.pr/list-top-proj specs request))
-        
+
         (GET  "/p/:user/:project"                 request (c.pr/get-proj specs request))
         (GET  "/p/:user/:project/:mod"            request (c.pr/get-proj-module specs request))
-        
+
         (GET  "/python-packages/"                 request (c.pr/get-py-proj specs request))
         (GET  "/python-packages/:project"         request (c.pr/get-py-proj specs request))
         (GET  "/python-packages/:project/"        request (c.pr/get-py-proj specs request))
-        (GET  "/top-python-contributors-developers" 
+        (GET  "/top-python-contributors-developers"
                                                   request (c.pr/get-py-contribs specs request))
 
         (GET  "/top-projects/"                    request (c.pr/list-top-proj specs request))
         (GET  "/top-projects"                     request (c.pr/list-top-proj specs request))
         (GET  "/top-:platform-projects/"          request (c.pr/list-top-proj specs request))
-        
+
         (GET  "/os/"                              request (c.pr/list-top-proj specs request))
         (GET  "/os"                               request (c.pr/list-top-proj specs request))
 
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
-        
+
         (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
         (GET  "/tutorial/"                        request (c.m/all-tutorial specs request))
         (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))
@@ -107,7 +108,7 @@
         (api routes)))
 
     (def dsn (:sentry-dsn (:conf conf)))
-    
+
     (def app
       (-> http-handler
           (wrap-exception-handler dsn)
@@ -120,7 +121,7 @@
     ; (if is-dev? (start-figwheel))
     (let [server (run-jetty app {:port (Integer. port)
                             :join? (not is-dev?)})]
-      
+
       ; (capture (:sentry-dsn conf) "Starting up..")
 
       (assoc this :server server)))

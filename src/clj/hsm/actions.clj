@@ -21,9 +21,6 @@
     [hsm.cache :as cache]
     [hsm.system.pg :refer [pg-db]]))
 
-(declare list-top-proj**)
-(declare load-projects-by-int-id)
-
 (defn load-user
   [db user-id]
   (let [conn (:connection db)]
@@ -76,67 +73,11 @@
   [dict]
   (assoc dict :id (str (:id dict))))
 
-
-
-; (defn load-projects*
-;   [db platform limit-by]
-;   (log/info "[LIST-PROJ] Fetching " platform limit-by)
-;   (let [conn (:connection db)
-;         limit-by (if (> limit-by 100) 100 limit-by)]
-;     (when-let [projects (cql/select conn :github_project
-;                           (dbq/limit 10000) ; place a hard limit
-;                            (when-not (nil? platform) (dbq/where
-;                                         [[= :language platform]])))]
-;       projects)))
-
-; (defn load-all-projects
-;   [db batch-size]
-;   (let [batch-size (if (> batch-size 100) 100 batch-size)
-;         conn (:connection db)]
-;     (cql/iterate-table conn :github_project :full_name batch-size)))
-
 (defn load-all-users
   [db batch-size]
   (let [batch-size (if (> batch-size 1000) 1000 batch-size)
         conn (:connection db)]
     (cql/iterate-table conn :github_user :login batch-size)))
-
-(defn ^:private fetch-top-proj
-  [db redis language size]
-  (log/warn "Start REDIS TOP PROJ Fetch" language)
-  (let [projects (cache/ssort-fetch redis (str "lang-" language) 0 (- size 1))
-        project-ids (mapv #(Integer/parseInt (first (.split % "-"))) projects)]
-    (log/warn project-ids)
-    (let [found-projects (load-projects-by-int-id db project-ids)]
-      ; (log/warn found-projects)
-      (log/warn (count found-projects))
-      found-projects)))
-
-(defn list-top-proj*
-  "List top projects;
-  Results will be fetched from redis"
-  [db redis platform limit-by]
-  (let [cached-projects (fetch-top-proj db redis platform limit-by)]
-    (if (!!nil? cached-projects)
-        cached-projects
-        (list-top-proj** db platform limit-by))))
-
-; (defn list-top-proj**
-;   "Given platform/language returns top n projects.
-;   TODO: DELETE THIS"
-;   [db platform limit-by]
-;   (log/info "[LIST-TOP-PROJ] Fetching " platform limit-by)
-;   (let [conn (:connection db)
-;         limit-by (if (> limit-by 100) 100 limit-by)]
-;     (when-let [projects (cql/select conn :github_project
-;                         (dbq/limit 10000) ; place a hard limit
-;                           (dbq/where [[= :language platform]]))]
-;       (map
-;         stringify-id
-;         (take limit-by (reverse
-;                           (sort-by :watchers projects)))))))
-
-(def list-top-proj (memo/ttl list-top-proj* :ttl/threshold 6000000 ))
 
 (defn load-project
   [db proj]
@@ -146,27 +87,18 @@
                        (where [:= :full_name proj])
                        (limit 1)
                        (sql/build)
-                       (sql/format :quoting :ansi)))
-    ; (cql/select conn :github_project
-    ;   (dbq/limit 1)
-    ;   (dbq/where [[= :full_name proj]]))
-    ))
+                       (sql/format :quoting :ansi)))))
 
 (defn load-projects-by-id
   [db proj-list]
   (let [conn (:connection db)]
-    (cql/select conn :github_project
-      (dbq/limit 100)
-      (dbq/where [[:in :full_name proj-list]]))))
-
-(defn load-projects-by-int-id
-  [db proj-list]
-  (let [conn (:connection db)]
-    ;; FIX THIS SHIT!@!@!@!
-     (mapcat #(cql/select conn :github_project
-            (dbq/limit 1000)
-            (dbq/where [[:= :id %]]))
-      proj-list)))
+     (jdbc/query pg-db
+      (-> (select :full_name)
+         (from :github_project)
+         (where [:in :full_name proj-list])
+         (limit 1e3)
+         (sql/build)
+         (sql/format :quoting :ansi)))))
 
 (defn load-project-extras
   [db proj]

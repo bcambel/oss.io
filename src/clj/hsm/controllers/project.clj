@@ -60,7 +60,8 @@
 
 (defn list-top-proj
   [{:keys [db event-chan redis else]} request]
-  (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
+  (let [{:keys [host id body json? user platform
+                req-id limit-by url hosted-pl]} (common-of request)
         view         (get-in request [:params :view])
         view-fn     (if (= view "grid") grid-view list-view)]
     (log/info req-id platform hosted-pl host url)
