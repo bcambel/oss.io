@@ -19,3 +19,4 @@ app.ini
 *.class
 *.py[oc]
 .hackersome_data
+.hackersome-data

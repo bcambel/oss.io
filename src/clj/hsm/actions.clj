@@ -185,9 +185,15 @@
                        (sql/build)
                        (sql/format :quoting :ansi))))]
     (merge proj-extras
-      { :watchers (if-not (nil? (:watchers proj-extras)) (-> (:watchers proj-extras) (kryo/deserialize)) #{})
-        :contributors (if-not (nil? (:contributors proj-extras)) (-> (:contributors proj-extras) (kryo/deserialize)) #{})
-        :stargazers (if-not (nil? (:stargazers proj-extras)) (-> (:stargazers proj-extras) (kryo/deserialize)) #{})
+      { :watchers (if-not (nil? (:watchers proj-extras))
+                      (-> (:watchers proj-extras) (kryo/deserialize))
+                        #{})
+        :contributors (if-not (nil? (:contributors proj-extras))
+                        (-> (:contributors proj-extras) (kryo/deserialize))
+                        #{})
+        :stargazers (if-not (nil? (:stargazers proj-extras))
+                      (-> (:stargazers proj-extras) (kryo/deserialize))
+                      #{})
         })))
 
 (defn list-top-user
@@ -217,9 +223,36 @@
 
 (defn user-extras
   [db user-id]
-  (let [conn (:connection db)]
-      (first (cql/select conn :github_user_list
-        (dbq/where [[= :user user-id]])))))
+  (let [user-extras (first (jdbc/query pg-db
+                      (-> (select :*)
+                       (from :github_user_list)
+                       (where [:= :login user-id])
+                       (limit 1)
+                       (sql/build)
+                       (sql/format :quoting :ansi))))]
+      ; (first (cql/select conn :github_user_list
+      ;   (dbq/where [[= :user user-id]])))
+
+
+      (merge user-extras
+      { :stargazers (if-not (nil? (:stargazers user-extras))
+                      (-> (:stargazers user-extras) (kryo/deserialize))
+                        #{})
+        :followers (if-not (nil? (:followers user-extras))
+                        (-> (:followers user-extras) (kryo/deserialize))
+                        #{})
+        :following (if-not (nil? (:following user-extras))
+                      (-> (:following user-extras) (kryo/deserialize))
+                      #{})
+        :starred (if-not (nil? (:starred user-extras))
+                      (-> (:starred user-extras) (kryo/deserialize))
+                      #{})
+
+        :repos (if-not (nil? (:repos user-extras))
+                      (-> (:repos user-extras) (kryo/deserialize))
+                      #{})
+        })
+      ))
 
 (defn top-users-in
   [users limit-by]

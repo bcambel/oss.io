@@ -82,7 +82,7 @@
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"}
               :main {:main hsm.server :uberjar-name "hsm.jar"}
-
+              :dbsync {:main hsm.tasks.dbexport :uberjar-name "hsm.db.export.jar"}
               :dev {
                   :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                     :repl-options {:init-ns hsm.server
