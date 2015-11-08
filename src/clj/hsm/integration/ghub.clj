@@ -15,6 +15,7 @@
       [hsm.utils                      :refer :all]
       [hsm.conf                       :as conf]
       [hsm.system.pg                  :refer [pg-db]]
+      [hsm.actions                    :as actions]
       )
     (:use [slingshot.slingshot :only [throw+ try+]]
       [clojure.data :only [diff]]))
@@ -35,7 +36,7 @@
 (def header-settings
   {:socket-timeout 10000 :conn-timeout 10000})
 
-(def base-user-fields ["id" "login" "type"])
+(def base-user-fields [:id :login :type])
 
 (def ghub-proj-fields
   [:id :name :fork :watchers :open_issues
@@ -53,7 +54,8 @@
 (defn get-url
   [url & options]
   (let [{:keys [header safe care conf]
-         :or {header header-settings safe false care true conf (get-config)}} options]
+         :or {header header-settings safe false
+              care true conf (get-config)}} options]
     (try+
       (client/get (format "%s&client_id=%s&client_secret=%s" url
                     (:github-client conf) (:github-secret conf))
@@ -71,7 +73,7 @@
 (defn user-data
   [m]
   (assoc
-    (select-keys (get m "owner") base-user-fields)
+    (select-keys (get m :owner) base-user-fields)
     :full_profile false))
 
 (defn find-existing-users
@@ -95,7 +97,7 @@
   extract those and construct a hash-map by login id."
   [conn coll]
   (let [users (apply merge
-                (map #(hash-map (get % "login") %) coll))
+                (map #(hash-map (get % :login) %) coll))
         user-list (keys users)
         existing-users (find-existing-users conn user-list)
         [_ not-in-db both-exists] (diff (set existing-users)
@@ -133,13 +135,13 @@
   [conn coll]
   (let [projects (doall (map (fn[item]
                           (select-keys item
-                          (map name ghub-proj-fields))) coll))
-        project-ids (mapv #(get % "full_name") projects)
+                           ghub-proj-fields)) coll))
+        project-ids (mapv #(get % :full_name) projects)
         existing-projects (or (find-existing-projects conn project-ids) [])]
         ; (log/warn "EXISTING" existing-projects project-ids)
     (let [[not-in-db _ both-exists] (diff (set project-ids) (set existing-projects))]
       (log/warn "NOT-DB" not-in-db)
-      (let [missing-projects (filter #(in? not-in-db (get % "full_name")) projects)]
+      (let [missing-projects (filter #(in? not-in-db (get % :full_name)) projects)]
         (when (> (count missing-projects) 0)
           (log/info (format "Inserting %d projects" (count missing-projects)))
           ; (cql/insert-batch conn :github_project missing-projects)
@@ -173,9 +175,9 @@
         (if (nil? response)
           {:success false :next-url nil :data nil :reason "Empty Response"}
           (do
-            (let [repos (parse-string (:body response))
+            (let [repos (parse-string (:body response) true)
                   next-url (find-next-url
-                      (-> response :headers (get "link")))]
+                      (-> response :headers :link))]
               (log/debug (:headers response))
               {:success true :next-url next-url :data repos}))))
     (catch Throwable t
@@ -191,7 +193,7 @@
            looped 1]
       (log/warn (format "Loop %d. %s" looped url))
       (let [{:keys [success next-url data]} (fetch-url url)
-            repos (get data "items")]
+            repos (get data :items)]
         (insert-records conn repos)
         (when (and next-url (< looped max-iter))
           (recur next-url (inc looped)))))
@@ -237,6 +239,11 @@
           ; (cql/update conn :github_user_list
           ;   {:starred [+ (set (mapv #(get % "full_name") repos))]}
           ;   (dbq/where [[:= :user user-login]]))
+          (let [user-extra (actions/user-extras nil user-login :starred)
+              new-repos (set (map :full_name repos))
+              all-repos (set (concat (or (:starred user-extra) #{}) new-repos))]
+            (actions/update-table-kryo-field :github_user_list :login user-login
+                :starred all-repos))
 
           (insert-records conn repos)
           (when (and next-url (< looped max-iter))
@@ -258,6 +265,12 @@
           ; (cql/update conn :github_user_list
           ;   {:repos [+ (set (mapv #(get % "full_name") repos))]}
           ;   (dbq/where [[:= :user user-login]]))
+          (let [user-extra (actions/user-extras nil user-login :repos)
+              new-repos (set (map :full_name repos))
+              all-repos (set (concat (or (:repos user-extra) #{}) new-repos))]
+            (actions/update-table-kryo-field :github_user_list :login user-login
+                :repos all-repos))
+
 
           (insert-records conn repos)
           (when (and next-url (< looped max-iter))
@@ -275,10 +288,11 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          ;; INSERT
-          ; (cql/update conn :github_project_list
-          ;   {:stargazers [+ (set (mapv #(get % "login") users))]}
-          ;   (dbq/where [[:= :proj project-name]]))
+         (let [proj-extra (actions/load-project-extras* nil project-name :stargazers)
+              new-users (set (map :login users))
+              all-stargazers (set (concat (or (:stargazers proj-extra) #{}) new-users))]
+          (actions/update-table-kryo-field :github_project_list :proj project-name
+                :stargazers all-stargazers))
 
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -290,6 +304,7 @@
         max-iter (or max-iter 10000)
         start-url (format "%s/repos/%s/subscribers?per_page=100"
                       ghub-root project-name (env :client-id) (env :client-secret))]
+    (actions/ensure-table-extras :github_project_list :proj project-name)
     (loop [url start-url
            looped 1]
       (log/warn (format "[PROJSTARRED]Loop %d. %s" looped url))
@@ -297,9 +312,11 @@
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
           ;; INSERT
-          ; (cql/update conn :github_project_list
-          ;   {:watchers [+ (set (mapv #(get % "login") users))]}
-          ;   (dbq/where [[:= :proj project-name]]))
+          (let [proj-extra (actions/load-project-extras* nil project-name :watchers)
+                new-users (set (map :login users))
+                all-watchers (set (concat (or (:watchers proj-extra) #{}) new-users))]
+          (actions/update-table-kryo-field :github_project_list :proj project-name
+                :watchers all-watchers))
 
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -317,10 +334,12 @@
       (let [{:keys [success next-url data]} (fetch-url url)
             users (map #(select-keys % base-user-fields) data)]
         (when-not (empty? users)
-          ;; INSERT
-          ; (cql/update conn :github_project_list
-          ;   {:contributors [+ (set (mapv #(get % "login") users))]}
-          ;   (dbq/where [[:= :proj project-name]]))
+
+          (let [proj-extra (actions/load-project-extras* nil project-name :contributors)
+              new-users (set (map :login users))
+              all-contributors (set (concat (or (:contributors proj-extra) #{}) new-users))]
+            (actions/update-table-kryo-field :github_project_list :proj project-name
+                  :contributors all-contributors))
 
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -363,6 +382,11 @@
           ; (cql/update conn :github_user_list
           ;   {:followers [+ (set (mapv #(get % "login") users))]}
           ;   (dbq/where [[:= :user user-login]]))
+          (let [user-extra (actions/user-extras nil user-login :followers)
+              new-users (set (map :login users))
+              all-users (set (concat (or (:followers user-extra) #{}) new-users))]
+            (actions/update-table-kryo-field :github_user_list :login user-login
+                :followers all-users))
 
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -393,6 +417,11 @@
           ; (cql/update conn :github_user_list
           ;   {:following [+ (set (mapv #(get % "login") users))]}
           ;   (dbq/where [[:= :user user-login]]))
+          (let [user-extra (actions/user-extras nil user-login :following)
+              new-users (set (map :login users))
+              all-users (set (concat (or (:following user-extra) #{}) new-users))]
+            (actions/update-table-kryo-field :github_user_list :login user-login
+                :following all-users))
 
           (insert-users conn users)
           (when (and next-url (< looped max-iter))
@@ -403,6 +432,18 @@
   (doall
     (pmap #(% db user-login max-iter)
       [user-following user-followers user-starred user-repos])))
+
+(defn update-project
+  [db proj]
+  (when-let [projx (expand-project proj)]
+    (let [update-query (-> (update :github_project)
+                            (sset (dissoc projx :full_name))
+                            (where [:= :full_name proj])
+                            (sql/build)
+                            (sql/format :quoting :ansi))]
+    (log/info projx)
+    (log/warn (first update-query))
+    (jdbc/execute! pg-db update-query))))
 
 (defn enhance-proj
   [db proj max-iter]
@@ -441,20 +482,7 @@
         (enhance-user db x 1000)
       )))
 
-(defn update-project
-  [db proj]
-  (when-let [projx (expand-project proj)]
-    (let [update-query (-> (update :github_project)
-                            (sset (dissoc projx :full_name))
-                            (where [:= :full_name proj])
-                            (sql/build)
-                            (sql/format :quoting :ansi)
-                           )]
-    (log/info projx)
-    (log/warn (first update-query))
-    (jdbc/execute! pg-db update-query)
-    )
-  ))
+
 
 (defn sync-users
   [db n]

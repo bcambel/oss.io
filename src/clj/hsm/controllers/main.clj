@@ -1,5 +1,5 @@
 (ns hsm.controllers.main
-  (:require 
+  (:require
     [clojure.tools.logging        :as log]
     [clojure.string :as str]
     [hiccup.def                   :refer [defhtml]]
@@ -12,36 +12,40 @@
     [hsm.views                    :refer :all]
     [hsm.utils                    :refer [host-of id-of cutoff pl->lang common-of]]
     [hsm.conf                     :refer [languages]]
-    [hsm.actions                  :refer [list-top-proj list-top-user top-projects-es]]))
+    [hsm.actions                  :refer [top-projects-es]]))
 
 (defn homepage
   [{:keys [db event-chan redis else]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)]
-    (html-resp 
-      (layout {:website host :title (format "Community for %s developers" platform) :keywords "Developer Community, Top Projects," }
+    (html-resp
+      (layout {:website host :title (format "Community for %s developers" platform)
+                :keywords "Developer Community, Top Projects," }
         [:div.row
           [:div.col-lg-2 ]
           [:div.col-lg-10
             [:div.jumbotron
               [:h1 "Community for " platform " developers"]
               [:hr]
-              [:p "Currently under high development. We will keep you updated if you " [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
+              [:p "Currently under high development. We will keep you updated if you "
+                [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
               [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe free"]
-              [:h2 "Pssst, also check out these" 
+              [:h2 "Pssst, also check out these"
                 [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"] " or "
                 [:a.green {:href "/users?utm_source=main_page_link"} " Top Users"]
                 ]
               [:hr]
-              [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :large }]
+              [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers"
+                                        :data-show-count true :data-size :large }]
         ]]]))))
 
 (defn about
   [{:keys [db event-chan redis else]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)]
-    (html-resp 
-      (layout {:website host :title (format "Community for %s developers" platform) :keywords "Developer Community, Top Projects," }
+    (html-resp
+      (layout {:website host :title (format "Community for %s developers" platform)
+               :keywords "Developer Community, Top Projects," }
         [:div.row
           [:div.col-lg-2 ]
           [:div.col-lg-10
@@ -52,7 +56,8 @@
               [:hr]
               [:h2 "Pssst, also check out these" [:a {:href "/open-source/?utm_source=about_page_link"} " Top Projects"]]
               [:hr]
-              [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :large }]
+              [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers"
+                                          :data-show-count true :data-size :large }]
         ]]]))))
 
 
@@ -60,14 +65,14 @@
   [{:keys [db event-chan redis else]} request]
   (let [host (host-of request)
         pl   (pl->lang (id-of request :platform))
-        top-members (list-top-user db pl 5)
+        top-members []
         top-projects (top-projects-es else pl 100)]
-    (html-resp 
+    (html-resp
       (layout {:website host
               :title (format "Top %s Project index" pl)
               :description (format "Top %s Project index, %s discussions, %s users" pl pl pl)
               :platform pl}
-        [:div 
+        [:div
           [:h1 (str "Welcome to " pl)]
           [:div.row
             [:div.col-lg-4
@@ -79,7 +84,7 @@
               (panel [:a {:href (format "/%s/top-projects" pl)} "Top Projects"]
                 [:ul {:style "list-style-type:none;padding-left:1px;" }
                   (for [x top-projects]
-                    [:li 
+                    [:li
                       [:a {:href (str "/p/"(:full_name x))} (:full_name x)
                       [:p {:style "color:gray"} (cutoff (:description x) 50)]]
                       ]
@@ -87,7 +92,7 @@
 
 (defn tutorial
   [{:keys [db event-chan redis else]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
         user (id-of request :user)
         orig-slug (id-of request :slug)
@@ -105,12 +110,12 @@
         (if json?
           (json-resp filtered)
           (html-resp
-            (layout {:website host 
-                      :title (str platform " " (:title (first filtered)) " Tutorial") 
+            (layout {:website host
+                      :title (str platform " " (:title (first filtered)) " Tutorial")
                       :description (format "%s Tutorial" (:title (first filtered)))
                       :keywords (str (:keywords (first filtered)) "," platform " tutorial")
-                      :platform platform}  
-              [:div.row 
+                      :platform platform}
+              [:div.row
               [:div.col-lg-3
                 (left-menu host platform (str "/tutorial/"user"/"orig-slug))]
               [:div.col-lg-9
@@ -123,7 +128,7 @@
 
 (defn all-tutorial
   [{:keys [db event-chan redis else]} request]
-  (let [{:keys [host id body json? user platform 
+  (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
         user (or (id-of request :user) "bcambel")
         slug  (format "%s-%s" user (id-of request :slug))
@@ -137,16 +142,18 @@
         (if json?
           (json-resp filtered)
           (html-resp
-            (layout {:website host :title (str platform " " (:title (first filtered)) " Tutorial") :platform platform}  
-              [:div.row 
+            (layout {:website host
+                     :title (str platform " " (:title (first filtered)) " Tutorial")
+                     :platform platform}
+              [:div.row
               [:div.col-lg-3
                 (left-menu host platform "tutorial")]
               [:div.col-lg-9
                 (for [data filtered]
 
-                  [:div 
-                    [:h3 [:a {:href (format "/tutorial/%s/%s" 
-                                    (:owner data) 
+                  [:div
+                    [:h3 [:a {:href (format "/tutorial/%s/%s"
+                                    (:owner data)
                                     (str/join "-" (rest (vec (.split (:slug data) "-")))))} (:title data)] ]
                     ; [:div (md-to-html-string (:content data))]
                     ])]])))))))

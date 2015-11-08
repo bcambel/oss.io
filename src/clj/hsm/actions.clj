@@ -21,48 +21,23 @@
     [hsm.cache :as cache]
     [hsm.system.pg :refer [pg-db]]))
 
-(defn load-user
-  [db user-id]
-  (let [conn (:connection db)]
-      (cql/select conn :user
-        (dbq/where [[= :nick user-id]]))))
+; (defn load-user
+;   [db user-id]
+;   (let [conn (:connection db)]
+;       (cql/select conn :user
+;         (dbq/where [[= :nick user-id]]))))
 
 (def User {:email s/Str :name s/Str :nick s/Str })
 
-(defn create-user
-  [db user-data]
-  (s/validate User user-data)
-  (let [conn (:connection db)
-        dt (now->ep)
-        additional {:id (id-generate) :password ""
-                    :roles #{"user"} :created_at dt  :registered_at dt }
-        user-info (merge additional user-data)]
-    (cql/insert conn :user user-info)))
-
-; (defn load-user-activity
-;   [db user-id])
-
-; (defn load-user-followers
-;   [db user-id]
-;   (let [conn (:connection db)]
-;     (cql/select conn :user_follower
-;       (dbq/columns :follower_id)
-;       (dbq/where [[= :user_id user-id]]))))
-
-; (defn load-user-following
-;   [db user-id]
-;   (let [conn (:connection db)]
-;     (map :following_id (cql/select conn :user_following
-;       (dbq/columns :following_id)
-;       (dbq/where [[= :user_id user-id]])))))
-
-; (defn get-profile
-;   [db user visitor])
-
-; (defn get-profile-by-nick
-;   [nick visitor]
-;   (let [user nick]
-;     (get-profile user)))
+; (defn create-user
+;   [db user-data]
+;   (s/validate User user-data)
+;   (let [conn (:connection db)
+;         dt (now->ep)
+;         additional {:id (id-generate) :password ""
+;                     :roles #{"user"} :created_at dt  :registered_at dt }
+;         user-info (merge additional user-data)]
+;     (cql/insert conn :user user-info)))
 
 ;; DISCUSS
 (def Discussion {:title s/Str :post s/Str})
@@ -77,7 +52,9 @@
   [db batch-size]
   (let [batch-size (if (> batch-size 1000) 1000 batch-size)
         conn (:connection db)]
-    (cql/iterate-table conn :github_user :login batch-size)))
+    ; (cql/iterate-table conn :github_user :login batch-size)
+
+    ))
 
 (defn load-project
   [db proj]
@@ -100,22 +77,52 @@
          (sql/build)
          (sql/format :quoting :ansi)))))
 
-(defn load-project-extras
-  [db proj]
-  (let [conn (:connection db)]
-    (first (cql/select conn :github_project_list
-      (dbq/limit 1)
-      (dbq/where [[= :proj proj]])))))
+; (defn load-project-extras
+;   [db proj]
+;   (let [conn (:connection db)]
+;     (first (cql/select conn :github_project_list
+;       (dbq/limit 1)
+;       (dbq/where [[= :proj proj]])))))
+
+(defn ensure-table-extras
+  [table pk-field pk-val]
+  (let [cnt (count (jdbc/query pg-db (->
+                     (select pk-field)
+                     (from table)
+                     (where [:= pk-field pk-val])
+                     (limit 1)
+                     (sql/build)
+                     (sql/format :quoting :ansi))))]
+    (when (zero? cnt)
+      (jdbc/insert! pg-db table {pk-field pk-val}))))
+
+(defn update-table-kryo-field
+  "Atomically update the field of a table
+  Usage: (update-table-kryo-field
+              :github_project :full_name \"bcambel/hackersome\"
+              :watchers [:me :you :him] )
+  "
+  [table pk-field pk-val field value]
+  (let [stmt (-> (update table)
+                  (sset {field (kryo/serialize value)})
+                  (where [:= pk-field pk-val])
+                  (sql/build)
+                  (sql/format :quoting :ansi)) ]
+    (log/info stmt)
+    (jdbc/execute! pg-db stmt)
+  ))
 
 (defn load-project-extras*
-  [db proj]
-  (let [proj-extras (first (jdbc/query pg-db
-                      (-> (select :*)
-                       (from :github_project_list)
-                       (where [:= :proj proj])
-                       (limit 1)
-                       (sql/build)
-                       (sql/format :quoting :ansi))))]
+  [db proj & fields]
+  (let [fields-to-select (if (empty? fields) [:*] fields)
+        q (-> (apply (partial select) fields-to-select)
+             (from :github_project_list)
+             (where [:= :proj proj])
+             (limit 1)
+             (sql/build)
+             (sql/format :quoting :ansi))
+        _ (log/info q)
+        proj-extras (first (jdbc/query pg-db q))]
     (merge proj-extras
       { :watchers (if-not (nil? (:watchers proj-extras))
                       (-> (:watchers proj-extras) (kryo/deserialize))
@@ -128,14 +135,14 @@
                       #{})
         })))
 
-(defn list-top-user
-  [db platform limit-by]
-  (log/warn "[TOP-USER] Fetching " platform limit-by)
-  (let [conn (:connection db)
-        limit-by (if (> limit-by 100) 100 limit-by)]
-    (cql/select conn :github_user
-      (dbq/limit limit-by))
-  ))
+; (defn list-top-user
+;   [db platform limit-by]
+;   (log/warn "[TOP-USER] Fetching " platform limit-by)
+;   (let [conn (:connection db)
+;         limit-by (if (> limit-by 100) 100 limit-by)]
+;     (cql/select conn :github_user
+;       (dbq/limit limit-by))
+;   ))
 
 (defn load-user2
   [db user-id]
@@ -147,44 +154,27 @@
                        (limit 1)
                        (sql/build)
                        (sql/format :quoting :ansi)))
-      first)
-      ; (first (cql/select conn :github_user
-      ;   (dbq/where [[= :login user-id]])))
-
-      ))
+      first)))
 
 (defn user-extras
-  [db user-id]
-  (let [user-extras (first (jdbc/query pg-db
-                      (-> (select :*)
-                       (from :github_user_list)
-                       (where [:= :login user-id])
-                       (limit 1)
-                       (sql/build)
-                       (sql/format :quoting :ansi))))]
-      ; (first (cql/select conn :github_user_list
-      ;   (dbq/where [[= :user user-id]])))
-
-
+  [db user-id & fields ]
+  (let [fields-to-select (if (empty? fields) [:*] fields)
+        q (-> (apply (partial select) fields-to-select)
+               (from :github_user_list)
+               (where [:= :login user-id])
+               (limit 1)
+               (sql/build)
+               (sql/format :quoting :ansi))
+        user-extras (first (jdbc/query pg-db q))
+        deserialize (fn[x] (if-not (nil? (x user-extras))
+                                  (-> (x user-extras) (kryo/deserialize))
+                                  #{}))]
       (merge user-extras
-      { :stargazers (if-not (nil? (:stargazers user-extras))
-                      (-> (:stargazers user-extras) (kryo/deserialize))
-                        #{})
-        :followers (if-not (nil? (:followers user-extras))
-                        (-> (:followers user-extras) (kryo/deserialize))
-                        #{})
-        :following (if-not (nil? (:following user-extras))
-                      (-> (:following user-extras) (kryo/deserialize))
-                      #{})
-        :starred (if-not (nil? (:starred user-extras))
-                      (-> (:starred user-extras) (kryo/deserialize))
-                      #{})
-
-        :repos (if-not (nil? (:repos user-extras))
-                      (-> (:repos user-extras) (kryo/deserialize))
-                      #{})
-        })
-      ))
+        { :stargazers (deserialize :stargazers)
+          :followers (deserialize :followers)
+          :following (deserialize :following)
+          :starred (deserialize :starred)
+          :repos (deserialize :repos)})))
 
 (defn top-users-in
   [users limit-by]
@@ -201,29 +191,33 @@
 
 (defn load-users-by-id
   [db user-ids]
+  (when-not (empty? user-ids)
   (let [user-ids (max-element user-ids 100)
         conn (:connection db)]
     (log/warn "Fetching user-ids" user-ids)
-    (cql/select conn :github_user
-        (dbq/limit 100)
-        (dbq/where [[:in :login user-ids]]))
-    ))
+    (jdbc/query pg-db
+      (->
+        (select :*)
+        (from :github_user)
+        (limit 100)
+        (where [:in :login user-ids])
+        (sql/format :quoting :ansi))))))
 
-(defn fetch-top-users
-  [db limit-by top-n]
-  (let [toppers (top-users db limit-by top-n)
-        user-ids (mapv :login toppers)]
-    (load-users-by-id db user-ids)))
+; (defn fetch-top-users
+;   [db limit-by top-n]
+;   (let [toppers (top-users db limit-by top-n)
+;         user-ids (mapv :login toppers)]
+;     (load-users-by-id db user-ids)))
 
-(defn load-users
-  [db limit-by]
-  (let [conn (:connection db)]
-    (when-let [users (cql/select conn :github_user
-                      (dbq/columns :login :followers :name :email :blog)
-                      (dbq/limit 1000)
-                      (dbq/where [[= :full_profile true]]))]
-      (mapv #(select-keys % [:login :followers :name :email :blog])
-        (top-users-in users limit-by)))))
+; (defn load-users
+;   [db limit-by]
+;   (let [conn (:connection db)]
+;     (when-let [users (cql/select conn :github_user
+;                       (dbq/columns :login :followers :name :email :blog)
+;                       (dbq/limit 1000)
+;                       (dbq/where [[= :full_profile true]]))]
+;       (mapv #(select-keys % [:login :followers :name :email :blog])
+;         (top-users-in users limit-by)))))
 
 
 (defn user-projects-es*

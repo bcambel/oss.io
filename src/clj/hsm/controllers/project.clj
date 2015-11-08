@@ -167,13 +167,17 @@
   (panel id
   [:div.row
     [:div.col-lg-2 {:style "text-align: center;padding-top:15px;"}
-      [:h3 [:i.fa.fa-star] [:a {:href (str "/p/" id "/stargazers")}(:watchers proj)]]
+      [:h3 [:i.fa.fa-star]
+           [:a {:href (str "/p/" id "/stargazers")}
+              (:watchers proj)]]
       [:form {:action "/ajax/project/follow" :method "POST"}
         [:input {:type "hidden" :value (:id proj)}]
 
         [:button.btn.btn-primary {:type "submit"} "Follow"]]
         (when admin?
-          [:a.btn.btn-danger.btn-sm {:href (format "/p/%s?force-sync=1" id) :rel "nofollow"} "Synchronize"])
+          [:a.btn.btn-danger.btn-sm {
+            :href (format "/p/%s?force-sync=1" id)
+            :rel "nofollow"} "Synchronize"])
         ]
     [:div.col-lg-8
       [:h3
@@ -294,6 +298,7 @@
           [:h3 [:a {:href (str "https://pypi.python.org/pypi/" proj)} (format "%s at PyPI" proj)]]]]])
   ))
 (defn get-proj
+  "Ugly method to respond a project query. xyz.com/p/:user/:project"
   [{:keys [db event-chan redis]} request]
   (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
@@ -342,11 +347,14 @@
                         (views/panel "READ ME"
                           (get-project-readme* redis id))]
                       [:div.col-lg-4
-                        (panel [:a {:href (str "/p/" id "/contributors")} [:span [:i.fa.fa-users] " Contributors" ]]
+                        (panel [:a {:href (str "/p/" id "/contributors")}
+                               [:span [:i.fa.fa-users] " Contributors" ]]
                           (user-list contributors ))
-                        (panel [:a {:href (str "/p/" id "/watchers") } [:span [:i.fa.fa-users] "Watchers"]]
+                        (panel [:a {:href (str "/p/" id "/watchers") }
+                               [:span [:i.fa.fa-users] "Watchers"]]
                           (user-list watchers))
-                        (panel [:a {:href (str "/p/" id "/stargazers") } [:span [:i.fa.fa-users] "Stargazers"]]
+                        (panel [:a {:href (str "/p/" id "/stargazers") }
+                               [:span [:i.fa.fa-users] "Stargazers"]]
                           (user-list stargazers))
                         (panel "Related Projects"
                           [:ul
