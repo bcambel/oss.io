@@ -308,11 +308,13 @@
         related-projects []
         admin? false]
     (let [proj (first (actions/load-project db id))]
+      (log/info "Project loaded" proj)
       (if force-sync
         (do
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
         (let [proj-extras (actions/load-project-extras* db id)
+              _ (log/info "Project extras loaded" proj-extras)
               watcher-count (count (:watchers proj-extras))
               contributor-count (count (:contributors proj-extras))
               owner (first (.split id "/"))

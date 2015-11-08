@@ -430,7 +430,7 @@
 (defn enhance-user
   [db user-login max-iter]
   (doall
-    (pmap #(% db user-login max-iter)
+    (map #(% db user-login max-iter)
       [user-following user-followers user-starred user-repos])))
 
 (defn update-project
@@ -449,7 +449,7 @@
   [db proj max-iter]
   (update-project db proj)
   (doall
-    (pmap #(% db proj max-iter)
+    (map #(% db proj max-iter)
       [project-watchers project-stargazers project-contrib])))
 
 (defn find-user

@@ -8,7 +8,6 @@
             [hiccup.def                   :refer [defhtml]]
             [clojurewerkz.elastisch.rest.document :as esd]
             [hsm.actions                  :as actions]
-            [hsm.pipe.event               :as event-pipe]
             [hsm.views                    :refer [layout panel panelx render-user left-menu]]
             [hsm.ring                     :refer [json-resp html-resp redirect]]
             [hsm.integration.ghub         :as gh]

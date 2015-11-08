@@ -1,4 +1,5 @@
-(defproject org.clojars.bcambel/hackersome (slurp "VERSION")
+(def VERSION (slurp "VERSION"))
+(defproject org.clojars.bcambel/hackersome VERSION
   :description "Hackersome"
   :url "http://hackersome.com"
   :license {:name "MIT"
@@ -12,7 +13,6 @@
                 [ring "1.3.2"]
                 [ring/ring-codec "1.0.0" :exclusions [commons-codec]]
                 [compojure "1.3.1"]
-                [bidi "1.12.0"]
                 [enlive "1.1.5"]
                 [clj-http "1.0.1"]
                 [clj-time "0.8.0"]
@@ -20,8 +20,7 @@
                 [environ "1.0.0"]
                 [com.cognitect/transit-clj "0.8.259"]
                 [cheshire "5.3.1"]
-                [com.cemerick/friend "0.2.0" :exclusions [org.clojure/core.cache]]
-                [friend-oauth2 "0.1.1"]
+
                 [clojurewerkz/cassaforte "2.0.0"]
                 [com.taoensso/carmine "2.9.0"]
                 [net.jpountz.lz4/lz4  "1.2.0"]
@@ -31,10 +30,9 @@
                 [com.stuartsierra/component "0.2.2"]
                 [com.brainbot/iniconfig "0.2.0"]
                 [com.draines/postal "1.11.1"]
-                [com.cemerick/piggieback "0.1.3"]
+
                 [com.climate/claypoole "0.2.1"] ; handle threads
                 [me.raynes/fs "1.4.6"]
-                [clj-kafka/clj-kafka "0.2.8-0.8.1.1"]
                 [hiccup "1.0.5"]
                 [clojurewerkz/elastisch "2.1.0"]
                 [liberator "0.12.2"]
@@ -49,17 +47,15 @@
                 ; [weasel "0.4.0-SNAPSHOT"]
                 [midje "1.6.3"]
                 [digest "1.4.4"]
-                [leiningen "2.5.0"]
-                [org.clojure/tools.nrepl "0.2.5"]
                 [raven-clj "1.2.0"]
                 [markdown-clj "0.9.62"]
-                [factual/durable-queue "0.1.3"]
+
 
                 [org.clojure/java.jdbc "0.4.2"]
                 [honeysql "0.6.2"]
                 [org.postgresql/postgresql "9.4-1205-jdbc41"]
                 [org.clojars.runa/clj-kryo "1.5.0"]
-                [byte-streams "0.2.0"]
+
                 ]
 
   :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
@@ -72,7 +68,7 @@
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}
   :min-lein-version "2.5.0"
-  :uberjar-name "hsm.jar"
+
   :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
@@ -81,7 +77,7 @@
               :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"}
-              :main {:main hsm.server :uberjar-name "hsm.jar"}
+              :main {:main hsm.server :uberjar-name ~(str "hsm-"VERSION".jar")}
               :dbsync {:main hsm.tasks.dbexport :uberjar-name "hsm.db.export.jar"}
               :dev {
                   :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]

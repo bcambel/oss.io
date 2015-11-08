@@ -11,10 +11,10 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-        [hsm.system.kafka             :as sys.kafka]
         [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
         [hsm.system.else              :as sys.else]
+        [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
         [ring.middleware.reload       :as reload]
@@ -26,8 +26,6 @@
         [compojure.core               :refer [GET POST PUT defroutes]]
         [com.stuartsierra.component   :as component]))
 
-(deftemplate defaultpage
-  (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
 
 (defn sample-conn
   [db request]
@@ -51,7 +49,7 @@
                  :else else}]
       (defroutes routes
         (resources "/")
-        (resources "/react" {:root "react"})
+        ; (resources "/react" {:root "react"})
         ; (GET  "/" req (defaultpage))
         (GET  "/"                                 request (c.m/homepage specs request))
         (GET  "/about"                            request (c.m/about specs request))
@@ -143,6 +141,7 @@
           :redis (sys.redis/redis-db redis-host redis-port)
           :kafka-producer "a" ;(sys.kafka/kafka-producer zookeeper)
           :else (sys.else/elastisch else-host else-port else-index)
+          ; :pg-db (sys.pg/new-database {})
           :conf config-options
           :app (component/using
             (http-server server-port)
@@ -163,7 +162,7 @@
 (defn worker-system [config-options]
   (let [{:keys [zookeeper]} config-options]
     (-> (component/system-map
-      :kafka-producer (sys.kafka/kafka-producer zookeeper)
+      :kafka-producer {}
       :app (component/using
         (worker)
         [:kafka-producer])))))
