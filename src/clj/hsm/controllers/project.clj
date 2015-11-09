@@ -66,7 +66,7 @@
         view-fn     (if (= view "grid") grid-view list-view)]
     (log/info req-id platform hosted-pl host url)
     (when platform
-      (let [top-projects (actions/top-projects-es else platform limit-by)
+      (let [top-projects (actions/top-projects-es* else platform limit-by)
             ; top-projects (actions/list-top-proj db redis platform limit-by)
             keyset (keys (first top-projects))]
         (if json?
@@ -314,7 +314,7 @@
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
         (let [proj-extras (actions/load-project-extras* db id)
-              _ (log/info "Project extras loaded" proj-extras)
+              _ (log/info "Project extras loaded")
               watcher-count (count (:watchers proj-extras))
               contributor-count (count (:contributors proj-extras))
               owner (first (.split id "/"))

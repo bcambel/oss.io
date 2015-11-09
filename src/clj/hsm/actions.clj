@@ -223,18 +223,27 @@
 (defn user-projects-es*
   [else user limit]
   (log/warn "[ES_PROJ]" user )
-  (let [res (esd/search (:conn else) (:index else) "github_project"
-                 :sort [ { :watchers {:order :desc}}]
-                 :size limit
-                  :query (q/filtered
-                          :filter   (q/term
-                                        :owner (str/lower-case user))))
-          n (esrsp/total-hits res)
-          hits (esrsp/hits-from res)]
-    (map :_source hits)))
+  (try
+    (let [res (esd/search (:conn else) (:index else) "github_project"
+                   :sort [ { :watchers {:order :desc}}]
+                   :size limit
+                    :query (q/filtered
+                            :filter   (q/term
+                                          :owner (str/lower-case user))))
+            n (esrsp/total-hits res)
+            hits (esrsp/hits-from res)]
+      (map :_source hits))
+  (catch Throwable t
+    (do
+      (log/error t)
+      []
+      )
+    )
+  ))
 
 (defn top-projects-es*
   [else platform limit]
+  (try
   (let [res (esd/search (:conn else) (:index else) "github_project"
                  :sort [ { :watchers {:order :desc}}]
                  :size limit
@@ -243,6 +252,13 @@
                                         :language (str/lower-case platform))))
           n (esrsp/total-hits res)
           hits (esrsp/hits-from res)]
-    (map :_source hits)))
+    (map :_source hits))
+    (catch Throwable t
+    (do
+      (log/error t)
+      []
+      )
+    )
+  ))
 
 (def top-projects-es (memo/ttl top-projects-es* :ttl/threshold 6000000 ))

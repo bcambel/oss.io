@@ -11,7 +11,7 @@
 (defn startup
   [{:keys [conf] :or {conf "app.ini"}} ]
   (let [c (conf/parse-conf conf true)]
-        (log/warn "Parsed config")
+        (log/warn "Parsed config" conf)
         (let [sys (system/front-end-system {
                                     :server-port (:port c)
                                     :zookeeper (:zookeeper-host c)
@@ -31,7 +31,7 @@
 (defn -main [& args]
     (try
       (log/info "Starting....")
-      (startup {})
+      (startup {:conf (first args)})
       (catch Throwable t
         (do
           (log/warn "FAILED!")
