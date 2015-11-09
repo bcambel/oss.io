@@ -24,7 +24,7 @@
   (fn [request]
     (let [ req (assign-id request)]
       ; (log/info "[LOG]")
-      (log/info req)
+      ; (log/info req)
       (let [response (handler req)]
         (log/info "HTTP" (:status response) (:req-id req) (:uri req))
       response
@@ -43,7 +43,7 @@
       (catch Throwable e
         (do
           (log/error e)
-          
+
           (when dsn
             (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]))
                 ; (log/info "SENTRY: " (deref ft 1000 :timed-out) e)
@@ -65,7 +65,7 @@
         ))))
 
 (defn json-resp
-  "Generates JSON resp of given object, 
+  "Generates JSON resp of given object,
   constructs a RING 200 Response.
   TODO: Optionable status code.."
   [data & [status]]

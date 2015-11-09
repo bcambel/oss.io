@@ -24,11 +24,11 @@
 
 (defhtml panelx
   ([header footer body-css & content ]
-    (let [panel-body-css (s/join " " 
+    (let [panel-body-css (s/join " "
                             (conj (set body-css) "panel-body"))]
-      [:div.panel.panel-default 
+      [:div.panel.panel-default
         [:div.panel-heading header]
-        [:div {:class panel-body-css} 
+        [:div {:class panel-body-css}
           content]
         [:div.panel-footer footer]])))
 
@@ -45,16 +45,15 @@
 
 (defhtml left-menu
   [host platform page]
-  (log/info "LEFT-MENU" host)
-  [:div.bs-callout.bs-callout-success ;{:style "background-color:#f7f7f7;" }
-  
+  [:div.bs-callout.bs-callout-success
     [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
-    [:p {:style "margin-top:10px"} "Join " [:b 1100] " others. No spamming." [:br][:b "I promise!"]]
-    [:p "We are currently under high development. "[:a {:href "https://github.com/bcambel/hackersome?utm_source=left_menu_link"} "Follow us at github."]]
+    [:p {:style "margin-top:10px"} "Join " [:b 2670] "+ others. No spamming." [:br][:b "I promise!"]]
+    [:p "We are currently under high development. "
+      [:a {:href "https://github.com/bcambel/hackersome?ref=left_menu_link"} "Follow us at github."]]
     [:hr]
-    [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?utm_source=left_menu_link"}  "Check these awesome tutorials"]]
+    [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?ref=left_menu_link"}  "Check these awesome tutorials"]]
     [:hr]
-    [:a.twitter-share-button {:href "https://twitter.com/share" 
+    [:a.twitter-share-button {:href "https://twitter.com/share"
       :data-text (format "Top %s Projects" platform)
       :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :normal
       :data-hashtags "python,hackers,github"
@@ -73,7 +72,7 @@
     [:tr [:td
     [:a {:href (format "/%s/top-projects" lang)} lang]]])])
 
-(def property-ids 
+(def property-ids
   { "hackersome.com" "UA-57973731-1"
     "sweet.io" "UA-33058338-1"
     "pythonhackers.com" "UA-57973731-4"
@@ -84,7 +83,7 @@
     "answer.io" "UA-57973731-7"
      })
 
-(def disqus-ids 
+(def disqus-ids
 {
   "pythonhackers.com" "pythonhackers"
   "clojurehackers.com" "pythonhackers"
@@ -132,7 +131,7 @@
         [:title (or title (format "Top %s Projects - Hackersome" platform))]
         [:meta {:name "description" :content description}]
         [:meta {:name "keywords" :content (or keywords description)}]
-        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.5/paper/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
         (include-css "/css/style.css")]
        [:body
@@ -143,11 +142,8 @@
                 [:a.navbar-brand {:href (format "http://%s" website)}  "Hackersome" ]]
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
-                  [:li [:a {:href "/users?utm_source=top_menu_link"} "Users"]]
-                  [:li [:a {:href "/open-source/?utm_source=top_menu_link"} "Top Projects"]]
-                  ; [:li [:a {:href "/collections"} "Collections"]]
-                  [:li [:a {:href "/discussions"} "Discussions"]]
-
+                  [:li [:a {:href "/users?ref=top_menu_link"} "Users"]]
+                  [:li [:a {:href "/open-source/?ref=top_menu_link"} "Top Projects"]]
                    [:li.dropdown
                      [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
                      [:ul.dropdown-menu
@@ -156,7 +152,7 @@
                   [:li [:a {:href "/about"} "About"]]
                   ]
                   ; [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
-                  ;   [:div.form-group 
+                  ;   [:div.form-group
                   ;     [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]]
                   ;     [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
@@ -179,15 +175,15 @@
             (when-not is-dev?
               [:div
                 [:p
-                  [:a.twitter-share-button {:href "https://twitter.com/share" 
+                  [:a.twitter-share-button {:href "https://twitter.com/share"
                     :data-text "Top Projects on"
                     :data-via "pythonhackers" :data-size :normal
                     } "Tell your friends"]
                   [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :normal }]]
                 [:hr]
-                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal" 
+                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal"
                           :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
-                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal" 
+                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal"
                           :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
             ])]
          ]
@@ -217,7 +213,7 @@
 
         (when (if (nil? is-dev?) true is-dev?)
           [:script {:type "text/javascript"}
-          (str 
+          (str
           (format "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -227,7 +223,7 @@
 
           "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');"
           (when-not is-dev?
-          (format 
+          (format
           "(function() {
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
             dsq.src = '//%s.disqus.com/embed.js';
