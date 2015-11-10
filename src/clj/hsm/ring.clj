@@ -61,7 +61,7 @@
         (-> response
         (assoc-in [:headers  "Pragma"] "no-cache")
         (assoc-in [:headers  "X-Req-ID"] (:req-id request))
-        (assoc-in [:headers "X-Server-Name"] (.getHostName (InetAddress/getLocalHost)))
+        ; (assoc-in [:headers "X-Server-Name"] (.getHostName (InetAddress/getLocalHost)))
         ))))
 
 (defn json-resp
