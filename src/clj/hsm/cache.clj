@@ -1,5 +1,5 @@
 (ns hsm.cache
-  (:require 
+  (:require
     [taoensso.carmine :as car :refer (wcar)]))
 
 (defn ssort-fetch
@@ -10,10 +10,16 @@
 
 (defn retrieve
   [redis key]
-  (wcar redis 
+  (wcar redis
     (car/get key)))
 
 (defn setup
   [redis key val]
-  (wcar redis 
+  (wcar redis
     (car/set key val)))
+
+(defn delete
+  [redis key]
+  (wcar redis
+    (car/del key))
+  )
