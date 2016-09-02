@@ -4,15 +4,6 @@
     [clojure.tools.logging :as log]
     [clojure.string :as str]
     [schema.core :as s]
-    [clojurewerkz.cassaforte.cql  :as cql]
-    [clojurewerkz.cassaforte.query :as dbq]
-    [qbits.hayt :as hayt]
-    [qbits.hayt.dsl.statement :as hs]
-    [clojurewerkz.elastisch.rest :as esr]
-    [clojurewerkz.elastisch.rest.index :as esi]
-    [clojurewerkz.elastisch.rest.document :as esd]
-    [clojurewerkz.elastisch.rest.response :as esrsp]
-    [clojurewerkz.elastisch.query :as q]
     [clojure.java.jdbc :as jdbc]
     [honeysql.core :as sql]
     [honeysql.helpers :refer :all]
@@ -21,23 +12,8 @@
     [hsm.cache :as cache]
     [hsm.system.pg :refer [pg-db]]))
 
-; (defn load-user
-;   [db user-id]
-;   (let [conn (:connection db)]
-;       (cql/select conn :user
-;         (dbq/where [[= :nick user-id]]))))
 
 (def User {:email s/Str :name s/Str :nick s/Str })
-
-; (defn create-user
-;   [db user-data]
-;   (s/validate User user-data)
-;   (let [conn (:connection db)
-;         dt (now->ep)
-;         additional {:id (id-generate) :password ""
-;                     :roles #{"user"} :created_at dt  :registered_at dt }
-;         user-info (merge additional user-data)]
-;     (cql/insert conn :user user-info)))
 
 ;; DISCUSS
 (def Discussion {:title s/Str :post s/Str})
@@ -76,13 +52,6 @@
          (limit 1e3)
          (sql/build)
          (sql/format :quoting :ansi)))))
-
-; (defn load-project-extras
-;   [db proj]
-;   (let [conn (:connection db)]
-;     (first (cql/select conn :github_project_list
-;       (dbq/limit 1)
-;       (dbq/where [[= :proj proj]])))))
 
 (defn ensure-table-extras
   [table pk-field pk-val]
@@ -135,17 +104,9 @@
                       #{})
         })))
 
-; (defn list-top-user
-;   [db platform limit-by]
-;   (log/warn "[TOP-USER] Fetching " platform limit-by)
-;   (let [conn (:connection db)
-;         limit-by (if (> limit-by 100) 100 limit-by)]
-;     (cql/select conn :github_user
-;       (dbq/limit limit-by))
-;   ))
-
 (defn load-user2
   [db user-id]
+  (log/info "Loading users from DB...")
   (let [conn (:connection db)]
       (->
       (jdbc/query pg-db (-> (select :*)
@@ -181,14 +142,6 @@
   (take limit-by
     (reverse (sort-by :followers users))))
 
-(defn top-users
-  [db limit-by top-n]
-  (let [conn (:connection db)
-        users (cql/select conn :github_user
-                (dbq/limit limit-by)
-                (dbq/columns :login :followers))]
-    (top-users-in users top-n)))
-
 (defn load-users-by-id
   [db user-ids]
   (when-not (empty? user-ids)
@@ -203,62 +156,31 @@
         (where [:in :login user-ids])
         (sql/format :quoting :ansi))))))
 
-; (defn fetch-top-users
-;   [db limit-by top-n]
-;   (let [toppers (top-users db limit-by top-n)
-;         user-ids (mapv :login toppers)]
-;     (load-users-by-id db user-ids)))
-
-; (defn load-users
-;   [db limit-by]
-;   (let [conn (:connection db)]
-;     (when-let [users (cql/select conn :github_user
-;                       (dbq/columns :login :followers :name :email :blog)
-;                       (dbq/limit 1000)
-;                       (dbq/where [[= :full_profile true]]))]
-;       (mapv #(select-keys % [:login :followers :name :email :blog])
-;         (top-users-in users limit-by)))))
-
-
 (defn user-projects-es*
-  [else user limit]
-  (log/warn "[ES_PROJ]" user )
-  (try
-    (let [res (esd/search (:conn else) (:index else) "github_project"
-                   :sort [ { :watchers {:order :desc}}]
-                   :size limit
-                    :query (q/filtered
-                            :filter   (q/term
-                                          :owner (str/lower-case user))))
-            n (esrsp/total-hits res)
-            hits (esrsp/hits-from res)]
-      (map :_source hits))
-  (catch Throwable t
-    (do
-      (log/error t)
-      []
-      )
-    )
-  ))
+  [id maximum]
+  (log/info id)
+  (jdbc/query pg-db
+    (->
+      (select :*)
+      (from :github_project)
+      (limit maximum)
+      (where [:= :owner id])
+      (order-by [:watchers :desc])
+      (sql/format :quoting :ansi))))
 
-(defn top-projects-es*
-  [else platform limit]
-  (try
-  (let [res (esd/search (:conn else) (:index else) "github_project"
-                 :sort [ { :watchers {:order :desc}}]
-                 :size limit
-                  :query (q/filtered
-                          :filter   (q/term
-                                        :language (str/lower-case platform))))
-          n (esrsp/total-hits res)
-          hits (esrsp/hits-from res)]
-    (map :_source hits))
-    (catch Throwable t
-    (do
-      (log/error t)
-      []
-      )
-    )
-  ))
 
-(def top-projects-es (memo/ttl top-projects-es* :ttl/threshold 6000000 ))
+(defn list-top-proj*
+  [lang num]
+  (log/info "Querying Top projects for " lang)
+
+  (jdbc/query pg-db
+    (->
+      (select :*)
+      (from :github_project)
+      (limit num)
+      (where [:= :language lang])
+      (order-by [:watchers :desc])
+      (sql/format :quoting :ansi))))
+
+(def list-top-proj
+  (memo/ttl list-top-proj* :ttl/threshold 6000000 ))

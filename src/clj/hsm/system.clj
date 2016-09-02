@@ -2,7 +2,7 @@
      (:require
         [clojure.java.io              :as io]
         [cheshire.core                :refer :all]
-        [clojurewerkz.cassaforte.cql  :as cql]
+        ; [clojurewerkz.cassaforte.cql  :as cql]
         [clojure.tools.logging        :as log]
         [hsm.dev                      :refer :all]
         [hsm.controllers.user         :as c.u]
@@ -11,9 +11,9 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-        [hsm.system.cassandra         :as sys.cassandra]
+        ; [hsm.system.cassandra         :as sys.cassandra]
         [hsm.system.redis             :as sys.redis]
-        [hsm.system.else              :as sys.else]
+        ; [hsm.system.else              :as sys.else]
         [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
@@ -27,10 +27,10 @@
         [com.stuartsierra.component   :as component]))
 
 
-(defn sample-conn
-  [db request]
-  (let [conn (:connection db)]
-    (json-resp (cql/select conn :user))))
+; (defn sample-conn
+;   [db request]
+;   (let [conn (:connection db)]
+;     (json-resp (cql/select conn :user))))
 
 
 (defrecord HTTP [port db kafka-producer redis else conf server]
@@ -46,14 +46,15 @@
                  :event-chan event-chan
                  :redis redis
                  :conf conf
-                 :else else}]
+                ;  :else else
+                 }]
       (defroutes routes
         (resources "/")
         ; (resources "/react" {:root "react"})
         ; (GET  "/" req (defaultpage))
         (GET  "/"                                 request (c.m/homepage specs request))
         (GET  "/about"                            request (c.m/about specs request))
-        (GET  "/test"                             request (sample-conn db request))
+
 
         (GET  "/users"                            request (c.u/some-user specs request))
         (GET  "/user2/:id"                        request (c.u/get-user2 specs request))
@@ -88,12 +89,12 @@
         (GET  "/:platform/index"                  request (c.m/platform specs request))
         (GET  "/:platform/top-projects"           request (c.pr/list-top-proj specs request))
 
-        (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
-        (GET  "/tutorial/"                        request (c.m/all-tutorial specs request))
-        (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))
+        ; (GET  "/tutorial/:user/:slug"             request (c.m/tutorial specs request))
+        ; (GET  "/tutorial/"                        request (c.m/all-tutorial specs request))
+        ; (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))
 
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
-        (GET  "/search"                           request (c.pr/search specs request))
+        ; (GET  "/search"                           request (c.pr/search specs request))
         ; (GET  "/search/update"                    request (c.pr/update-search specs request))
         ; (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
 
@@ -137,10 +138,10 @@
   (let [{:keys [host port keyspace server-port zookeeper redis-host
                 redis-port else-host else-port else-index]} config-options]
     (-> (component/system-map
-          :db (sys.cassandra/cassandra-db host port keyspace)
+          :db 1 ;(sys.cassandra/cassandra-db host port keyspace)
           :redis (sys.redis/redis-db redis-host redis-port)
           :kafka-producer "a" ;(sys.kafka/kafka-producer zookeeper)
-          :else (sys.else/elastisch else-host else-port else-index)
+           :else 1 ;(sys.else/elastisch else-host else-port else-index)
           ; :pg-db (sys.pg/new-database {})
           :conf config-options
           :app (component/using
@@ -179,7 +180,7 @@
   [config-options]
   (let [{:keys [host port keyspace]} config-options]
     (-> (component/system-map
-          :db (sys.cassandra/cassandra-db host port keyspace)
+          :db 1 ;(sys.cassandra/cassandra-db host port keyspace)
           :app (component/using
             (map->Integration {})
             [:db]

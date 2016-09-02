@@ -6,7 +6,7 @@
             [cheshire.core                :refer :all]
             [ring.util.response           :as resp]
             [hiccup.def                   :refer [defhtml]]
-            [clojurewerkz.elastisch.rest.document :as esd]
+            ; [clojurewerkz.elastisch.rest.document :as esd]
             [hsm.actions                  :as actions]
             [hsm.views                    :refer [layout panel panelx render-user left-menu]]
             [hsm.ring                     :refer [json-resp html-resp redirect]]
@@ -106,7 +106,7 @@
 
         (let [user-extras (actions/user-extras db id)
               ; user-repos (reverse (sort-by :watchers (actions/load-projects-by-id db (vec (:repos user-extras)))))
-              user-repos (actions/user-projects-es* else id 100)
+              user-repos (actions/user-projects-es* id 100)
               c-star (count (:starred user-extras))
               c-follow (count (:following user-extras))
               c-followers (count (:followers user-extras))
@@ -285,7 +285,7 @@
   (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
         limit-by 100
         es-conn     (:conn else)
-        search-rez (esd/search es-conn (:index else) "github_user" :sort [ { :followers {:order :desc}}] :size 100)
+        search-rez [];(esd/search es-conn (:index else) "github_user" :sort [ { :followers {:order :desc}}] :size 100)
         users (map :_source (-> search-rez :hits :hits))
         is-json (type-of request :json)]
     (if is-json

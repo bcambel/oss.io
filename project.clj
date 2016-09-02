@@ -20,8 +20,8 @@
                 [environ "1.0.0"]
                 [com.cognitect/transit-clj "0.8.259"]
                 [cheshire "5.3.1"]
-
-                [clojurewerkz/cassaforte "2.0.0"]
+                [com.google.guava/guava "19.0"]
+                ; [clojurewerkz/cassaforte "2.0.0"]
                 [com.taoensso/carmine "2.9.0"]
                 [net.jpountz.lz4/lz4  "1.2.0"]
                 [prismatic/schema "0.3.3"]
@@ -34,14 +34,14 @@
                 [com.climate/claypoole "0.2.1"] ; handle threads
                 [me.raynes/fs "1.4.6"]
                 [hiccup "1.0.5"]
-                [clojurewerkz/elastisch "2.1.0"]
+                ; [clojurewerkz/elastisch "2.1.0"]
                 [liberator "0.12.2"]
                 [commons-logging "1.1.3"]
                 [raven-clj "1.2.0"]
-                [twitter-api "0.7.7"]
+                ; [twitter-api "0.7.7"]
                 [metrics-clojure "2.4.0"]
                 [slingshot "0.12.1"]
-                [twitter-streaming-client/twitter-streaming-client "0.3.2"]
+                ; [twitter-streaming-client/twitter-streaming-client "0.3.2"]
                 [ch.qos.logback/logback-classic "1.1.2"]
                 [org.clojure/tools.logging "0.3.1"]
                 ; [weasel "0.4.0-SNAPSHOT"]
@@ -58,7 +58,7 @@
 
                 ]
 
-  :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
+  ; :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
   :plugins [[lein-environ "1.0.0"]
             [lein-release "1.0.5"]
             [s3-wagon-private "1.1.2"]]
@@ -67,33 +67,36 @@
   :codox {:defaults {:doc/format :markdown}
           :src-dir-uri "http://github.com/bcambel/hackersome/blob/development/"
           :src-linenum-anchor-prefix "L"}
-  :min-lein-version "2.5.0"
+  ; :min-lein-version "2.5.0"
 
-  :main hsm.server
+  ; :main hsm.server
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.7 {:dependencies [[org.clojure/clojure "1.7.0-alpha4"]]}
               :master {:dependencies [[org.clojure/clojure "1.7.0-master-SNAPSHOT"]]}
-              :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
+              ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :tasksdb { :main hsm.tasks.db :uberjar-name "hsm.tasks.db.jar"}
               :main {:main hsm.server :uberjar-name ~(str "hsm-"VERSION".jar")}
               :dbsync {:main hsm.tasks.dbexport :uberjar-name "hsm.db.export.jar"}
               :dev {
                   :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
-                    :repl-options {:init-ns hsm.server
-                                  ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
-                                }
+                  :source-paths ["dev"]
+                    ; :repl-options {:init-ns hsm.server
+                    ;               ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
+                    ;             }
                     :plugins [[lein-midje "3.1.3"]
-                                [lein-figwheel "0.1.4-SNAPSHOT"]
+                                ; [lein-figwheel "0.1.4-SNAPSHOT"]
                               ]
                     :dependencies [[midje "1.7.0-SNAPSHOT"]
-                                   [org.xerial.snappy/snappy-java "1.0.5"]]
-                    :figwheel {:http-server-root "public"
-                              :port 3449
-                              :css-dirs ["resources/public/css"]}
+                                   [org.xerial.snappy/snappy-java "1.0.5"]
+                                   [org.clojure/tools.namespace "0.2.11"]]
+                    ; :figwheel {:http-server-root "public"
+                    ;           :port 3449
+                    ;           :css-dirs ["resources/public/css"]}
                     :env {:is-dev true}
-                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]}}}}
+                    ; :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]}}                    }
+                  }
 
              :uberjar {
                        :env {:production true}
