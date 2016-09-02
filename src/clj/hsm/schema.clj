@@ -1,6 +1,6 @@
 ; (ns hsm.schema
 ;   (:require
-;     [clojure.tools.logging :as log]
+;     [taoensso.timbre :as log]
 ;     [clojurewerkz.cassaforte.cql  :as cql]
 ;     [clojurewerkz.cassaforte.query :as cq]
 ;     [qbits.hayt.dsl.statement :as hs]))

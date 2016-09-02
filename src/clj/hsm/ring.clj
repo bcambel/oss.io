@@ -1,11 +1,11 @@
 (ns hsm.ring
   (:require
-    [clojure.tools.logging  :as log]
+    [taoensso.timbre  :as log]
     [ring.util.response     :as resp]
     [cognitect.transit       :as t]
     [clojure.stacktrace     :as clj-stk]
-    [raven-clj.core               :refer  [capture]]
-    [raven-clj.ring               :refer [capture-error]]
+    ; [raven-clj.core               :refer  [capture]]
+    ; [raven-clj.ring               :refer [capture-error]]
     [cheshire.core           :refer :all]
     [digest]
     [hsm.dev :refer [is-dev?]]
@@ -44,11 +44,12 @@
         (do
           (log/error e)
 
-          (when dsn
-            (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]))
+          ; (when dsn
+          ;   (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]
+          ;   ))
                 ; (log/info "SENTRY: " (deref ft 1000 :timed-out) e)
-          (log/error "[EXCP]" (str (class e)) (clj-stk/print-cause-trace e))
-          (when is-dev? (throw e))
+          ; (log/error "[EXCP]" (str (class e)) (clj-stk/print-cause-trace e))
+          ; (when is-dev? (throw e))
         (->
          (resp/response "Sorry. An error occured.")
          (resp/status 500)))))))

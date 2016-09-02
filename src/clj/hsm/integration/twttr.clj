@@ -5,7 +5,7 @@
 ;    [twitter.callbacks.handlers])
 ;   (:require
 ;    [cheshire.core :refer :all]
-;    [clojure.tools.logging :as log]
+;    [taoensso.timbre :as log]
 ;    [twitter-streaming-client.core :as twt-strm-cli]
 ;    [clojure.core.async :as async :refer [go >! chan]]
 ;    [environ.core :refer [env]]

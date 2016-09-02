@@ -1,6 +1,6 @@
 (ns hsm.conf
   (:require
-    [clojure.tools.logging :as log]
+    [taoensso.timbre :as log]
     [com.brainbot.iniconfig :as iniconfig]
     [me.raynes.fs :refer [exists?]]))
 

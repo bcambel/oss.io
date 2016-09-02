@@ -1,6 +1,6 @@
 (ns hsm.server
   (:require
-            [clojure.tools.logging :as log]
+            [taoensso.timbre :as log]
             [hsm.conf :as conf]
             [hsm.system :as system]
             [com.stuartsierra.component :as component]

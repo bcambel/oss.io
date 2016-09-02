@@ -1,7 +1,7 @@
 (ns user
   (:require [clojure.tools.namespace.repl :refer [refresh]]
-            [hsm.server :refer [start]]
-            [stuartsierra.component :as component]
+            [hsm.server :refer [startup]]
+            [com.stuartsierra.component :as component]
             ))
 
 

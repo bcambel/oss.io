@@ -1,6 +1,6 @@
 ; (ns hsm.system.cassandra
 ; 	(:require
-; 		[clojure.tools.logging					:as log 	]
+; 		[taoensso.timbre					:as log 	]
 ; 		[hsm.schema 										:as db 		]
 ; 		[clojurewerkz.cassaforte.client :as cc 		]
 ;     [clojurewerkz.cassaforte.policies   :as cp]

@@ -1,6 +1,6 @@
 (ns hsm.controllers.main
   (:require
-    [clojure.tools.logging        :as log]
+    [taoensso.timbre        :as log]
     [clojure.string :as str]
     [hiccup.def                   :refer [defhtml]]
     [markdown.core :refer [md-to-html-string]]
@@ -12,7 +12,7 @@
     [hsm.views                    :refer :all]
     [hsm.utils                    :refer [host-of id-of cutoff pl->lang common-of]]
     [hsm.conf                     :refer [languages]]
-    ; [hsm.actions                  :refer [top-projects-es]]
+    [hsm.actions                  :refer [list-top-proj]]
     ))
 
 (defn homepage
@@ -67,7 +67,7 @@
   (let [host (host-of request)
         pl   (pl->lang (id-of request :platform))
         top-members []
-        top-projects [] ; (top-projects-es else pl 100)
+        top-projects (list-top-proj pl 100)
         ]
     (html-resp
       (layout {:website host

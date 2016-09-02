@@ -1,6 +1,6 @@
 (ns hsm.system.pg
   (:require
-    [clojure.tools.logging          :as log   ]
+    [taoensso.timbre          :as log   ]
     [com.stuartsierra.component     :as component]
     [clojure.java.jdbc              :as jdbc]
     ))

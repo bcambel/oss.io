@@ -1,5 +1,5 @@
 (ns hsm.controllers.user
-  (:require [clojure.tools.logging        :as log]
+  (:require [taoensso.timbre        :as log]
             [clojure.java.io              :as io]
             [clojure.core.memoize         :as memo]
             [clojure.string               :as str]

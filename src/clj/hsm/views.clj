@@ -1,7 +1,7 @@
 (ns hsm.views
   (:require
     [clojure.string     :as s]
-    [clojure.tools.logging :as log]
+    [taoensso.timbre :as log]
     [hiccup.core        :refer [html ]]
     [hiccup.page        :refer [doctype include-css include-js html5]]
     [hiccup.def         :refer [defhtml ]]
@@ -110,7 +110,7 @@
     {:lang "en-US"}
     [:head
       [:meta {:charset "UTF-8"}]
-      (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.1/lumen/bootstrap.min.css")
+      (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/sandstone/bootstrap.min.css")
       (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")]
     [:body
       content
@@ -131,7 +131,7 @@
         [:title (or title (format "Top %s Projects - Hackersome" platform))]
         [:meta {:name "description" :content description}]
         [:meta {:name "keywords" :content (or keywords description)}]
-        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.5/paper/bootstrap.min.css")
+        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/journal/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
         (include-css "/css/style.css")]
        [:body
@@ -234,19 +234,6 @@
   analytics.load('eqMNHeqB0Ukx8AWah4nKiwFwaxbeJlGg');
   analytics.page();}}();
 ")
-(when-not is-dev?
-  "var _gauges = _gauges || [];
-  (function() {
-    var t   = document.createElement('script');
-    t.type  = 'text/javascript';
-    t.async = true;
-    t.id    = 'gauges-tracker';
-    t.setAttribute('data-site-id', '552832af5dd05343e80002b3');
-    t.setAttribute('data-track-path', 'https://track.gaug.es/track.gif');
-    t.src = 'https://track.gaug.es/track.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(t, s);
-  })();")
 (format
 "!function(){window.jstag=function(e){var t=!1,n=window,r=document,i='/js/io',s=Array.prototype.slice,o=e.url||'';return n.jstag||{load:function(){var e,s=r.getElementsByTagName('script')[0];return t=!0,'JSON'in n&&Array.prototype.forEach||(i+='w'),r.getElementById(i)?this:(e=r.createElement('script'),e.id=i,e.src=o+i+'.min.js',s.parentNode.insertBefore(e,s),this)},_q:[],_c:e,bind:function(e){this._q.push([e,s.call(arguments,1)])},ready:function(){this._q.push(['ready',s.call(arguments)])},send:function(){return t||this.load(),this._q.push(['ready','send',s.call(arguments)]),this},ts:(new Date).getTime()}
 }({cid:'report',url:'//%s/',path:'',idpath:''});jstag.send({data:1});}();" (if is-dev? "dev.strck.hackersome.com" "strck.hackersome.com"))

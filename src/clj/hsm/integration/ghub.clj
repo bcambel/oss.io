@@ -2,7 +2,7 @@
     "Fetch repository information from github"
     (:require
       [clojure.string                 :as s]
-      [clojure.tools.logging          :as log]
+      [taoensso.timbre                :as log]
       [clojure.java.jdbc              :as jdbc]
       [honeysql.core                  :as sql]
       [honeysql.helpers               :refer :all]
@@ -56,6 +56,7 @@
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
               care true conf (get-config)}} options]
+    (log/info header)
     (try+
       (client/get (format "%s&client_id=%s&client_secret=%s" url
                     (:github-client conf) (:github-secret conf))

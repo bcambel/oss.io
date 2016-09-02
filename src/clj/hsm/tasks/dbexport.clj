@@ -8,7 +8,7 @@
 ;     [hsm.system.pg :refer [pg-db]]
 ;     [hsm.schema :as schema]
 ;     [clj-kryo.core :as kryo]
-;      [clojure.tools.logging        :as log]
+;      [taoensso.timbre        :as log]
 ;     [cheshire.core :refer :all]
 ;     [hsm.server])
 ;   (:gen-class))

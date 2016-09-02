@@ -1,6 +1,6 @@
 (ns hsm.system.redis
-  (:require 
-    [clojure.tools.logging          :as log]
+  (:require
+    [taoensso.timbre          :as log]
     [taoensso.carmine               :as car :refer (wcar)]
     [com.stuartsierra.component     :as component]))
 

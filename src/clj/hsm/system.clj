@@ -2,8 +2,7 @@
      (:require
         [clojure.java.io              :as io]
         [cheshire.core                :refer :all]
-        ; [clojurewerkz.cassaforte.cql  :as cql]
-        [clojure.tools.logging        :as log]
+        [taoensso.timbre              :as log]
         [hsm.dev                      :refer :all]
         [hsm.controllers.user         :as c.u]
         [hsm.controllers.project      :as c.pr]
@@ -11,20 +10,17 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-        ; [hsm.system.cassandra         :as sys.cassandra]
+
         [hsm.system.redis             :as sys.redis]
-        ; [hsm.system.else              :as sys.else]
         [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
         [ring.middleware.reload       :as reload]
         [ring.util.response           :as resp]
-        [ring.adapter.jetty           :refer [run-jetty]]
-        [raven-clj.ring               :refer [wrap-sentry]]
-        [raven-clj.core               :refer  [capture]]
         [net.cgrand.enlive-html       :refer [deftemplate]]
         [compojure.core               :refer [GET POST PUT defroutes]]
-        [com.stuartsierra.component   :as component]))
+        [com.stuartsierra.component   :as component])
+    (:use org.httpkit.server))
 
 
 ; (defn sample-conn
@@ -111,23 +107,19 @@
     (def app
       (-> http-handler
           (wrap-exception-handler dsn)
-          (wrap-sentry dsn)
+          ; (wrap-sentry dsn)
           (wrap-nocache)
           (wrap-log)
-          ; (if is-dev? wrap-nocache identity )
           ))
 
-    ; (if is-dev? (start-figwheel))
-    (let [server (run-jetty app {:port (Integer. port)
+    (let [server (run-server app {:port (Integer. port)
                             :join? (not is-dev?)})]
-
-      ; (capture (:sentry-dsn conf) "Starting up..")
 
       (assoc this :server server)))
 
   (stop [this]
     (log/warn "Stopping HTTP Server")
-    (.stop server)))
+    (server)))
 
 (defn http-server
   [port]

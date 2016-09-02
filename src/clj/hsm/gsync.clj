@@ -1,6 +1,6 @@
 (ns hsm.gsync
   (:require 
-    [clojure.tools.logging :as log]
+    [taoensso.timbre :as log]
     [com.stuartsierra.component :as component]
     [hsm.conf :as conf]
     [hsm.system :as system]

@@ -2,7 +2,7 @@
   (:require [com.climate.claypoole :as cp]
     [cheshire.core :refer :all]
     [clj-http.client :as http]
-    [clojure.tools.logging :as log]) 
+    [taoensso.timbre :as log]) 
   (:gen-class))
 
 (defn safe-parse

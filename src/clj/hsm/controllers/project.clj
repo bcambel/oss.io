@@ -1,6 +1,6 @@
 (ns hsm.controllers.project
   (:require
-    [clojure.tools.logging :as log]
+    [taoensso.timbre :as log]
     [clojure.core.memoize :as memo]
     [clojure.java.io :as io]
     [clojure.string :as str]
@@ -11,11 +11,6 @@
     [hiccup.page :as hic.pg]
     [hiccup.element :as hic.el]
     [hiccup.def         :refer [defhtml]]
-    ; [clojurewerkz.elastisch.rest :as esr]
-    ; [clojurewerkz.elastisch.rest.index :as esi]
-    ; [clojurewerkz.elastisch.rest.document :as esd]
-    ; [clojurewerkz.elastisch.rest.response :as esrsp]
-    ; [clojurewerkz.elastisch.query :as q]
     [hsm.actions :as actions]
     [hsm.ring :refer [json-resp html-resp redirect]]
     [hsm.views :as views :refer [layout panel panelx render-user left-menu]]
@@ -111,56 +106,9 @@
     (-> data
       (assoc :owner (first (vec (.split (:full_name data) "/")))))))
 
-; (defn update-search
-;   "Refactor later to remove all this bulk op"
-;   [{:keys [db event-chan redis else]} request]
-;   (let [index-name  (:index else)
-;         es-conn     (:conn else)]
-;     (if (nil? es-conn)
-;       (json-resp {:ok false :reason "Conn failure..."})
-;       (do
-;         (when (esi/exists? es-conn index-name)
-;           (esi/flush es-conn index-name :refresh true))
-;         ; (mapv #(esd/create es-conn index-name "github_project" (transform-project %))
-;         ;   (actions/load-all-projects db 200))
-;         (json-resp {:ok 1})))))
-
 (defn transform-user
   [x]
   x)
-
-; (defn update-user-search-index
-;   [{:keys [db event-chan redis else]} request]
-;   (let [index-name  (:index else)
-;         es-conn     (:conn else)]
-;     (if (nil? es-conn)
-;       (json-resp {:ok false :reason "Conn failure..."})
-;       (do
-;         ; (when (esi/exists? es-conn index-name)
-;           ; (esi/flush es-conn index-name :refresh true))
-;         (mapv #(esd/create es-conn index-name "github_user" (transform-user %))
-;           (actions/load-all-users db 200))
-;         (json-resp {:ok 1})))))
-
-; (defn search
-;   "Temporary horrible searching logic.
-;   Will be replaced with proper ElasticSearch Solution"
-;   [{:keys [db event-chan redis else]} request]
-;   (let [{:keys [host id body json? user platform req-id limit-by url hosted-pl]} (common-of request)
-;         term        (get-in request [:query-params "q"])
-;         index-name  (:index else)
-;         es-conn     (:conn else)]
-;     (log/warn "TERML:" term)
-;     (let [res (esd/search es-conn index-name "github_project"
-;
-;                 :query (q/query-string :query (codec/url-encode term)))
-;                 ; :query  (q/filtered
-;                 ;     :filter   (q/term :full_name (str/lower-case platform)))
-;
-;           n (esrsp/total-hits res)
-;           hits (esrsp/hits-from res)]
-;       (json-resp (map :_source hits)))))
-;(map #(assoc % :full_name (format "%s - %s" (:watchers %) (:full_name %)))
 
 (defhtml project-header
   [id proj admin? owner contributor-count watcher-count]
@@ -209,8 +157,8 @@
          admin? false
          proj (first (actions/load-project db id))
          proj-extras (actions/load-project-extras* db id)
-         watcher-count (count (:watchers proj-extras))
-         contributor-count (count (:contributors proj-extras))
+         watcher-count (try (count (:watchers proj-extras)) (catch Throwable t 0))
+         contributor-count (try  (count (:contributors proj-extras)) (catch Throwable t 0))
          owner (first (.split id "/"))
          owner-obj (actions/load-user2 db owner)]
       (if json?
@@ -308,15 +256,15 @@
         related-projects []
         admin? false]
     (let [proj (first (actions/load-project db id))]
-      (log/info "Project loaded" proj)
+      (log/info "Project loaded" (select-keys proj [:id :name :full_name]))
       (if force-sync
         (do
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
         (let [proj-extras (actions/load-project-extras* db id)
               _ (log/info "Project extras loaded" proj-extras)
-              watcher-count (count (or (:watchers proj-extras) 0))
-              contributor-count (count (:contributors proj-extras))
+              watcher-count (try (count (or (:watchers proj-extras) 0)) (catch Throwable t 0))
+              contributor-count (try (count (:contributors proj-extras)) (catch Throwable t 0))
               owner (first (.split id "/"))
               owner-obj (actions/load-user2 db owner)]
           (if json?

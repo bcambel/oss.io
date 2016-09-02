@@ -1,7 +1,7 @@
   (ns hsm.actions
   (:require
     [clojure.core.memoize :as memo]
-    [clojure.tools.logging :as log]
+    [taoensso.timbre :as log]
     [clojure.string :as str]
     [schema.core :as s]
     [clojure.java.jdbc :as jdbc]

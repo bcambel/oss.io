@@ -1,6 +1,6 @@
 (ns hsm.data
     (:require 
-      [clojure.tools.logging :as log]
+      [taoensso.timbre :as log]
       [clj-http.client :as client]))
 
 (defn extract 
