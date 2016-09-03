@@ -9,10 +9,10 @@ import time
 logging.basicConfig(format='[%(asctime)s](%(filename)s#%(lineno)d)%(levelname)-7s %(message)s',
                     level=logging.INFO)
 
-env.user = 'root'
+env.user = 'ubuntu'
 env.use_ssh_config = True
-folder = "/var/www/hackersome/"
-
+folder = "/opt/hackersome/"
+asset_folder = "/var/www/hackersome/"
 PACKAGES = ['openjdk-7-jre-headless','python-pip','dstat','htop','supervisor',
             'libjna-java', 'libopts25','ntp', 'python-support',]
 
@@ -59,12 +59,12 @@ def generate_cassandra_settings(ip_address):
 @task
 def cassandra(ip_address):
   if not confirm("Are you sure to install followings ? \n{}".format("=>\n".join([e for e in env.hosts]))):
-    return 
+    return
 
   sudo("curl -L http://debian.datastax.com/debian/repo_key | sudo apt-key add -")
   sudo('echo "deb http://debian.datastax.com/community stable main" > /etc/apt/sources.list.d/datastax.list')
   aptupdate()
-  
+
   sudo("apt-get install -y cassandra=2.0.10 dsc20=2.0.10-1")
 
   sudo("service cassandra stop")
@@ -116,11 +116,11 @@ def release(compile_app=True):
 
 @task
 def deploy_assets():
-    with cd(folder):
-        put("resources/public/css/style.css", "public/css/style.css")
-        put("resources/public/js/app.js", "public/js/app.js")
-        put("logback.xml", "logback.xml")
-        put("opt-out.txt", "opt-out.txt")
+    with cd(asset_folder):
+        put("resources/public/css/style.css", "public/css/style.css", use_sudo=True)
+        put("resources/public/js/app.js", "public/js/app.js", use_sudo=True)
+        put("logback.xml", "logback.xml", use_sudo=True)
+        put("opt-out.txt", "opt-out.txt", use_sudo=True)
 
 @task
 def build(token,new_build=False):
@@ -130,7 +130,7 @@ def build(token,new_build=False):
 
     url = "http://jenkins.hackersome.com/buildByToken/build?job=hackersome&token=token123456"
     logging.warn(url)
-    
+
     if new_build:
         build_req = requests.get(url)
 
@@ -140,7 +140,7 @@ def build(token,new_build=False):
             return False
         else:
             logging.warn(build_req.text)
-        
+
         time.sleep(10)
 
     project_status_resp = requests.get(build_url.format("job/Hackersome/api/json"))
@@ -171,9 +171,9 @@ def build(token,new_build=False):
 
     tries = 0
     succeed = False
-    building = True 
+    building = True
     status = ""
-    
+
     while building and (not succeed) and tries < 10:
         try:
             succeed, building, status = req()
@@ -181,23 +181,23 @@ def build(token,new_build=False):
                 break
         except Exception,ex:
             logging.error(ex)
-            
+
         logging.warn("Retrying.... %d", tries)
         tries += 1
 
         time.sleep(tries*3)
 
     logging.info("To the next level now.. %s %s %s", succeed, building, status )
-    # if succeed: 
+    # if succeed:
     #     if confirm("Would you like to deploy now ?"):
     #         deploy()
 
-    
+
 
 def check_jar(uberjar_location):
     rez = requests.head(uberjar_location)
     logging.warn("Uberjar found {}\n{}".format(rez.status_code, uberjar_location))
-    return rez.ok 
+    return rez.ok
 
 
 @task
@@ -212,7 +212,7 @@ def deploy(git_version=None):
 
     if not check_jar(uberjar):
         return False
-    
+
     sudo("supervisorctl stop prod_hackersome")
 
     sudo("mkdir -p {}public/css".format(folder))

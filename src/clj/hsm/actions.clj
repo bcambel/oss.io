@@ -66,7 +66,7 @@
       (jdbc/insert! pg-db table {pk-field pk-val}))))
 
 (defn update-table-kryo-field
-  "Atomically update the field of a table
+  "Atomically update the kryo field of a table
   Usage: (update-table-kryo-field
               :github_project :full_name \"bcambel/hackersome\"
               :watchers [:me :you :him] )
@@ -80,6 +80,28 @@
     (log/info stmt)
     (jdbc/execute! pg-db stmt)
   ))
+
+(defn update-table-field
+  "Atomically update the field of a table
+  Usage: (update-table-kryo-field
+              :github_project :full_name \"bcambel/hackersome\"
+              :watchers [:me :you :him] )
+  "
+  [table pk-field pk-val field value]
+  (let [stmt (-> (update table)
+                  (sset {field value})
+                  (where [:= pk-field pk-val])
+                  (sql/build)
+                  (sql/format :quoting :ansi)) ]
+    (try
+      (jdbc/execute! pg-db stmt)
+      (catch Throwable t
+        (do (log/error t)
+        false)))))
+
+(defn set-project-readme
+  [proj readme]
+  (update-table-field :github_project :full_name proj :readme readme))
 
 (defn load-project-extras*
   [db proj & fields]

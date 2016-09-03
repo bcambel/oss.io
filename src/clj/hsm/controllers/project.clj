@@ -80,17 +80,31 @@
   "Fetch read me. Redis is used.
   Or Fetches from github.
   TODO: Post retrieved data to ElasticSearch"
-  [redis proj]
-  (let [cache-key (str "readme-" proj)
+  [redis proj-obj]
+  (when-not (nil? proj-obj)
+  (if (not (empty? (:readme proj-obj)))
+    (:readme proj-obj)
+
+  (let [proj (:full_name proj-obj)
+        cache-key (str "readme-" proj)
         cached (cache/retrieve redis cache-key)]
     (if (!nil? cached)
-      cached
+      (do
+          (actions/set-project-readme proj cached)
+          (cache/delete redis cache-key)
+          cached)
       (let [readme (gh/project-readme proj)]
         (try
-          (cache/setup redis cache-key readme)
-          (catch Throwable t (log/error t)))
+          ; (cache/setup redis cache-key readme)
+          (actions/set-project-readme (:full_name proj) readme)
+          redis
+          (catch Throwable t
+            (do
+              (log/error t)
+              (actions/set-project-readme (:full_name proj) :err)))
+            )
         readme
-        ))))
+        ))))))
 
 (defn get-project-readme
   "Memoized Project README.
@@ -268,7 +282,9 @@
               owner (first (.split id "/"))
               owner-obj (actions/load-user2 db owner)]
           (if json?
-            (json-resp (assoc proj :owner owner-obj))
+            (json-resp (-> proj
+                          (assoc :owner owner-obj)
+                          (assoc :readme (get-project-readme* redis proj))))
             (let [contributors (take 10 (:contributors proj-extras))
                   watchers (take 10 (:watchers proj-extras))
                   stargazers (take 10 (:stargazers proj-extras))
@@ -277,7 +293,7 @@
                   contributors (filter #(in? contributors (:login %)) users)
                   watchers (filter #(in? watchers (:login %)) users)
                   stargazers (filter #(in? stargazers (:login %)) users)]
-                  ; (log/warn proj)
+
             (html-resp
               (views/layout {:website host :platform platform
                              :title (:description proj)
@@ -295,7 +311,7 @@
                     [:div.row
                       [:div.col-lg-8
                         (views/panel "READ ME"
-                          (get-project-readme* redis id))]
+                          (get-project-readme* redis proj))]
                       [:div.col-lg-4
                         (panel [:a {:href (str "/p/" id "/contributors")}
                                [:span [:i.fa.fa-users] " Contributors" ]]
