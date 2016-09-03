@@ -14,7 +14,7 @@ A Community project for developers, entreprenuers, hustlers. Hackersome is the u
 - [Python Hackers](http://pythonhackers.com)
 - [Clojure Hackers](http://clojurehackers.com)
 - [Hackersome](http://hackersome.com)
-- [Sweet.io](http://sweet.io)
+
 
 ## Development
 
@@ -40,7 +40,7 @@ CIDER is up to date).
 In the REPL do
 
 ```clojure
-(def sys (startup {}))
+(def sys (startup {:conf "settings.dev.ini"}))
 ```
 
 Which will return the system map. It's based on Stuart Sierra's amazing [Component lib](https://github.com/stuartsierra/component).
@@ -81,55 +81,10 @@ docker pull clojure
 docker run -i -t --entrypoint /bin/bash <imageID>
 ```
 
-Cassandra 
-==========
-
-Using the following [Spotify Cassandra Container](https://github.com/spotify/docker-cassandra)
-
-
-Runs a command inside the given container ID. 
-since image runs with [cassandra -f option](https://github.com/spotify/docker-cassandra/blob/master/cassandra/scripts/cassandra-singlenode.sh#L33), you wont get any interaction
-
-```
-docker pull spotify/cassandra
-# 
-docker run spotify/cassandra -d --ip=172.17.0.48
-# fetch the IP of the image
-docker inspect <image_id> 
-# modify your /etc/hosts file to add the cassandra host
-docker exec -it <container_id> cqlsh < schema.cql
-```
-
-Kafka
-==========
-
-http://www.michael-noll.com/blog/2013/03/13/running-a-multi-broker-apache-kafka-cluster-on-a-single-node/
-
-
-Using [Ches/Kafka](https://registry.hub.docker.com/u/ches/kafka/) as the base image. It's very simple to 
-setup and use. Kafka requires ZooKeeper to keep track of it's client markers, nodes, etc..
-
-```shell
-docker run -d --name zookeeper jplock/zookeeper:3.4.6
-docker run -d --name kafka --link zookeeper:zookeeper ches/kafka -p 9092:9092
-docker run -d --name kafka --publish 9092:9092 --publish 7203:7203 --link zookeeper:zookeeper ches/kafka
-
-ZK_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' zookeeper)
-KAFKA_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' kafka)
-# learn the image ID. 
-# "q" switch for quiet(returns only ID). "f" for filtering
-KAFKA_CONT_ID=$(docker ps -fq name=kafka)
-docker exec -it $KAFKA_CONT_ID kafka-topics.sh --create --topic test --replication-factor 1 --partitions 1 --zookeeper $ZK_IP:2181
-docker exec -it $KAFKA_CONT_ID kafka-console-producer.sh --topic test --broker-list $KAFKA_IP:9092
-```
-
-a more complex kafka installation could be done via the following docker image
-https://registry.hub.docker.com/u/wurstmeister/kafka/
 
 ## License
 
-Copyright © 2014 Bahadir Cambel
+Copyright © 2016 Bahadir Cambel
 
 Distributed under the MIT License.
 
-docker run -d --hostname localhost --name kafka --volume ./data:/data --volume ./logs:/logs --publish 9092:9092 --publish 7203:7203 --env EXPOSED_HOST=127.0.0.1 --env ZOOKEEPER_IP=127.0.0.1 ches/kafka
