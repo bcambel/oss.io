@@ -262,7 +262,7 @@
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
         (let [proj-extras (actions/load-project-extras* db id)
-              _ (log/info "Project extras loaded" proj-extras)
+              _ (log/info "Project extras loaded" (select-keys proj-extras [:proj]))
               watcher-count (try (count (or (:watchers proj-extras) 0)) (catch Throwable t 0))
               contributor-count (try (count (:contributors proj-extras)) (catch Throwable t 0))
               owner (first (.split id "/"))
@@ -277,7 +277,7 @@
                   contributors (filter #(in? contributors (:login %)) users)
                   watchers (filter #(in? watchers (:login %)) users)
                   stargazers (filter #(in? stargazers (:login %)) users)]
-                  (log/warn proj)
+                  ; (log/warn proj)
             (html-resp
               (views/layout {:website host :platform platform
                              :title (:description proj)

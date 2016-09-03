@@ -1,4 +1,5 @@
-(def VERSION (slurp "VERSION"))
+(def VERSION (clojure.string/replace (slurp "VERSION") #"\n" ""))
+(println VERSION "-")
 (defproject org.clojars.bcambel/hackersome VERSION
   :description "Hackersome"
   :url "http://hackersome.com"
@@ -61,7 +62,7 @@
 
                 ]
 
-  ; :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
+  :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
   :plugins [[lein-environ "1.0.0"]
             ; [lein-release "1.0.5"]
             [s3-wagon-private "1.1.2"]]
