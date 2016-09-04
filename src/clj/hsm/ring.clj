@@ -4,8 +4,8 @@
     [ring.util.response     :as resp]
     [cognitect.transit       :as t]
     [clojure.stacktrace     :as clj-stk]
-    ; [raven-clj.core               :refer  [capture]]
-    ; [raven-clj.ring               :refer [capture-error]]
+    [raven-clj.core               :refer  [capture]]
+    [raven-clj.ring               :refer [capture-error wrap-sentry]]
     [cheshire.core           :refer :all]
     [digest]
     [hsm.dev :refer [is-dev?]]
@@ -42,14 +42,9 @@
          (resp/status 400)))
       (catch Throwable e
         (do
+          (log/warn "Exception caught.")
           (log/error e)
-
-          ; (when dsn
-          ;   (let [ft (capture-error dsn req {:message (str e "->" (.getMessage e))} e nil)]
-          ;   ))
-                ; (log/info "SENTRY: " (deref ft 1000 :timed-out) e)
-          ; (log/error "[EXCP]" (str (class e)) (clj-stk/print-cause-trace e))
-          ; (when is-dev? (throw e))
+          (when is-dev? (throw e))
         (->
          (resp/response "Sorry. An error occured.")
          (resp/status 500)))))))

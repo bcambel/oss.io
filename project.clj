@@ -12,18 +12,19 @@
                 [org.clojure/core.memoize "0.5.9"]
                 [org.clojure/core.async "0.2.385"]
                 [ring "1.5.0"]
-                ; [ring/ring-codec "1.0.0" :exclusions [commons-codec]]
+                [ring/ring-defaults "0.2.1"]
+
                 [http-kit "2.2.0"]
                 [compojure "1.5.1"]
                 [enlive "1.1.5"]
                 [clj-http "3.2.0"]
                 [clj-time "0.12.0"]
-                ; [figwheel "0.1.4-SNAPSHOT"]
+
                 [environ "1.1.0"]
                 [com.cognitect/transit-clj "0.8.288"]
                 [cheshire "5.3.1"]
                 [com.google.guava/guava "19.0"]
-                ; [clojurewerkz/cassaforte "2.0.0"]
+
                 [com.taoensso/carmine "2.14.0"]
 
                 [net.jpountz.lz4/lz4  "1.3.0"]
@@ -40,15 +41,12 @@
                 [me.raynes/fs "1.4.6"]
                 [hiccup "1.0.5"]
 
-                ; [raven-clj "1.4.1" :exclusions [clj-http]]
                 [com.taoensso/timbre "4.7.4"]
-                ; [twitter-api "0.7.7"]
+                [bcambel/raven-clj "1.4.3"]
+
                 [metrics-clojure "2.4.0"]
                 [slingshot "0.12.2"]
-                ; [twitter-streaming-client/twitter-streaming-client "0.3.2"]
-                ; [ch.qos.logback/logback-classic "1.1.2"]
-                ; [org.clojure/tools.logging "0.3.1"]
-                ; [weasel "0.4.0-SNAPSHOT"]
+
                 [midje "1.8.3"]
                 [digest "1.4.4"]
 
@@ -62,7 +60,7 @@
 
                 ]
 
-  :java-agents [[com.newrelic.agent.java/newrelic-agent "2.19.0"]]
+  :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
   :plugins [[lein-environ "1.0.0"]
             ; [lein-release "1.0.5"]
             [s3-wagon-private "1.1.2"]]
@@ -84,9 +82,9 @@
               :main {:main hsm.server :uberjar-name ~(str "hsm-"VERSION".jar")}
               :dbsync {:main hsm.tasks.dbexport :uberjar-name "hsm.db.export.jar"}
               :dev {
-                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
+                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow" "-javaagent:newrelic/newrelic.jar"]
                   :source-paths ["dev"]
-                    ; :repl-options {:init-ns hsm.server
+                    :repl-options {:init-ns user}
                     ;               ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
                     ;             }
                     :plugins [[lein-midje "3.1.3"]

@@ -148,7 +148,7 @@
                      [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
                      [:ul.dropdown-menu
                        (for [lang languages]
-                         [:li [:a {:href (format "/%s/index" lang) } lang]])]]
+                         [:li [:a {:href (format "/%s/top-projects" lang) } lang]])]]
                   [:li [:a {:href "/about"} "About"]]
                   ]
                   ; [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}

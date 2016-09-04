@@ -170,11 +170,13 @@
          related-projects []
          admin? false
          proj (first (actions/load-project db id))
+         _ (log/infof "Project loaded. " (:full_name proj))
          proj-extras (actions/load-project-extras* db id)
          watcher-count (try (count (:watchers proj-extras)) (catch Throwable t 0))
          contributor-count (try  (count (:contributors proj-extras)) (catch Throwable t 0))
          owner (first (.split id "/"))
-         owner-obj (actions/load-user2 db owner)]
+         owner-obj (actions/load-user2 db owner)
+         _ (log/infof "User loaded %s-> %s" owner owner-obj)]
       (if json?
         (json-resp (selector proj-extras));(assoc proj :owner owner-obj))
         (views/layout {:website host
@@ -212,6 +214,7 @@
   [db selector id proj proj-extras]
   (let [ppl-list (selector proj-extras)
         users (actions/load-users-by-id db (vec ppl-list))]
+      ;  (throw (clojure.lang.ArityException. 2 "Invalid Stargazer exce" ))
     (panel "Star gazers"
       [:div.row.user-list
         (for [x (reverse (sort-by :followers users))]
@@ -259,6 +262,24 @@
           [:p "Python Packages currently unavailable. Please follow the link below."]
           [:h3 [:a {:href (str "https://pypi.python.org/pypi/" proj)} (format "%s at PyPI" proj)]]]]])
   ))
+
+(defn take-x [coll n]
+  (try
+    (take n coll)
+    (catch Throwable t
+      (do
+      (log/error t)
+      []))))
+
+(defn load-peeps [proj-extras]
+  (let [contributors (:contributors proj-extras)
+        watchers (:watchers proj-extras)
+        stargazers (:stargazers proj-extras)]
+    {:contributors (take-x contributors 10)
+     :stargazers (take-x stargazers 10)
+     :watchers (take-x watchers 10)
+    }))
+
 (defn get-proj
   "Ugly method to respond a project query. xyz.com/p/:user/:project"
   [{:keys [db event-chan redis]} request]
@@ -280,20 +301,18 @@
               watcher-count (try (count (or (:watchers proj-extras) 0)) (catch Throwable t 0))
               contributor-count (try (count (:contributors proj-extras)) (catch Throwable t 0))
               owner (first (.split id "/"))
-              owner-obj (actions/load-user2 db owner)]
+              owner-obj (actions/load-user2 db owner)
+              _ (log/infof "User loaded %s" owner)]
           (if json?
             (json-resp (-> proj
                           (assoc :owner owner-obj)
                           (assoc :readme (get-project-readme* redis proj))))
-            (let [contributors (take 10 (:contributors proj-extras))
-                  watchers (take 10 (:watchers proj-extras))
-                  stargazers (take 10 (:stargazers proj-extras))
-                  people (vec (set (concat contributors watchers stargazers)))
+            (let [{:keys [contributors watchers stargazers]} (load-peeps proj-extras)
+                  people (try (vec (set (concat contributors watchers stargazers))) (catch Throwable t []))
                   users (actions/load-users-by-id db people)
                   contributors (filter #(in? contributors (:login %)) users)
                   watchers (filter #(in? watchers (:login %)) users)
                   stargazers (filter #(in? stargazers (:login %)) users)]
-
             (html-resp
               (views/layout {:website host :platform platform
                              :title (:description proj)

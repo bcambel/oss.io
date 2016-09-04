@@ -1,4 +1,4 @@
-  (ns hsm.actions
+(ns hsm.actions
   (:require
     [clojure.core.memoize :as memo]
     [taoensso.timbre :as log]
@@ -128,16 +128,21 @@
 
 (defn load-user2
   [db user-id]
-  (log/info "Loading users from DB...")
-  (let [conn (:connection db)]
-      (->
-      (jdbc/query pg-db (-> (select :*)
-                       (from :github_user)
-                       (where [:= :login user-id])
-                       (limit 1)
-                       (sql/build)
-                       (sql/format :quoting :ansi)))
-      first)))
+  (log/infof "Loading user[%s] from DB..." user-id)
+
+  (let [conn (:connection db)
+        user (->
+                (jdbc/query pg-db (-> (select :*)
+                                 (from :github_user)
+                                 (where [:= :login user-id])
+                                 (limit 1)
+                                 (sql/build)
+                                 (sql/format :quoting :ansi)))
+                first)]
+      (log/debug "User loaded" user)
+      user
+
+      ))
 
 (defn user-extras
   [db user-id & fields ]
@@ -166,17 +171,19 @@
 
 (defn load-users-by-id
   [db user-ids]
-  (when-not (empty? user-ids)
-  (let [user-ids (max-element user-ids 100)
-        conn (:connection db)]
-    (log/warn "Fetching user-ids" user-ids)
-    (jdbc/query pg-db
-      (->
-        (select :*)
-        (from :github_user)
-        (limit 100)
-        (where [:in :login user-ids])
-        (sql/format :quoting :ansi))))))
+  (log/info "Loading users..# " (count user-ids))
+  (if (empty? user-ids)
+    []
+    (let [user-ids (max-element user-ids 100)
+          conn (:connection db)]
+      (log/warn "Fetching user-ids" user-ids)
+      (jdbc/query pg-db
+        (->
+          (select :*)
+          (from :github_user)
+          (limit 100)
+          (where [:in :login user-ids])
+          (sql/format :quoting :ansi))))))
 
 (defn user-projects-es*
   [id maximum]

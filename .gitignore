@@ -21,3 +21,5 @@ app.ini
 .hackersome_data
 hackersome-data
 settings.dev.ini
+newrelic*
+newrelic.yml

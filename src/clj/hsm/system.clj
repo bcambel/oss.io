@@ -10,12 +10,13 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-
+        [raven-clj.ring               :refer [capture-error wrap-sentry]]
         [hsm.system.redis             :as sys.redis]
         [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
         [ring.middleware.reload       :as reload]
+        [ring.middleware.defaults     :refer :all]
         [ring.util.response           :as resp]
         [net.cgrand.enlive-html       :refer [deftemplate]]
         [compojure.core               :refer [GET POST PUT defroutes]]
@@ -106,8 +107,10 @@
 
     (def app
       (-> http-handler
+          (wrap-defaults api-defaults)
+          (wrap-defaults site-defaults)
           (wrap-exception-handler dsn)
-          ; (wrap-sentry dsn)
+          (wrap-sentry dsn {:namespaces ["hsm"]})
           (wrap-nocache)
           (wrap-log)
           ))
