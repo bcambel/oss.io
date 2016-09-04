@@ -60,7 +60,7 @@
 
                 ]
 
-  :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
+
   :plugins [[lein-environ "1.0.0"]
             ; [lein-release "1.0.5"]
             [s3-wagon-private "1.1.2"]]
@@ -76,7 +76,9 @@
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
-              :master {:dependencies [[org.clojure/clojure "1.8.0"]]}
+              :master {:dependencies [[org.clojure/clojure "1.8.0"]]
+                        :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
+                      }
               ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :main {:main hsm.server :uberjar-name ~(str "hsm-"VERSION".jar")}
