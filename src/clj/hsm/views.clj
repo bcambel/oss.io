@@ -46,20 +46,21 @@
 (defhtml left-menu
   [host platform page]
   [:div.bs-callout.bs-callout-success
-    [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
-    [:p {:style "margin-top:10px"} "Join " [:b 2670] "+ others. No spamming." [:br][:b "I promise!"]]
-    [:p "We are currently under high development. "
+    ; [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
+    [:p {:style "margin-top:10px"} "Join " [:b 10350] "+ others. No spamming." [:br][:b "I promise!"]]
+    [:p 
       [:a {:href "https://github.com/bcambel/hackersome?ref=left_menu_link"} "Follow us at github."]]
+      [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=oss.io&type=watch&count=true&size=normal"
+                :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
     [:hr]
-    [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?ref=left_menu_link"}  "Check these awesome tutorials"]]
-    [:hr]
-    [:a.twitter-share-button {:href "https://twitter.com/share"
-      :data-text (format "Top %s Projects" platform)
-      :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :normal
-      :data-hashtags "python,hackers,github"
-      } "Tell your friends"]
+    ; [:p "Looking for " [:b[:span.red "Python Tutorials? "]] [:br] [:a {:href "/tutorial/?ref=left_menu_link"}  "Check these awesome tutorials"]]
+    ; [:hr]
+    ; [:a.twitter-share-button {:href "https://twitter.com/share"
+    ;   :data-text (format "Top %s Projects" platform)
+    ;   :data-via "pythonhackers" :data-url (format "%s/%s" host page) :data-size :normal
+    ;   :data-hashtags "python,hackers,github"
+    ;   } "Tell your friends"]
     [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers" :data-show-count true :data-size :small }]
-    [:div.fb-like {:data-href (format "http://%s/top-%s-projects" host platform)}]
 
     [:hr]
     [:script#_carbonads_js {:type "text/javascript" :src (format "//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=%s" (get-placement host)) }]
@@ -110,7 +111,7 @@
     {:lang "en-US"}
     [:head
       [:meta {:charset "UTF-8"}]
-      (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/sandstone/bootstrap.min.css")
+      (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/solar/bootstrap.min.css")
       (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")]
     [:body
       content
@@ -128,10 +129,10 @@
         [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"}]
         [:meta {:content "IE=edge,chrome=1"
                 :http-equiv "X-UA-Compatible"}]
-        [:title (or title (format "Top %s Projects - Hackersome" platform))]
+        [:title (or title (format "Top %s Projects - Open Source Software" platform))]
         [:meta {:name "description" :content description}]
         [:meta {:name "keywords" :content (or keywords description)}]
-        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/journal/bootstrap.min.css")
+        (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/paper/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
         (include-css "/css/style.css")]
        [:body
@@ -139,7 +140,7 @@
           [:div.container
              [:div.navbar-header
                 [:span.rotated.orange (format "%s" (str "(" platform ")"))]
-                [:a.navbar-brand {:href (format "http://%s" website)}  "Hackersome" ]]
+                [:a.navbar-brand {:href (format "http://%s" website)}  "OpenSourceSofware" ]]
                 [:div.navbar-collapse.collapse
                  [:ul.nav.navbar-nav
                   [:li [:a {:href "/users?ref=top_menu_link"} "Users"]]
@@ -151,10 +152,7 @@
                          [:li [:a {:href (format "/%s/top-projects" lang) } lang]])]]
                   [:li [:a {:href "/about"} "About"]]
                   ]
-                  ; [:form.navbar-form.navbar-left {:method "GET" :action "/p/"}
-                  ;   [:div.form-group
-                  ;     [:input.form-control.typeahead.input-xs {:type "text" :name "project"}]]
-                  ;     [:button.btn.btn-default.btn-xs {:type "Submit" :onclick "window.location='/p/'+ $(this).parents('form').find('input').val();return false;"} "Go"]]
+
                   [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
         [:div.container-fluid
           ; [:div.col-lg-1.left-panel ""]
@@ -169,8 +167,8 @@
           [:div.col-lg-10.col-lg-offset-1
             [:p "Designed, built and made in Amsterdam with all the love by " [:a {:href "http://twitter.com/bahadircambel"} "@bcambel"]]
             [:p
-              website " running version  " [:a {:href (str "https://github.com/bcambel/hackersome/commit/" VERSION)} (str "@" SHORTVERSION)]]
-            [:p "Code licensed under " [:a {:href "https://github.com/bcambel/hackersome/blob/development/LICENSE"} :MIT]]
+              website " running version  " [:a {:href (str "https://github.com/bcambel/oss.io/commit/" VERSION)} (str "@" SHORTVERSION)]]
+            [:p "Code licensed under " [:a {:href "https://github.com/bcambel/oss.io/blob/development/LICENSE"} :MIT]]
             [:hr]
             (when-not is-dev?
               [:div
@@ -183,7 +181,7 @@
                 [:hr]
                 [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=pythonhackers&type=watch&count=true&size=normal"
                           :allowtransparency true :frameborder 0 :scroling 0 :width "120px" :height "30px"}]
-                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=hackersome&type=watch&count=true&size=normal"
+                [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=oss.io&type=watch&count=true&size=normal"
                           :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
             ])]
          ]

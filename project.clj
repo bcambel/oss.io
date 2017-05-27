@@ -46,7 +46,7 @@
 
                 [metrics-clojure "2.4.0"]
                 [slingshot "0.12.2"]
-
+                [clj-datadog "3.0.1"]
                 [midje "1.8.3"]
                 [digest "1.4.4"]
 
@@ -77,14 +77,14 @@
   :profiles {
               :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
               :master {:dependencies [[org.clojure/clojure "1.8.0"]]
-                        :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
+                        ; :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
                       }
               ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
               :main {:main hsm.server :uberjar-name ~(str "hsm-"VERSION".jar")}
               :dbsync {:main hsm.tasks.dbexport :uberjar-name "hsm.db.export.jar"}
               :dev {
-                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow" "-javaagent:newrelic/newrelic.jar"]
+                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                   :source-paths ["dev"]
                     :repl-options {:init-ns user}
                     ;               ; :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]

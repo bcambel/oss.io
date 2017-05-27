@@ -8,6 +8,7 @@
     [raven-clj.ring               :refer [capture-error wrap-sentry]]
     [cheshire.core           :refer :all]
     [digest]
+    [truckerpath.clj-datadog.core :as dd]
     [hsm.dev :refer [is-dev?]]
     )
   (:import
@@ -23,10 +24,15 @@
   [handler]
   (fn [request]
     (let [ req (assign-id request)]
-      ; (log/info "[LOG]")
-      ; (log/info req)
+      (log/sometimes 0.1 (log/info req))
+
       (let [response (handler req)]
         (log/info "HTTP" (:status response) (:req-id req) (:uri req))
+        (try
+          (dd/increment {} "page.views" 1 { :url (:uri req)  :status (:status response) })
+          (catch Throwable e
+            (log/error e)))
+
       response
     ))))
 
