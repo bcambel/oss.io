@@ -246,6 +246,16 @@
                         (render-user x)])]
                 )])])))))
 
+(defn organization-events
+  [{:keys [db event-chan redis]} request]
+  (let [id (id-of request)
+        host (host-of request)
+        user (actions/load-user2 db id)]
+    (when (and user (= (:type user) "Organization"))
+      (gh/import-org-events id)
+        )))
+
+
 (defn user2-starred
   [{:keys [db event-chan redis]} request]
   (let [id (id-of request)

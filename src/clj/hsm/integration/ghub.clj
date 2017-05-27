@@ -17,8 +17,18 @@
       [hsm.system.pg                  :refer [pg-db]]
       [hsm.actions                    :as actions]
       )
+
     (:use [slingshot.slingshot :only [throw+ try+]]
-      [clojure.data :only [diff]]))
+      [clojure.data :only [diff]])
+
+    (:import [org.postgresql.util PGobject]))
+
+
+(defn pg-json [value]
+  (doto (PGobject.)
+    (.setType "json")
+    (.setValue value)))
+
 
 (def ghub-root "https://api.github.com")
 
@@ -55,6 +65,28 @@
   [url & options]
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
+              care true conf (get-config)}} options
+              end-point (format "%s&client_id=%s&client_secret=%s" url
+                            (env :client-id)
+                            (env :client-secret)) ]
+    (log/info header)
+    (log/info end-point)
+    (try+
+      (client/get end-point header)
+      (catch [:status 403] {:keys [request-time headers body]}
+        (log/warn "403" request-time headers))
+      (catch [:status 404] {:keys [request-time headers body]}
+        (log/warn "NOT FOUND" url request-time headers body))
+      (catch Object _
+        (when care
+          (log/error (:throwable &throw-context) "Unexpected Error"))
+        (when-not safe
+          (throw+))))))
+
+(defn get-url2
+  [url & options]
+  (let [{:keys [header safe care conf]
+         :or {header header-settings safe false
               care true conf (get-config)}} options]
     (log/info header)
     (try+
@@ -70,6 +102,43 @@
           (log/error (:throwable &throw-context) "Unexpected Error"))
         (when-not safe
           (throw+))))))
+
+(defn find-next-url
+  "Figure out the next url to call
+  <https://api.github.com/search/repositories?q=...&page=2>;
+  rel=\"next\", <https://api.github.com/search/repositories?q=+...&page=34>; rel=\"last\"
+  "
+  [stupid-header]
+  (when (!nil? stupid-header)
+    (try
+      (log/debug stupid-header)
+      (let [[next-s last-s & others] (.split stupid-header ",")
+            next-page (vec (.split next-s ";"))
+            is-next (.contains (last next-page) "next")]
+          (log/debug next-s last-s)
+          (log/info "Next UP" next-page)
+        (when is-next
+          (s/replace (subs (first next-page) 1) ">" "")))
+      (catch Throwable t
+        (log/error t stupid-header)))))
+
+(defn fetch-url
+  [url]
+  (try
+    (let [response (get-url url :header header-settings)]
+        (if (nil? response)
+          {:success false :next-url nil :data nil :reason "Empty Response"}
+          (do
+            (let [repos (parse-string (:body response) true)
+                  next-url (find-next-url
+                      (-> response :headers :link))]
+              (log/debug (:headers response))
+              {:success true :next-url next-url :data repos}))))
+    (catch Throwable t
+      (do
+        (throw+ t)
+        {:success false :reason (.getMessage t) :repos [] :next-url nil }))))
+
 
 (defn user-data
   [m]
@@ -153,38 +222,8 @@
   (insert-projects conn coll)
   (insert-users conn (map user-data coll)))
 
-(defn find-next-url
-  "Figure out the next url to call
-  <https://api.github.com/search/repositories?q=...&page=2>;
-  rel=\"next\", <https://api.github.com/search/repositories?q=+...&page=34>; rel=\"last\"
-  "
-  [stupid-header]
-  (when (!nil? stupid-header)
-    (try
-      (let [[next-s last-s] (.split stupid-header ",")
-            next-page (vec (.split next-s ";"))
-            is-next (.contains (last next-page) "next")]
-        (when is-next
-          (s/replace (subs (first next-page) 1) ">" "")))
-      (catch Throwable t
-        (log/warn t stupid-header)))))
 
-(defn fetch-url
-  [url]
-  (try
-    (let [response (get-url url :header header-settings)]
-        (if (nil? response)
-          {:success false :next-url nil :data nil :reason "Empty Response"}
-          (do
-            (let [repos (parse-string (:body response) true)
-                  next-url (find-next-url
-                      (-> response :headers :link))]
-              (log/debug (:headers response))
-              {:success true :next-url next-url :data repos}))))
-    (catch Throwable t
-      (do
-        (throw+ t)
-        {:success false :reason (.getMessage t) :repos [] :next-url nil }))))
+ (defn insert-events [events] (when-not (empty? events) (apply (partial jdbc/insert! pg-db :github_events) events)))
 
 (defn import-repos
   [db language max-iter]
@@ -199,6 +238,31 @@
         (when (and next-url (< looped max-iter))
           (recur next-url (inc looped)))))
     1))
+
+(defn import-org-events
+  [organization ]
+  (let [org-events-url (format "%s/orgs/%s/events?per_page=100" ghub-root organization)
+        max-iter 100]
+    (loop [url org-events-url
+           looped 1
+           ids []]
+        (log/warn (format "Loop %d. %s \n %s" looped url (count ids)))
+        (let [{:keys [success next-url data]} (fetch-url url)]
+          (log/info next-url url)
+          (insert-events (mapv (fn[x] {:id (Long/parseLong (:id x))
+                                        :event_type (:type x)
+                                        :payload (pg-json (generate-string x))})
+                            (remove #(in? ids (:id %)) data)))
+
+            (when (and next-url
+
+                    (< looped max-iter))
+              (recur next-url (inc looped)
+                (concat ids (mapv :id data)) ))))))
+
+; (def facebook-events (fetch-url (events-url "facebook")))
+; (defn org-events-url [organization] (format "%s/orgs/%s/events?per_page=100" ghub-root organization))
+
 
 (defn expand-user
   "Fetch latest user information from github"

@@ -61,6 +61,7 @@
         (GET  "/user2/:id/starred"                request (c.u/user2-starred specs request))
         (GET  "/user2/:id/contrib"                request (c.u/user2-contrib specs request))
         (GET  "/user2/:id/activity"               request (c.u/user2-activity specs request))
+        (GET  "/user2/:id/events"                 request (c.u/organization-events specs request))
 
         (GET  "/os/:user/:project"                request (c.pr/get-proj specs request))
         (GET  "/open-source/:user/:project"       request (c.pr/get-proj specs request))
