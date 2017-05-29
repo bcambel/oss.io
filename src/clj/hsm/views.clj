@@ -48,7 +48,7 @@
   [:div.bs-callout.bs-callout-success
     ; [:a.btn.btn-success {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe Free"]
     [:p {:style "margin-top:10px"} "Join " [:b 10350] "+ others. No spamming." [:br][:b "I promise!"]]
-    [:p 
+    [:p
       [:a {:href "https://github.com/bcambel/hackersome?ref=left_menu_link"} "Follow us at github."]]
       [:iframe {:src "http://ghbtns.com/github-btn.html?user=bcambel&repo=oss.io&type=watch&count=true&size=normal"
                 :allowtransparency true :frameborder 0 :scroling 0 :width "260px" :height "30px"}]
@@ -207,7 +207,6 @@
                     "//cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.4/typeahead.bundle.min.js"
                     "//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"
                     "//cdnjs.cloudflare.com/ajax/libs/bootstrap-markdown/2.8.0/js/bootstrap-markdown.js")
-        (include-js "/js/app.js")
 
         (when (if (nil? is-dev?) true is-dev?)
           [:script {:type "text/javascript"}

@@ -80,8 +80,7 @@
 (defn opted-out?
   [user]
   (let [opted-out-users (opt-out-list)]
-  (log/info "Checking user.." user opted-out-users)
-  (in? opted-out-users user)))
+    (in? opted-out-users user)))
 
 (defn get-user2
   [{:keys [db event-chan redis conf else]} request]
@@ -91,7 +90,7 @@
         admin? false
         force-sync (is-true (get-in request [:params :force-sync]))
         is-json (type-of request :json)]
-    (log/info user)
+    ; (log/info user)
     (if (opted-out? id)
       (layout {:website host :title "User does not exist"} "User opted-out.")
       (if (or force-sync (not (:full_profile user)))

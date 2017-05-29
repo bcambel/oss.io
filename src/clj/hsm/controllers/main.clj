@@ -17,16 +17,16 @@
   (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)]
     (html-resp
-      (layout {:website host :title (format "Community for %s developers" platform)
+      (layout {:website host :title "Community for developers"
                 :keywords "Developer Community, Top Projects," }
         [:div.row
           [:div.col-lg-2 ]
           [:div.col-lg-10
             [:div.jumbotron
-              [:h1 "Community for " platform " developers"]
+              [:h1 "Community for developers"]
               [:hr]
-              [:p "Currently under high development. We will keep you updated if you "
-                [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
+              ; [:p "Currently under high development. We will keep you updated if you "
+              ;   [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
               [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe free"]
               [:h2 "Pssst, also check out these"
                 [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"] " or "

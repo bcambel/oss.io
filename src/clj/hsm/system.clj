@@ -10,7 +10,7 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-        [raven-clj.ring               :refer [capture-error wrap-sentry]]
+        ; [raven-clj.ring               :refer [capture-error wrap-sentry]]
         [hsm.system.redis             :as sys.redis]
         [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
@@ -111,7 +111,7 @@
           (wrap-defaults api-defaults)
           (wrap-defaults site-defaults)
           (wrap-exception-handler dsn)
-          (wrap-sentry dsn {:namespaces ["hsm"]})
+          ; (wrap-sentry dsn {:namespaces ["hsm"]})
           (wrap-nocache)
           (wrap-log)
           ))

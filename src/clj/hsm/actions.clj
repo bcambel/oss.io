@@ -44,6 +44,7 @@
 
 (defn load-projects-by-id
   [db proj-list]
+  (when-not (empty? proj-list)
   (let [conn (:connection db)]
      (jdbc/query pg-db
       (-> (select :full_name)
@@ -51,7 +52,7 @@
          (where [:in :full_name proj-list])
          (limit 1e3)
          (sql/build)
-         (sql/format :quoting :ansi)))))
+         (sql/format :quoting :ansi))))))
 
 (defn ensure-table-extras
   [table pk-field pk-val]
@@ -112,7 +113,7 @@
              (limit 1)
              (sql/build)
              (sql/format :quoting :ansi))
-        _ (log/info q)
+        ; _ (log/info q)
         proj-extras (first (jdbc/query pg-db q))]
     (merge proj-extras
       { :watchers (if-not (nil? (:watchers proj-extras))
@@ -128,7 +129,7 @@
 
 (defn load-user2
   [db user-id]
-  (log/infof "Loading user[%s] from DB..." user-id)
+  ; (log/infof "Loading user[%s] from DB..." user-id)
 
   (let [conn (:connection db)
         user (->
@@ -139,7 +140,7 @@
                                  (sql/build)
                                  (sql/format :quoting :ansi)))
                 first)]
-      (log/debug "User loaded" user)
+      ; (log/debug "User loaded" user)
       user
 
       ))
@@ -171,12 +172,12 @@
 
 (defn load-users-by-id
   [db user-ids]
-  (log/info "Loading users..# " (count user-ids))
+  ; (log/info "Loading users..# " (count user-ids))
   (if (empty? user-ids)
     []
     (let [user-ids (max-element user-ids 100)
           conn (:connection db)]
-      (log/warn "Fetching user-ids" user-ids)
+      ; (log/warn "Fetching user-ids" user-ids)
       (jdbc/query pg-db
         (->
           (select :*)
@@ -187,7 +188,7 @@
 
 (defn user-projects-es*
   [id maximum]
-  (log/info id)
+  ; (log/info id)
   (jdbc/query pg-db
     (->
       (select :*)

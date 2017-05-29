@@ -61,7 +61,7 @@
   []
   (:data @conf/app-conf))
 
-(defn get-url
+(defn get-url2
   [url & options]
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
@@ -69,8 +69,6 @@
               end-point (format "%s&client_id=%s&client_secret=%s" url
                             (env :client-id)
                             (env :client-secret)) ]
-    (log/info header)
-    (log/info end-point)
     (try+
       (client/get end-point header)
       (catch [:status 403] {:keys [request-time headers body]}
@@ -83,7 +81,7 @@
         (when-not safe
           (throw+))))))
 
-(defn get-url2
+(defn get-url
   [url & options]
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
@@ -115,8 +113,6 @@
       (let [[next-s last-s & others] (.split stupid-header ",")
             next-page (vec (.split next-s ";"))
             is-next (.contains (last next-page) "next")]
-          (log/debug next-s last-s)
-          (log/info "Next UP" next-page)
         (when is-next
           (s/replace (subs (first next-page) 1) ">" "")))
       (catch Throwable t
@@ -131,9 +127,11 @@
           (do
             (let [repos (parse-string (:body response) true)
                   next-url (find-next-url
-                      (-> response :headers :link))]
+                              (-> response :headers :link))]
               (log/debug (:headers response))
-              {:success true :next-url next-url :data repos}))))
+              {:success true
+                :next-url next-url
+                :data repos}))))
     (catch Throwable t
       (do
         (throw+ t)
@@ -148,11 +146,6 @@
 
 (defn find-existing-users
   [conn user-list]
-  ; (mapv :login (cql/select conn :github_user
-  ;   (dbq/columns :login)
-  ;   (dbq/where [[:in :login user-list]])
-  ;   )
-  ; )
   (map :login (jdbc/query pg-db
     (->(select :login)
        (from :github_user)
@@ -195,11 +188,8 @@
   (when-let [users (mapv #(assoc % :full_profile false)
                       (find-users conn coll))]
     (when-not (empty? users)
-      (log/info "INSERT USERS" users)
-      (apply (partial jdbc/insert! pg-db :github_user) users)
-      ; (cql/insert-batch conn :github_user users)
-
-      )))
+      (log/info "INSERT USERS" (count users))
+      (jdbc/insert-multi! pg-db :github_user users))))
 
 (defn insert-projects
   [conn coll]
@@ -208,22 +198,43 @@
                            ghub-proj-fields)) coll))
         project-ids (mapv #(get % :full_name) projects)
         existing-projects (or (find-existing-projects conn project-ids) [])]
-        ; (log/warn "EXISTING" existing-projects project-ids)
     (let [[not-in-db _ both-exists] (diff (set project-ids) (set existing-projects))]
       (log/warn "NOT-DB" not-in-db)
       (let [missing-projects (filter #(in? not-in-db (get % :full_name)) projects)]
         (when (> (count missing-projects) 0)
           (log/info (format "Inserting %d projects" (count missing-projects)))
-          ; (cql/insert-batch conn :github_project missing-projects)
-          (apply (partial jdbc/insert! pg-db :github_project) missing-projects))))))
+          (jdbc/insert-multi! pg-db :github_project missing-projects))))))
 
 (defn insert-records
   [conn coll]
   (insert-projects conn coll)
   (insert-users conn (map user-data coll)))
 
+  (defn find-existing-events
+    [event-list]
+      (let [events (mapv :id
+                        (jdbc/query pg-db
+                        (->(select :id)
+                           (from :github_events)
+                           (where [:in :id event-list])
+                           (limit 1e6)
+                           (sql/build)
+                           (sql/format :quoting :ansi))))]
+        (log/warn (format "Found Ids: %d" (count events)))
+        events))
 
- (defn insert-events [events] (when-not (empty? events) (apply (partial jdbc/insert! pg-db :github_events) events)))
+ (defn insert-events [events]
+   (when-not (empty? events)
+    (let [existing-events (find-existing-events (mapv :id events))
+          remaining-events (remove #(in? existing-events (:id %)) events)]
+          (log/warn (format "Remaining Ids: %d" (count remaining-events)))
+      (when-not (empty? remaining-events)
+        ; (log/warn "Writing" (first remaining-events))
+        ; (log/warn pg-db)
+        (jdbc/insert-multi! pg-db :github_events remaining-events)
+        ; (log/warn "done Writing")
+        true
+        ))))
 
 (defn import-repos
   [db language max-iter]
@@ -240,22 +251,19 @@
     1))
 
 (defn import-org-events
-  [organization ]
+  [organization]
   (let [org-events-url (format "%s/orgs/%s/events?per_page=100" ghub-root organization)
         max-iter 100]
     (loop [url org-events-url
            looped 1
            ids []]
-        (log/warn (format "Loop %d. %s \n %s" looped url (count ids)))
+        (log/warn (format "Loop %d. %s %s" looped url (count ids)))
         (let [{:keys [success next-url data]} (fetch-url url)]
-          (log/info next-url url)
           (insert-events (mapv (fn[x] {:id (Long/parseLong (:id x))
                                         :event_type (:type x)
                                         :payload (pg-json (generate-string x))})
                             (remove #(in? ids (:id %)) data)))
-
             (when (and next-url
-
                     (< looped max-iter))
               (recur next-url (inc looped)
                 (concat ids (mapv :id data)) ))))))
@@ -508,7 +516,9 @@
                             (sql/format :quoting :ansi))]
     (log/info projx)
     (log/warn (first update-query))
-    (jdbc/execute! pg-db update-query))))
+    (jdbc/execute! pg-db update-query)
+    projx
+    )))
 
 (defn enhance-proj
   [db proj max-iter]

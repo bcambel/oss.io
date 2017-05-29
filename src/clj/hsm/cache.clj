@@ -23,3 +23,9 @@
   (wcar redis
     (car/del key))
   )
+
+(defn hset
+  [redis key el val]
+  (wcar redis
+    (car/hset key el val))
+  )

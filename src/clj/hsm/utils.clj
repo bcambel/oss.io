@@ -194,7 +194,7 @@
 (defn whois
   "Temporary user finder.. Returns a static User ID"
   [request]
-  (log/debug (get-in request [:headers "x-auth-token"]))
+  ; (log/debug (get-in request [:headers "x-auth-token"]))
   243975551163827208)
 
 (defn common-of
@@ -271,7 +271,7 @@
 (defn !nil? [x] (not (nil? x)))
 (defn   !blank? [x] (not (str/blank? x)))
 (defn     !neg? [x] (not (neg? x)))
-(defn  pos-int? [x] (and (integer? x) (pos? x)))
+
 (defn !neg-int? [x] (and (integer? x) (!neg? x)))
 (defn   nvec? [n x] (and (vector?  x) (= (count x) n)))
 (def vec1? (partial nvec? 1))

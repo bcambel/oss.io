@@ -59,7 +59,7 @@
                 req-id limit-by url hosted-pl]} (common-of request)
         view         (get-in request [:params :view])
         view-fn     (if (= view "grid") grid-view list-view)]
-    (log/info req-id platform hosted-pl host url)
+    ; (log/info req-id platform hosted-pl host url)
     (when platform
       (let [;top-projects (actions/top-projects-es* else platform limit-by)
             top-projects (actions/list-top-proj platform 100)
@@ -170,13 +170,14 @@
          related-projects []
          admin? false
          proj (first (actions/load-project db id))
-         _ (log/infof "Project loaded. " (:full_name proj))
+        ;  _ (log/infof "Project loaded. %s" (:full_name proj))
          proj-extras (actions/load-project-extras* db id)
          watcher-count (try (count (:watchers proj-extras)) (catch Throwable t 0))
          contributor-count (try  (count (:contributors proj-extras)) (catch Throwable t 0))
          owner (first (.split id "/"))
          owner-obj (actions/load-user2 db owner)
-         _ (log/infof "User loaded %s-> %s" owner owner-obj)]
+        ;  _ (log/infof "User loaded %s-> %s" owner owner-obj)
+         ]
       (if json?
         (json-resp (selector proj-extras));(assoc proj :owner owner-obj))
         (views/layout {:website host
@@ -291,18 +292,19 @@
         related-projects []
         admin? false]
     (let [proj (first (actions/load-project db id))]
-      (log/info "Project loaded" (select-keys proj [:id :name :full_name]))
+      ; (log/info "Project loaded" (select-keys proj [:id :name :full_name]))
       (if force-sync
         (do
           (gh/enhance-proj db id 1000)
           (redirect (str "/p/" id)))
         (let [proj-extras (actions/load-project-extras* db id)
-              _ (log/info "Project extras loaded" (select-keys proj-extras [:proj]))
+              ; _ (log/info "Project extras loaded" (select-keys proj-extras [:proj]))
               watcher-count (try (count (or (:watchers proj-extras) 0)) (catch Throwable t 0))
               contributor-count (try (count (:contributors proj-extras)) (catch Throwable t 0))
               owner (first (.split id "/"))
               owner-obj (actions/load-user2 db owner)
-              _ (log/infof "User loaded %s" owner)]
+              ; _ (log/infof "User loaded %s" owner)
+              ]
           (if json?
             (json-resp (-> proj
                           (assoc :owner owner-obj)

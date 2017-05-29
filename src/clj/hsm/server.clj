@@ -4,7 +4,9 @@
             [hsm.conf :as conf]
             [hsm.system :as system]
             [com.stuartsierra.component :as component]
-            [environ.core :refer [env]])
+            [environ.core :refer [env]]
+            [hsm.tasks.queue :as worker-queue]
+            )
   (:gen-class))
 
 
@@ -25,6 +27,7 @@
                                     :else-index (:else-index c)
                                     :conf c})
         app-sys (component/start sys)]
+        (worker-queue/start-listen)
         app-sys
     )))
 

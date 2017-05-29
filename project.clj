@@ -8,53 +8,54 @@
 
   :source-paths ["src/clj" "src/cljs"]
   :lein-release {:deploy-via :clojars :scm :git}
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                 [org.clojure/core.memoize "0.5.9"]
-                [org.clojure/core.async "0.2.385"]
-                [ring "1.5.0"]
-                [ring/ring-defaults "0.2.1"]
+                [org.clojure/core.async "0.3.443"]
+                [ring "1.6.1"]
+                [ring/ring-defaults "0.3.0"]
 
                 [http-kit "2.2.0"]
-                [compojure "1.5.1"]
-                [enlive "1.1.5"]
-                [clj-http "3.2.0"]
-                [clj-time "0.12.0"]
+                [compojure "1.6.0"]
+                [enlive "1.1.6"]
+                [clj-http "3.6.0"]
+                [clj-time "0.13.0"]
 
                 [environ "1.1.0"]
-                [com.cognitect/transit-clj "0.8.288"]
-                [cheshire "5.3.1"]
-                [com.google.guava/guava "19.0"]
+                [com.cognitect/transit-clj "0.8.300"]
+                [cheshire "5.7.1"]
+                [com.google.guava/guava "22.0"]
 
-                [com.taoensso/carmine "2.14.0"]
+                [com.taoensso/carmine "2.16.0"]
 
                 [net.jpountz.lz4/lz4  "1.3.0"]
-                [prismatic/schema "0.3.3"]
-                [prismatic/plumbing "0.3.5"]
+                [prismatic/schema "1.1.6"]
+                [prismatic/plumbing "0.5.4"]
                 ; [tentacles "0.2.5"]
 
-                [com.stuartsierra/component "0.3.1"]
+                [com.stuartsierra/component "0.3.2"]
 
                 [com.brainbot/iniconfig "0.2.0"]
-                [com.draines/postal "1.11.1"]
+                [com.draines/postal "2.0.2"]
 
-                [com.climate/claypoole "0.2.1"] ; handle threads
+                [com.climate/claypoole "1.1.4"] ; handle threads
                 [me.raynes/fs "1.4.6"]
                 [hiccup "1.0.5"]
 
                 [com.taoensso/timbre "4.7.4"]
-                [bcambel/raven-clj "1.4.3"]
-
-                [metrics-clojure "2.4.0"]
+                ; [bcambel/raven-clj "1.4.3"]
+                [spootnik/raven "0.1.2"]
+                [com.climate/squeedo "0.1.4"]
+                [metrics-clojure "2.9.0"]
                 [slingshot "0.12.2"]
                 [clj-datadog "3.0.1"]
                 [midje "1.8.3"]
-                [digest "1.4.4"]
+                [digest "1.4.5"]
 
                 [markdown-clj "0.9.62"]
 
 
-                [org.clojure/java.jdbc "0.4.2"]
-                [honeysql "0.6.2"]
+                [org.clojure/java.jdbc "0.6.1"]
+                [honeysql "0.8.2"]
                 [org.postgresql/postgresql "9.4-1205-jdbc41"]
                 [org.clojars.runa/clj-kryo "1.5.0"]
 
@@ -76,7 +77,7 @@
   :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
   :profiles {
               :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
-              :master {:dependencies [[org.clojure/clojure "1.8.0"]]
+              :master {:dependencies [[org.clojure/clojure "1.9.0-alpha14"]]
                         ; :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
                       }
               ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
@@ -92,7 +93,7 @@
                     :plugins [[lein-midje "3.1.3"]
                                 ; [lein-figwheel "0.1.4-SNAPSHOT"]
                               ]
-                    :dependencies [[midje "1.7.0-SNAPSHOT"]
+                    :dependencies [[midje "1.8.3"]
                                    [org.xerial.snappy/snappy-java "1.0.5"]
                                    [org.clojure/tools.namespace "0.2.11"]]
                     ; :figwheel {:http-server-root "public"
