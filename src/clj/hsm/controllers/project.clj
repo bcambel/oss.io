@@ -240,7 +240,9 @@
       "stargazers" (get-project-stargazers spec request)
       "watchers"    (get-project-watchers spec request)
       "contributors" (get-project-contrib spec request)
-      (resp/status 404))))
+      (->
+       (resp/response "Sorry. Page not found")
+       (resp/status 404)))))
 
 (defn get-py-contribs
   [{:keys [db event-chan redis]} request]

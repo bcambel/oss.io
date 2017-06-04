@@ -4,7 +4,6 @@
     [ring.util.response     :as resp]
     [cognitect.transit       :as t]
     [clojure.stacktrace     :as clj-stk]
-    [raven.client :refer [capture!]]
     [cheshire.core           :refer :all]
     [digest]
     [truckerpath.clj-datadog.core :as dd]
@@ -42,16 +41,14 @@
     (try
       (handler req)
       (catch IllegalArgumentException e
-        (capture! dsn e)
         (-> e
          (resp/response)
          (resp/status 400)))
       (catch Throwable e
         (do
-          (capture! dsn e)
-          (log/warn "Exception caught.")
-          (log/error e)
-          (when is-dev? (throw e))
+          (when is-dev?
+            (log/error e)
+            (throw e))
         (->
          (resp/response "Sorry. An error occured.")
          (resp/status 500)))))))
@@ -73,7 +70,7 @@
   TODO: Optionable status code.."
   [data & [status]]
   (let [http-status-code (or status 200)]
-    (log/info http-status-code)
+    ; (log/info http-status-code)
     (-> (generate-string data)
           (resp/response)
           (resp/header "Content-Type" "application/json")

@@ -42,8 +42,8 @@
                 [hiccup "1.0.5"]
 
                 [com.taoensso/timbre "4.7.4"]
-                ; [bcambel/raven-clj "1.4.3"]
-                [spootnik/raven "0.1.2"]
+                [bcambel/raven-clj "1.5.0"]
+                ; [spootnik/raven "0.1.2"]
                 [com.climate/squeedo "0.1.4"]
                 [metrics-clojure "2.9.0"]
                 [slingshot "0.12.2"]
@@ -52,7 +52,7 @@
                 [digest "1.4.5"]
 
                 [markdown-clj "0.9.62"]
-
+                [org.clojure/tools.nrepl "0.2.12"]
 
                 [org.clojure/java.jdbc "0.6.1"]
                 [honeysql "0.8.2"]
@@ -78,7 +78,7 @@
   :profiles {
               :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
               :master {:dependencies [[org.clojure/clojure "1.9.0-alpha14"]]
-                        ; :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
+                        :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]
                       }
               ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
               :gsync { :main hsm.gsync :uberjar-name "hsm.github.sync.jar"}

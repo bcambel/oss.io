@@ -6,6 +6,7 @@
             [com.stuartsierra.component :as component]
             [environ.core :refer [env]]
             [hsm.tasks.queue :as worker-queue]
+            [clojure.tools.nrepl.server :as repl]
             )
   (:gen-class))
 
@@ -27,14 +28,18 @@
                                     :else-index (:else-index c)
                                     :conf c})
         app-sys (component/start sys)]
-        (worker-queue/start-listen)
+        (when (get c :worker false)
+          (log/info "Worker Actived! ")
+          (worker-queue/start-listen))
         app-sys
     )))
 
 (defn -main [& args]
     (try
       (log/info "Starting....")
+
       (startup {:conf (first args)})
+      (defonce server (repl/start-server :port 7888))
       (catch Throwable t
         (do
           (log/warn "FAILED!")

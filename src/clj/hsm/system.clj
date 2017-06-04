@@ -10,13 +10,14 @@
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
                                               wrap-nocache wrap-log redirect]]
-        ; [raven-clj.ring               :refer [capture-error wrap-sentry]]
+        [raven-clj.ring               :refer [capture-error wrap-sentry]]
         [hsm.system.redis             :as sys.redis]
         [hsm.system.pg              :as sys.pg]
         [compojure.handler            :as handler :refer [api]]
         [compojure.route              :as route :refer [resources]]
         [ring.middleware.reload       :as reload]
         [ring.middleware.defaults     :refer :all]
+        [ring.middleware.keyword-params :refer :all]
         [ring.util.response           :as resp]
         [net.cgrand.enlive-html       :refer [deftemplate]]
         [compojure.core               :refer [GET POST PUT defroutes]]
@@ -95,6 +96,7 @@
         ; (GET  "/search"                           request (c.pr/search specs request))
         ; (GET  "/search/update"                    request (c.pr/update-search specs request))
         ; (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
+        (GET "/update-project/:user/:project"              [user project] (json-resp (ghub/update-project-info (format "%s/%s" user project))))
 
         (route/not-found "Page not found")
         ))
@@ -110,8 +112,8 @@
       (-> http-handler
           (wrap-defaults api-defaults)
           (wrap-defaults site-defaults)
-          (wrap-exception-handler dsn)
-          ; (wrap-sentry dsn {:namespaces ["hsm"]})
+          (wrap-sentry dsn {:namespaces ["hsm"]})
+          ; (wrap-exception-handler dsn)
           (wrap-nocache)
           (wrap-log)
           ))

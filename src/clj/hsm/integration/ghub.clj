@@ -5,10 +5,7 @@
       [taoensso.timbre                :as log]
       [clojure.java.jdbc              :as jdbc]
       [honeysql.core                  :as sql]
-      [honeysql.helpers               :refer :all]
-      ; [clojurewerkz.cassaforte.cql    :as cql]
-      ; [clojurewerkz.cassaforte.query  :as dbq]
-      ; [qbits.hayt.dsl.statement       :as hs]
+      [honeysql.helpers               :as sqlh]
       [clj-http.client                :as client]
       [cheshire.core                  :refer :all]
       [environ.core                   :refer [env]]
@@ -16,6 +13,8 @@
       [hsm.conf                       :as conf]
       [hsm.system.pg                  :refer [pg-db]]
       [hsm.actions                    :as actions]
+      [hsm.integration.ghub_keys      :as ghkeys]
+      [hsm.cache :as cache]
       )
 
     (:use [slingshot.slingshot :only [throw+ try+]]
@@ -61,40 +60,35 @@
   []
   (:data @conf/app-conf))
 
-(defn get-url2
-  [url & options]
-  (let [{:keys [header safe care conf]
-         :or {header header-settings safe false
-              care true conf (get-config)}} options
-              end-point (format "%s&client_id=%s&client_secret=%s" url
-                            (env :client-id)
-                            (env :client-secret)) ]
-    (try+
-      (client/get end-point header)
-      (catch [:status 403] {:keys [request-time headers body]}
-        (log/warn "403" request-time headers))
-      (catch [:status 404] {:keys [request-time headers body]}
-        (log/warn "NOT FOUND" url request-time headers body))
-      (catch Object _
-        (when care
-          (log/error (:throwable &throw-context) "Unexpected Error"))
-        (when-not safe
-          (throw+))))))
+
+(defn rate-limit-logger
+  [hd]
+  (log/infof "R/L: %s RESET: %s"
+           (get hd "X-RateLimit-Remaining")
+           (get hd "X-RateLimit-Reset")))
 
 (defn get-url
   [url & options]
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
-              care true conf (get-config)}} options]
-    (log/info header)
+              care true conf (get-config)}} options
+        [client_id secret] (ghkeys/pick-key)
+        _ (log/infof "Picked %s" client_id)]
     (try+
-      (client/get (format "%s&client_id=%s&client_secret=%s" url
-                    (:github-client conf) (:github-secret conf))
-        header)
+      (let [response (client/get (format "%s&client_id=%s&client_secret=%s" url client_id secret
+                                    ;;(:github-client conf) (:github-secret conf)
+                                    )
+                        header)]
+          (rate-limit-logger (:headers response))
+          response)
       (catch [:status 403] {:keys [request-time headers body]}
-        (log/warn "403" request-time headers))
+        (do
+          (log/warn "403" request-time)
+          (rate-limit-logger headers)))
       (catch [:status 404] {:keys [request-time headers body]}
-        (log/warn "NOT FOUND" url request-time headers body))
+        (do
+          (log/warn "NOT FOUND" url request-time )
+          (rate-limit-logger headers)))
       (catch Object _
         (when care
           (log/error (:throwable &throw-context) "Unexpected Error"))
@@ -128,7 +122,6 @@
             (let [repos (parse-string (:body response) true)
                   next-url (find-next-url
                               (-> response :headers :link))]
-              (log/debug (:headers response))
               {:success true
                 :next-url next-url
                 :data repos}))))
@@ -147,12 +140,12 @@
 (defn find-existing-users
   [conn user-list]
   (map :login (jdbc/query pg-db
-    (->(select :login)
-       (from :github_user)
-       (where [:in :login user-list])
-       (limit 1e6)
-       (sql/build)
-       (sql/format :quoting :ansi))))
+      (-> (sqlh/select :login)
+          (sqlh/from :github_user)
+          (sqlh/where [:in :login user-list])
+          (sqlh/limit 1e6)
+          (sql/build)
+          (sql/format :quoting :ansi))))
   )
 
 (defn find-users
@@ -174,10 +167,10 @@
   [conn project-list]
     (let [projects (map :full_name
                       (jdbc/query pg-db
-                      (->(select :full_name)
-                         (from :github_project)
-                         (where [:in :full_name project-list])
-                         (limit 1e6)
+                      (->(sqlh/select :full_name)
+                         (sqlh/from :github_project)
+                         (sqlh/where [:in :full_name project-list])
+                         (sqlh/limit 1e6)
                          (sql/build)
                          (sql/format :quoting :ansi))))]
       (log/warn (format "Found projects: %d" (count projects)))
@@ -214,10 +207,10 @@
     [event-list]
       (let [events (mapv :id
                         (jdbc/query pg-db
-                        (->(select :id)
-                           (from :github_events)
-                           (where [:in :id event-list])
-                           (limit 1e6)
+                        (->(sqlh/select :id)
+                           (sqlh/from :github_events)
+                           (sqlh/where [:in :id event-list])
+                           (sqlh/limit 1e6)
                            (sql/build)
                            (sql/format :quoting :ansi))))]
         (log/warn (format "Found Ids: %d" (count events)))
@@ -286,14 +279,12 @@
 
 (defn expand-project
   [proj]
-  (let [url (format "%s/repos/%s?"
-                     ghub-root proj (env :client-id) (env :client-secret))
+  (let [url (format "%s/repos/%s?" ghub-root proj )
         response (get-url url :header header-settings)]
-       (log/info (:headers response))
       (when (!nil? response)
         (let [proj-data (parse-string (:body response) true)]
           (when-let [proj-info (select-keys proj-data ghub-proj-fields)]
-            (log/warn (format "%s -> %s" proj proj-info))
+            (log/warn (format "%s -> %s" proj (select-keys proj-info [:id :watchers :full_name])))
             proj-info)))))
 
 (defn user-starred
@@ -506,19 +497,47 @@
     (map #(% db user-login max-iter)
       [user-following user-followers user-starred user-repos])))
 
+(defn update-project-db
+  [proj projx]
+  (log/infof "%s| %s" proj projx)
+  (let [update-query (-> (sqlh/update :github_project)
+                          (sqlh/sset (dissoc projx :full_name))
+                          (sqlh/where [:= :full_name proj])
+                          (sql/build)
+                          (sql/format :quoting :ansi))]
+  ; (log/info projx)
+  ; (log/warn (first update-query))
+  (try
+    (jdbc/execute! pg-db update-query)
+    (catch Exception ex
+      (log/warnf "Failed to write update for %s" proj)
+      ))
+  projx
+  ))
+
 (defn update-project
   [db proj]
-  (when-let [projx (expand-project proj)]
-    (let [update-query (-> (update :github_project)
-                            (sset (dissoc projx :full_name))
-                            (where [:= :full_name proj])
-                            (sql/build)
-                            (sql/format :quoting :ansi))]
-    (log/info projx)
-    (log/warn (first update-query))
-    (jdbc/execute! pg-db update-query)
-    projx
-    )))
+  (when-let [projx (try
+                      (expand-project proj)
+                      (catch Exception ex
+                        (log/error "Failed")))]
+      (update-project-db proj projx)
+      projx))
+
+(defn update-project-stats
+  [project]
+  (when project
+    (cache/hset {:pool {} :spec {:host "localhost" :port 6379}}
+      (format "oss.stats_timeline_%s" (:full_name project))
+                            (str (System/currentTimeMillis))
+                            (:watchers project)))
+    project)
+
+(defn update-project-info
+  [params]
+  (-> (update-project nil params)
+      (update-project-stats)))
+
 
 (defn enhance-proj
   [db proj max-iter]
@@ -537,21 +556,22 @@
 
 (defn user-list
   [conn n]
-  ; (mapv :login
-  ;   (cql/select conn :github_user
-  ;     (dbq/columns :login)
-  ;     (dbq/limit n)
-  ;     (dbq/where [[:= :full_profile false]])))
-  )
+  (jdbc/execute! pg-db
+      (-> (sqlh/select :login)
+          (sqlh/from github_user)
+          (sqlh/where [:= :full_profile false])
+          (sqlh/limit n)
+          (sql/build)
+          (sql/format :quoting :ansi))))
 
 (defn find-n-update-user
   [db x enhance?]
     (when-let [user (find-user x)]
       (log/warn "USER:" user)
       (jdbc/execute! pg-db
-          (-> (update :github_user)
-              (sset user)
-              (where [:= :login x])
+          (-> (sqlh/update :github_user)
+              (sqlh/sset user)
+              (sqlh/where [:= :login x])
               (sql/format :quoting :ansi)))
       (when enhance?
         (enhance-user db x 1000)
@@ -563,7 +583,7 @@
   [db n]
   (log/warn "Find users: " n db)
   (let [conn (:connection db)]
-    (loop [users (user-list conn n)
+    (loop [users (user-list n)
            looped 1]
       (log/warn (format "Loop: %d Found %d users" looped (count users)))
       (doall
