@@ -134,7 +134,8 @@
         [:meta {:name "keywords" :content (or keywords description)}]
         (include-css "//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/paper/bootstrap.min.css")
         (include-css "//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css")
-        (include-css "/css/style.css")]
+        (include-css "/css/style.css")
+        ]
        [:body
          [:div.nav.navbar-default
           [:div.container
@@ -146,14 +147,17 @@
                   [:li [:a {:href "/users?ref=top_menu_link"} "Users"]]
                   [:li [:a {:href "/open-source/?ref=top_menu_link"} "Top Projects"]]
                    [:li.dropdown
-                     [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Platforms" [:span.caret]]
+                     [:a.dropdown-toggle {:data-toggle "dropdown" :href "#"} "Languages" [:span.caret]]
                      [:ul.dropdown-menu
                        (for [lang languages]
                          [:li [:a {:href (format "/%s/top-projects" lang) } lang]])]]
                   [:li [:a {:href "/about"} "About"]]
+                  [:li [:a {:href "/register"} "Join"]]
                   ]
 
-                  [:ul.nav.navbar-nav.navbar-right [:li [:a "Hello"] ]]]]]
+                  [:ul.nav.navbar-nav.navbar-right [:li
+                  ; [:div#oa_social_login_container ]
+                  ]]]]]
         [:div.container-fluid
           ; [:div.col-lg-1.left-panel ""]
           [:div.col-lg-11
@@ -217,8 +221,15 @@
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
       ga('create', '%s', 'auto');
       ga('send', 'pageview');" property-id)
-
+      (format
+      "var oneall_subdomain = 'ossio';var oa = document.createElement('script');oa.type = 'text/javascript'; oa.async = true;oa.src = '//' + oneall_subdomain + '.api.oneall.com/socialize/library.js';
+      var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(oa, s);
+      var _oneall = _oneall || [];
+      _oneall.push(['social_login', 'set_providers', ['github','google','twitter']]);
+      _oneall.push(['social_login', 'set_callback_uri', 'http://%s/auth']);
+      _oneall.push(['social_login', 'do_render_ui', 'oa_social_login_container']);" website)
           "!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');"
+
           (when-not is-dev?
           (format
           "(function() {

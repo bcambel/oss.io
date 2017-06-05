@@ -27,10 +27,9 @@
               [:hr]
               ; [:p "Currently under high development. We will keep you updated if you "
               ;   [:a {:href "#mc_embed_signup" :data-toggle :modal} "subscribe now!"]]
-              [:a.btn.btn-success.btn-lg {:href "#mc_embed_signup" :data-toggle :modal} "Subscribe free"]
+              [:a.btn.btn-success.btn-lg {:href "/register" } "Join free"]
               [:h2 "Pssst, also check out these"
-                [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"] " or "
-                [:a.green {:href "/users?utm_source=main_page_link"} " Top Users"]
+                [:a {:href "/open-source/?utm_source=main_page_link"} " Top Projects"]
                 ]
               [:hr]
               [:a.twitter-follow-button {:href "https://twitter.com/pythonhackers"

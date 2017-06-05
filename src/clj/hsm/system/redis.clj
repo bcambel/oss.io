@@ -10,7 +10,7 @@
 (defrecord Redis [host port conn]
   component/Lifecycle
   (start [component] (log/info "Starting Redis Component")
-    (let [conn {:pool {} :spec {:host host :port port}}]
+    (let [conn {:pool {} :spec {:host host :port (Integer/parseInt port)}}]
       (assoc component :conn conn)))
 
    (stop  [component] (log/info "Stopping Redis Component")

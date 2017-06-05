@@ -33,7 +33,8 @@
 (defn pick-key
   []
   (let [available-keys (get-keys)]
-    (rand-nth available-keys)))
+    (when-not (empty? available-keys)
+      (rand-nth available-keys))))
 
 (defn update-key-credits
   [client_id secret]
