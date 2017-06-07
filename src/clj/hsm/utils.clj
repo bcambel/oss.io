@@ -17,7 +17,14 @@
     [clj-kryo.core :as kryo])
   (:import [com.google.common.net InternetDomainName]
             [java.io ByteArrayOutputStream ByteArrayInputStream]
+            [org.postgresql.util PGobject]
             [com.esotericsoftware.kryo.io Output Input]))
+
+
+(defn pg-json [value]
+  (doto (PGobject.)
+    (.setType "json")
+    (.setValue value)))
 
 (defn kryo-round-trip [expr]
   (let [bos (ByteArrayOutputStream.)]

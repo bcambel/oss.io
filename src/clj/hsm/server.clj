@@ -31,6 +31,9 @@
         (when (get c :worker false)
           (log/info "Worker Actived! ")
           (worker-queue/start-listen))
+        (defonce server
+          (repl/start-server :port (Integer/parseInt
+                                    (get c :repl "7888"))))
         app-sys
     )))
 
@@ -39,7 +42,7 @@
       (log/info "Starting....")
 
       (startup {:conf (first args)})
-      (defonce server (repl/start-server :port 7888))
+
       (catch Throwable t
         (do
           (log/warn "FAILED!")

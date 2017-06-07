@@ -6,6 +6,7 @@
             [taoensso.timbre :as log]
             [cheshire.core                  :refer :all]
             [clj-http.client                :as client]
+            [truckerpath.clj-datadog.core :as dd]
             [taoensso.carmine :as car :refer (wcar)]
             ))
 
@@ -20,9 +21,10 @@
         url (format "http://%s/%s/%s" bee "update-project" param )]
       (log/info url)
      (when-let [result (try
-                        (-> (client/get url)
+                        (dd/timed {} "worker.bee.call" {:service "oss"}
+                          (-> (client/get url)
                             (get :body)
-                            (parse-string true))
+                            (parse-string true)))
                         (catch Exception ex
                           (log/error ex)))]
       (gh/update-project-stats result)
@@ -38,6 +40,8 @@
     (try
     (condp = type
       "update-project" (assign-worker-bee params)
+      "enhance-user" (gh/find-n-update-user nil params true)
+      "sync-user" (gh/sync-some-users {:connection nil} (Integer/parseInt params))
       "import-org-events" (gh/import-org-events params)
       (str "unexpected value ->" type)
       )
