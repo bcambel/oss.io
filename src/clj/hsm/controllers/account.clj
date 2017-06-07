@@ -61,6 +61,10 @@
           []
           )))))
 
+(defn create-link
+  [user-id user-token]
+  (jdbc/insert! pg-db :user_token_link {:user_id user-id :user_token user-token}
+  ))
 
 (defn create-account
   [user-data user-token]
@@ -85,10 +89,6 @@
         (:id oss-user)
         ))))
 
-(defn create-link
-  [user-id user-token]
-  (jdbc/insert! pg-db :user_token_link {:user_id user-id :user_token user-token}
-  ))
 
 (defn authorize
   [specs request]

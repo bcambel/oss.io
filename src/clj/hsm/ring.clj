@@ -5,6 +5,7 @@
     [cognitect.transit       :as t]
     [clojure.stacktrace     :as clj-stk]
     [cheshire.core           :refer :all]
+    [truckerpath.clj-datadog.core :as dd]
     [digest]
     [truckerpath.clj-datadog.core :as dd]
     [hsm.dev :refer [is-dev?]]

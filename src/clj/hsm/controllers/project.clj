@@ -55,9 +55,7 @@
 
 (defn list-top-proj
   [{:keys [db event-chan redis else]} request]
-  (let [session-data (:session request)]
-    (log/warn session-data)
-  )
+  ; (let [session-data (:session request)])
   (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
         view         (get-in request [:params :view])
@@ -289,9 +287,7 @@
 (defn get-proj
   "Ugly method to respond a project query. xyz.com/p/:user/:project"
   [{:keys [db event-chan redis]} request]
-  (let [session-data (:session request)]
-    (log/warn session-data)
-  )
+  (let [session-data (:session request)])
   (let [{:keys [host id body json? user platform
                 req-id limit-by url hosted-pl]} (common-of request)
 

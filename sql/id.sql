@@ -1,6 +1,6 @@
-create sequence public.global_id_sequence;
+create sequence global_id_sequence;
 
-CREATE OR REPLACE FUNCTION public.id_generator(OUT result bigint) AS $$
+CREATE OR REPLACE FUNCTION id_generator(OUT result bigint) AS $$
 DECLARE
     our_epoch bigint := 1314220021721;
     seq_id bigint;

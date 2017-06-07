@@ -74,7 +74,7 @@
             :jvm-opts ["-XX:+CMSClassUnloadingEnabled"]
             :profiles {:1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
                        :master {:dependencies [[org.clojure/clojure "1.9.0-alpha14"]]
-                                :java-agents [[com.newrelic.agent.java/newrelic-agent "3.31.1"]]}
+                                :java-agents [[com.newrelic.agent.java/newrelic-agent "3.39.1"]]}
               ; :twitter { :main hsm.integration.twttr :uberjar-name "hsm-twitter-pipe.jar"}
                        :gsync {:main hsm.gsync :uberjar-name "hsm.github.sync.jar"}
                        :main {:main hsm.server :uberjar-name ~(str "hsm-" VERSION ".jar")}

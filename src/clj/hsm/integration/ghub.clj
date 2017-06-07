@@ -14,6 +14,7 @@
       [hsm.system.pg                  :refer [pg-db]]
       [hsm.actions                    :as actions]
       [hsm.integration.ghub_keys      :as ghkeys]
+      [truckerpath.clj-datadog.core   :as dd]
       [hsm.cache :as cache]
       )
 
@@ -72,12 +73,14 @@
         [client_id secret] (ghkeys/pick-key)
         _ (log/infof "Picked %s" client_id)]
     (try+
-      (let [response (client/get (format "%s&client_id=%s&client_secret=%s" url client_id secret
-                                    ;;(:github-client conf) (:github-secret conf)
+      (dd/timed {} "github.api.call" {:service "github"}
+        (let [response
+
+              (client/get (format "%s&client_id=%s&client_secret=%s" url client_id secret
                                     )
                         header)]
           (rate-limit-logger (:headers response))
-          response)
+          response))
       (catch [:status 403] {:keys [request-time headers body]}
         (do
           (log/warn "403" request-time)
@@ -170,7 +173,7 @@
                          (sqlh/limit 1e6)
                          (sql/build)
                          (sql/format :quoting :ansi))))]
-      (log/warn (format "Found projects: %d" (count projects)))
+      ; (log/warn (format "Found projects: %d" (count projects)))
       projects))
 
 (defn insert-users
@@ -178,7 +181,8 @@
   (when-let [users (mapv #(assoc % :full_profile false)
                       (find-users conn coll))]
     (when-not (empty? users)
-      (log/info "INSERT USERS" (count users))
+      (log/infof  "Insert users %d " (count users))
+      (dd/increment {} "oss.users" (count users))
       (jdbc/insert-multi! pg-db :github_user users))))
 
 (defn insert-projects
@@ -189,10 +193,11 @@
         project-ids (mapv #(get % :full_name) projects)
         existing-projects (or (find-existing-projects conn project-ids) [])]
     (let [[not-in-db _ both-exists] (diff (set project-ids) (set existing-projects))]
-      (log/warn "NOT-DB" not-in-db)
+      ; (log/warn "NOT-DB" not-in-db)
       (let [missing-projects (filter #(in? not-in-db (get % :full_name)) projects)]
         (when (> (count missing-projects) 0)
-          (log/info (format "Inserting %d projects" (count missing-projects)))
+          (dd/increment {} "oss.projects" (count missing-projects))
+          (log/info (format "Insert projects %d" (count missing-projects)))
           (jdbc/insert-multi! pg-db :github_project missing-projects))))))
 
 (defn insert-records
@@ -528,13 +533,14 @@
 
 (defn user-list
   [conn n]
-  (jdbc/execute! pg-db
+  (mapv :login
+    (jdbc/query pg-db
       (-> (sqlh/select :login)
           (sqlh/from :github_user)
           (sqlh/where [:= :full_profile false])
           (sqlh/limit n)
           (sql/build)
-          (sql/format :quoting :ansi))))
+          (sql/format :quoting :ansi)))))
 
 (defn find-n-update-user
   [db x enhance?]
@@ -548,13 +554,21 @@
       (when enhance?
         (enhance-user db x 1000))))
 
+(defn sync-some-users
+  [db n]
+  (log/warn "Find users: " n db)
+  (let [conn (:connection db)
+        users (user-list nil n)]
+    (log/warnf "Loop: %d Found users" (count users))
+    (mapv #(find-n-update-user db % true) users )))
 
 
-(defn sync-users
+
+(defn sync-users-continuous
   [db n]
   (log/warn "Find users: " n db)
   (let [conn (:connection db)]
-    (loop [users (user-list n)
+    (loop [users (user-list nil n)
            looped 1]
       (log/warn (format "Loop: %d Found %d users" looped (count users)))
       (doall
