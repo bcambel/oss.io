@@ -1,5 +1,5 @@
 (ns hsm.gsync
-  (:require 
+  (:require
     [taoensso.timbre :as log]
     [com.stuartsierra.component :as component]
     [hsm.conf :as conf]
@@ -10,13 +10,13 @@
   [& args]
   (let [{:keys [conf] :or {conf "app.ini"}} {:conf "app.ini"}
         c (conf/parse-conf conf true)
-        sys (component/start (system/db-system { 
-                                    :host (:db-host c) 
-                                    :port (:db-port c) 
+        sys (component/start (system/db-system {
+                                    :host (:db-host c)
+                                    :port (:db-port c)
                                     :keyspace (:db-keyspace c)}))
         number-of-users (Integer/parseInt (first args))]
     (log/warn "Start operations!")
-    (gh/sync-users (-> sys :db) number-of-users)
+    (gh/sync-some-users (-> sys :db) number-of-users)
     (log/warn "Done!")
     (component/stop sys)
     (System/exit 0)

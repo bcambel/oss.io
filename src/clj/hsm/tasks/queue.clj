@@ -1,6 +1,7 @@
 (ns hsm.tasks.queue
   (:require [cemerick.bandalore :as sqs]
             [cheshire.core :refer :all]
+            [ring.util.codec :as codec]
             [hsm.integration.ghub :as gh]
             [hsm.cache :as cache]
             [taoensso.timbre :as log]
@@ -10,27 +11,6 @@
             [taoensso.carmine :as car :refer (wcar)]
             ))
 
-(defn pick-bee []
-  (let [hive (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
-              (car/smembers "oss.worker.bees"))]
-        (rand-nth hive)))
-
-(defn assign-worker-bee
-  [param]
-  (let [bee (pick-bee )
-        url (format "http://%s/%s/%s" bee "update-project" param )]
-      (log/info url)
-     (when-let [result (try
-                        (dd/timed {} "worker.bee.call" {:service "oss"}
-                          (-> (client/get url)
-                            (get :body)
-                            (parse-string true)))
-                        (catch Exception ex
-                          (log/error ex)))]
-      (gh/update-project-stats result)
-      (gh/update-project-db param result)
-  )))
-
 
 
 (defn process-msg
@@ -39,14 +19,16 @@
     (log/infof "Processing %s %s" type params)
     (try
     (condp = type
-      "update-project" (assign-worker-bee params)
+      "update-project" (gh/update-project-remotely params)
       "enhance-user" (gh/find-n-update-user nil params true)
       "sync-user" (gh/sync-some-users {:connection nil} (Integer/parseInt params))
+      "sync-single-user" (gh/find-n-update-user {} params)
       "import-org-events" (gh/import-org-events params)
-      (str "unexpected value ->" type)
+      (log/warn (str "unexpected value ->" type))
       )
     (catch Exception ex
       (do
+        (log/error ex)
         (log/warnf "Error during processing %s %s: %s" type params ex)
       )))))
 

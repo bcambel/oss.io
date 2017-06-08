@@ -3,6 +3,7 @@
     (:require
       [clojure.string                 :as s]
       [taoensso.timbre                :as log]
+      [ring.util.codec :as codec]
       [clojure.java.jdbc              :as jdbc]
       [honeysql.core                  :as sql]
       [honeysql.helpers               :as sqlh]
@@ -15,8 +16,8 @@
       [hsm.actions                    :as actions]
       [hsm.integration.ghub_keys      :as ghkeys]
       [truckerpath.clj-datadog.core   :as dd]
-      [hsm.cache :as cache]
-      )
+      [taoensso.carmine :as car :refer (wcar)]
+      [hsm.cache :as cache])
 
     (:use [slingshot.slingshot :only [throw+ try+]]
       [clojure.data :only [diff]])
@@ -65,20 +66,21 @@
            (get hd "X-RateLimit-Remaining")
            (get hd "X-RateLimit-Reset")))
 
+
+
 (defn get-url
   [url & options]
   (let [{:keys [header safe care conf]
          :or {header header-settings safe false
               care true conf (get-config)}} options
         [client_id secret] (ghkeys/pick-key)
-        _ (log/infof "Picked %s" client_id)]
+        ; _ (log/infof "Picked %s" client_id)
+        ]
     (try+
       (dd/timed {} "github.api.call" {:service "github"}
-        (let [response
-
-              (client/get (format "%s&client_id=%s&client_secret=%s" url client_id secret
-                                    )
-                        header)]
+        (let [full-url (format "%s&client_id=%s&client_secret=%s" url client_id secret)
+              _ (log/infof  "Calling %s " full-url)
+              response (client/get full-url header)]
           (rate-limit-logger (:headers response))
           response))
       (catch [:status 403] {:keys [request-time headers body]}
@@ -88,12 +90,22 @@
       (catch [:status 404] {:keys [request-time headers body]}
         (do
           (log/warn "NOT FOUND" url request-time )
-          (rate-limit-logger headers)))
+          (rate-limit-logger headers)
+          {:error 404}
+          ))
       (catch Object _
         (when care
           (log/error (:throwable &throw-context) "Unexpected Error"))
         (when-not safe
           (throw+))))))
+
+(defn get-url*
+  [url & options]
+  (let [response (get-url url)]
+    response
+  )
+  )
+
 
 (defn find-next-url
   "Figure out the next url to call
@@ -103,7 +115,7 @@
   [stupid-header]
   (when (!nil? stupid-header)
     (try
-      (log/debug stupid-header)
+      (log/info stupid-header)
       (let [[next-s last-s & others] (.split stupid-header ",")
             next-page (vec (.split next-s ";"))
             is-next (.contains (last next-page) "next")]
@@ -112,23 +124,76 @@
       (catch Throwable t
         (log/error t stupid-header)))))
 
-(defn fetch-url
-  [url]
+(defn fetch-url-and-next
+  [url {:keys [get-url-fn] :or {get-url-fn get-url}}]
   (try
-    (let [response (get-url url :header header-settings)]
+    (let [response (get-url-fn url :header header-settings)]
         (if (nil? response)
           {:success false :next-url nil :data nil :reason "Empty Response"}
           (do
-            (let [repos (parse-string (:body response) true)
+            (let [data (parse-string (:body response) true)
+                  _ (log/sometimes 0.1 (log/info (:headers response)))
                   next-url (find-next-url
-                              (-> response :headers :link))]
+                              (or (-> response :headers :link)
+                                  (-> response :headers :Link) ;; json encoder causes this when executed remotely
+                              ))]
               {:success true
                 :next-url next-url
-                :data repos}))))
+                :data data}))))
     (catch Throwable t
       (do
         (throw+ t)
         {:success false :reason (.getMessage t) :repos [] :next-url nil }))))
+
+
+(defn pick-bee []
+  (let [hive (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
+              (car/smembers "oss.worker.bees"))]
+        (rand-nth hive)))
+
+(defn assign-worker-bee
+  [task param & {:keys [bee-picker] :or {bee-picker pick-bee}}]
+  (let [bee (bee-picker)
+        url (format "http://%s/%s/%s" bee task param )]
+      (log/info url)
+     (when-let [result (try
+                        (dd/timed {} "worker.bee.call" {:service "oss"}
+                          (-> (client/get url)
+                            (get :body)
+                            (parse-string true)))
+                        (catch Exception ex
+                          (log/error ex)))]
+      result)))
+
+(defn clean-next-url
+  [next-url]
+  (let [
+        [path qs] (s/split next-url #"\?")
+        params  (-> (codec/form-decode qs "UTF-8")
+                    (dissoc "client_id" "client_secret"))
+        next-url* (s/join "?" [path (codec/form-encode params "UTF-8")]  )]
+      next-url*
+  ))
+
+(defn fetch-url
+  "Picks up one of the worker bee as the delegate to fetch the URL and finds the
+  next link. "
+  [url]
+  (let [fetcher (fn [url & args] (assign-worker-bee "get-url" (codec/url-encode url)
+                                  ; :bee-picker (fn [] "localhost:10554")
+                                   ))]
+      (let [next-step (fetch-url-and-next url {:get-url-fn fetcher})
+            next-url (:next-url next-step)
+            ; _ (log/info (:next-url next-step))
+            ]
+        (if (nil? next-url)
+          next-step
+          (let [next-url* (clean-next-url next-url)
+              next-step* (assoc next-step :next-url next-url*)]
+
+          (log/info (:next-url next-step*))
+          next-step*
+      )))))
 
 
 (defn user-data
@@ -272,12 +337,16 @@
   [user-login]
   (let [url (format "%s/users/%s?"
                      ghub-root user-login (env :client-id) (env :client-secret))
-        response (get-url url :header header-settings)]
-      (when (!nil? response)
-        (let [user-data (parse-string (:body response) true)]
-          (when-let [user-info (select-keys user-data user-fields)]
-            (log/warn (format "%s -> %s" user-login user-info))
-            user-info)))))
+        response (fetch-url url)]
+        (log/info response)
+        ;; iff the response is {:error 404}
+        (if (or (= "Empty Response" (get response :reason ))
+                (= 404 (:error (:data response ))))
+          :user-does-not-exist
+          (let [{:keys [next-url data]} response]
+            (when-let [user-info (select-keys data user-fields)]
+              (log/warn (format "%s -> %s" user-login user-info))
+              user-info)))))
 
 (defn expand-project
   [proj]
@@ -520,16 +589,19 @@
   [db proj max-iter]
   (update-project db proj)
   (doall
-    (map #(% db proj max-iter)
+    (pmap #(% db proj max-iter)
       [project-watchers project-stargazers project-contrib])))
 
 (defn find-user
   [user-login]
-  (when-let [user-data (mapkeyw (expand-user user-login))]
-    (-> user-data
-      (assoc :image (:avatar_url user-data))
-      (assoc :full_profile true)
-      (dissoc :avatar_url))))
+  (let [user-info (expand-user user-login)]
+    (if (= :user-does-not-exist user-info)
+        user-info
+      (when-let [user-data (mapkeyw user-info)]
+        (-> user-data
+          (assoc :image (:avatar_url user-data))
+          (assoc :full_profile true)
+          (dissoc :avatar_url))))))
 
 (defn user-list
   [conn n]
@@ -543,16 +615,27 @@
           (sql/format :quoting :ansi)))))
 
 (defn find-n-update-user
-  [db x enhance?]
+  [_ x enhance?]
     (when-let [user (find-user x)]
       (log/warn "USER:" user)
-      (jdbc/execute! pg-db
-          (-> (sqlh/update :github_user)
-              (sqlh/sset user)
-              (sqlh/where [:= :login x])
-              (sql/format :quoting :ansi)))
+      (try
+        (if (= :user-does-not-exist user)
+          (do
+            (log/warnf "Deleting user %s" x)
+            (jdbc/delete! pg-db :github_user ["login = ?" x]))
+
+          (jdbc/execute! pg-db
+            (-> (sqlh/update :github_user)
+                (sqlh/sset user)
+                (sqlh/where [:= :login x])
+                (sql/build)
+                (sql/format :quoting :ansi))))
+            (catch Exception ex
+              (let [ex (.getNextException ex)]
+                (log/error ex)
+              )))
       (when enhance?
-        (enhance-user db x 1000))))
+        (enhance-user {} x 1000))))
 
 (defn sync-some-users
   [db n]
@@ -565,7 +648,7 @@
 
 
 (defn sync-users-continuous
-  [db n]
+  [db n slp]
   (log/warn "Find users: " n db)
   (let [conn (:connection db)]
     (loop [users (user-list nil n)
@@ -573,5 +656,11 @@
       (log/warn (format "Loop: %d Found %d users" looped (count users)))
       (doall
         (map #(find-n-update-user db % true) users ))
-      (Thread/sleep 5000)
+      (Thread/sleep slp)
       (recur (user-list conn n) (inc looped)))))
+
+(defn update-project-remotely
+  [params]
+  (let [result (assign-worker-bee "update-project" params)]
+    (update-project-stats result)
+    (update-project-db params result)))

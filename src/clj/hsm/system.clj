@@ -7,6 +7,7 @@
         [hsm.controllers.user         :as c.u]
         [hsm.controllers.project      :as c.pr]
         [hsm.controllers.main         :as c.m]
+        [hsm.controllers.task         :as c.t]
         [hsm.controllers.account         :as account]
         [hsm.integration.ghub         :as ghub]
         [hsm.ring :as ringing         :refer [json-resp wrap-exception-handler
@@ -45,8 +46,7 @@
                  }]
       (defroutes routes
         (resources "/")
-        ; (resources "/react" {:root "react"})
-        ; (GET  "/" req (defaultpage))
+
         (GET  "/"                                 request (c.m/homepage specs request))
         (GET  "/about"                            request (c.m/about specs request))
 
@@ -90,10 +90,9 @@
         ; (GET  "/tutorial/:user/"                  request (c.m/all-tutorial specs request))
 
         (GET  "/import/:language"                 [language] (json-resp (ghub/import-repos [db event-chan] language)))
-        ; (GET  "/search"                           request (c.pr/search specs request))
-        ; (GET  "/search/update"                    request (c.pr/update-search specs request))
-        ; (GET  "/search/update-user"               request (c.pr/update-user-search-index specs request))
-        (GET "/update-project/:user/:project"              [user project] (json-resp (ghub/update-project-info (format "%s/%s" user project))))
+
+        (GET "/update-project/:user/:project"     [user project] (json-resp (ghub/update-project-info (format "%s/%s" user project))))
+        (GET "/get-url/:url"                      request (json-resp (c.t/get-url request)))
         (POST "/auth"                             request (account/authorize specs request))
         (GET "/register"                          request (account/register specs request))
 
