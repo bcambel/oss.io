@@ -75,13 +75,12 @@
 
 (def property-ids
   { "hackersome.com" "UA-57973731-1"
-    "sweet.io" "UA-33058338-1"
     "pythonhackers.com" "UA-57973731-4"
     "clojurehackers.com" "UA-57973731-3"
     "dev.hackersome.com" "UA-57973731-1"
     "oss.io" "UA-57973731-5"
+    "www.oss.io" "UA-57973731-10"
     "java-hackers.com" "UA-57973731-6"
-    "answer.io" "UA-57973731-7"
      })
 
 (def disqus-ids
