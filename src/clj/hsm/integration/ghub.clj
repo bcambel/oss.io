@@ -131,8 +131,8 @@
         (if (nil? response)
           {:success false :next-url nil :data nil :reason "Empty Response"}
           (do
-            (let [data (parse-string (:body response) true)
-                  _ (log/sometimes 0.1 (log/info (:headers response)))
+            (let [data (parse-string-strict (:body response) true)
+                  _ (log/sometimes 0.1 (log/info (:headers response) ))
                   next-url (find-next-url
                               (or (-> response :headers :link)
                                   (-> response :headers :Link) ;; json encoder causes this when executed remotely
@@ -189,10 +189,10 @@
         (if (nil? next-url)
           next-step
           (let [next-url* (clean-next-url next-url)
-              next-step* (assoc next-step :next-url next-url*)]
+                next-step* (assoc next-step :next-url next-url*)]
 
-          (log/info (:next-url next-step*))
-          next-step*
+            (log/info (:next-url next-step*))
+            next-step*
       )))))
 
 
@@ -214,7 +214,7 @@
   )
 
 (defn find-users
-  "Given all the projects which contains **`owner`** field,
+  "Given all the users,
   extract those and construct a hash-map by login id."
   [conn coll]
   (let [users (apply merge
@@ -248,7 +248,10 @@
     (when-not (empty? users)
       (log/infof  "Insert users %d " (count users))
       (dd/increment {} "oss.users" (count users))
-      (jdbc/insert-multi! pg-db :github_user users))))
+      ; (log/info users)
+      ; (mapv #(jdbc/insert! pg-db :github_user %) users)
+      (jdbc/insert-multi! pg-db :github_user users)
+      )))
 
 (defn insert-projects
   [conn coll]
@@ -605,14 +608,18 @@
 
 (defn user-list
   [conn n]
+  (let [random (rand-int 3e7)]
+  (log/infof "Picking %d up" random)
   (mapv :login
     (jdbc/query pg-db
       (-> (sqlh/select :login)
           (sqlh/from :github_user)
-          (sqlh/where [:= :full_profile false])
+          (sqlh/where [:and
+                       [:= :full_profile false]
+                       [:> :id random]])
           (sqlh/limit n)
           (sql/build)
-          (sql/format :quoting :ansi)))))
+          (sql/format :quoting :ansi))))))
 
 (defn find-n-update-user
   [_ x enhance?]
@@ -646,7 +653,6 @@
     (mapv #(find-n-update-user db % true) users )))
 
 
-
 (defn sync-users-continuous
   [db n slp]
   (log/warn "Find users: " n db)
@@ -659,8 +665,42 @@
       (Thread/sleep slp)
       (recur (user-list conn n) (inc looped)))))
 
+
 (defn update-project-remotely
   [params]
   (let [result (assign-worker-bee "update-project" params)]
     (update-project-stats result)
     (update-project-db params result)))
+
+
+(defn iterate-users
+  [url looped max]
+    (log/warn (format "[USERSINCE]Loop %d. %s" looped url))
+    (let [{:keys [success next-url data]} (fetch-url url)]
+      (insert-users {}
+        (mapv (fn [x]
+                (select-keys x base-user-fields)) data))
+      (if (>= looped max)
+        :done
+      (recur next-url (inc looped) max)
+  )))
+
+(defn iterate-projects
+  [url looped max]
+    (log/warn (format "[PROJECTSINCE]Loop %d. %s" looped url))
+    (let [{:keys [success next-url data]} (fetch-url url)]
+      (insert-projects {} data)
+      (if (>= looped max)
+        :done
+      (recur next-url (inc looped) max)
+  )))
+
+(defn iterate-users-since
+  [since]
+  (iterate-users (format "https://api.github.com/users?since=%d&per_page=100" since) 0 1e4)
+  )
+
+(defn iterate-projects-since
+  [since]
+  (iterate-projects (format "https://api.github.com/repositories?since=%d&per_page=100" since) 0 1e4)
+  )

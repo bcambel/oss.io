@@ -9,7 +9,7 @@ import time
 logging.basicConfig(format='[%(asctime)s](%(filename)s#%(lineno)d)%(levelname)-7s %(message)s',
                     level=logging.INFO)
 
-env.user = 'ubuntu'
+# env.user = 'ubuntu'
 env.use_ssh_config = True
 folder = "/opt/hackersome/"
 asset_folder = "/var/www/hackersome/"
@@ -263,3 +263,35 @@ def disk_status():
 def nlog():
     with cd("/var/log/nginx/hackersome.com"):
         run("tail -f access.log")
+
+@task
+def redis_keys():
+    run("redis-cli hgetall oss.system.github_keys")
+
+@task
+def setup_machine():
+
+    run("wget https://gist.githubusercontent.com/bcambel/18bdd02ec71a6b8dc9bce035a8c0c61d/raw/5bf14bf8fc2f2a41a711ac5b14640d050a4a013d/setup.sh")
+    run("chmod +x setup.sh")
+    run(". ./setup.sh")
+
+@task
+def setup_serv():
+    put("app.worker.basic.ini", "app.ini")
+    sudo("supervisorctl reread")
+    sudo("supervisorctl update")
+
+@task
+def setup_nginx():
+    sudo("service nginx restart")
+
+@task
+def deploy_code(version="0.1.9"):
+    ff = "hackersome-{0}-standalone.jar".format(version)
+    put("target/"+ff, ff)
+    run("ln -s {} hackersome.jar --force".format(ff))
+
+@task
+def restart():
+    sudo("supervisorctl restart oss")
+    sudo("supervisorctl status oss")

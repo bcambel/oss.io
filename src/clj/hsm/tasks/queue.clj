@@ -18,19 +18,24 @@
   (let [{:keys [type params]} (parse-string (:body msg) true)]
     (log/infof "Processing %s %s" type params)
     (try
-    (condp = type
-      "update-project" (gh/update-project-remotely params)
-      "enhance-user" (gh/find-n-update-user nil params true)
-      "sync-user" (gh/sync-some-users {:connection nil} (Integer/parseInt params))
-      "sync-single-user" (gh/find-n-update-user {} params)
-      "import-org-events" (gh/import-org-events params)
-      (log/warn (str "unexpected value ->" type))
-      )
+      (condp = type
+        "update-project" (gh/update-project-remotely params)
+        "enhance-user" (gh/find-n-update-user nil params true)
+        "sync-user" (future
+                      (gh/sync-some-users {:connection nil} (Integer/parseInt params)))
+        "sync-single-user" (gh/find-n-update-user {} params)
+        "import-org-events" (gh/import-org-events params)
+        "iterate-users" (future (gh/iterate-users-since (Long/parseLong params)))
+        "iterate-projects" (gh/iterate-projects-since (Long/parseLong params))
+        (log/warn (str "unexpected value ->" type))
+        )
     (catch Exception ex
       (do
         (log/error ex)
         (log/warnf "Error during processing %s %s: %s" type params ex)
-      )))))
+      )))
+      (log/infof "Returning task %s" (:id msg))
+      ))
 
 
 (defn consume-messages
@@ -43,8 +48,11 @@
       (let [available-queues  (sqs/list-queues client)
             _ (log/info available-queues)
             op-queue (.replace (or (first available-queues) "") "us-east-1" "us-west-1" )]
-          (future (dorun (map (sqs/deleting-consumer client process-msg)
-             (sqs/polling-receive client op-queue :max-wait Long/MAX_VALUE :limit 10)))))))
+          (future
+            (dorun
+              (map
+                (sqs/deleting-consumer client process-msg)
+                (sqs/polling-receive client op-queue :max-wait Long/MAX_VALUE :limit 10)))))))
 
 (defn start-listen []
     (try
