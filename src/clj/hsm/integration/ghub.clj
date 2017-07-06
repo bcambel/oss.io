@@ -106,6 +106,8 @@
   )
   )
 
+;; if the response is 403, capture the reset date and remove it from
+;; the available items
 
 (defn find-next-url
   "Figure out the next url to call
@@ -132,30 +134,26 @@
           {:success false :next-url nil :data nil :reason "Empty Response"}
           (do
             (let [data (parse-string-strict (:body response) true)
-                  _ (log/sometimes 0.1 (log/info (:headers response) ))
+                  _ (log/sometimes 0.01 (log/info (:headers response) ))
+                  credit-state (select-keys (:headers response) [:X-RateLimit-Reset :X-RateLimit-Remaining])
+                  ; _ (log/infof "R/L %s" credit-state)
                   next-url (find-next-url
                               (or (-> response :headers :link)
                                   (-> response :headers :Link) ;; json encoder causes this when executed remotely
                               ))]
               {:success true
                 :next-url next-url
-                :data data}))))
+                :data data
+                :credits credit-state}))))
     (catch Throwable t
       (do
         (throw+ t)
         {:success false :reason (.getMessage t) :repos [] :next-url nil }))))
 
-
-(defn pick-bee []
-  (let [hive (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
-              (car/smembers "oss.worker.bees"))]
-        (rand-nth hive)))
-
 (defn assign-worker-bee
-  [task param & {:keys [bee-picker] :or {bee-picker pick-bee}}]
-  (let [bee (bee-picker)
-        url (format "http://%s/%s/%s" bee task param )]
-      (log/info url)
+  [task bee param]
+  (let [url (format "http://%s/%s/%s" bee task param )]
+      ; (log/info url)
      (when-let [result (try
                         (dd/timed {} "worker.bee.call" {:service "oss"}
                           (-> (client/get url)
@@ -175,25 +173,103 @@
       next-url*
   ))
 
+(defn to-int
+  [v]
+  (try
+    (Integer/parseInt v)
+    (catch Exception ex
+      nil)))
+(defn epoch-sec
+  []
+  (int (/ (hsm.utils/now->ep) 1000)))
+
+(defn credit-report
+  [bee report]
+  (when report
+    (when-let [reset (to-int (:X-RateLimit-Reset report))]
+    (let [now (epoch-sec)
+          credits-left (to-int (:X-RateLimit-Remaining report))
+          report (merge report {:bee bee :rate (if (zero? credits-left) 0
+                                                   (float (/ (- reset now) credits-left)))})]
+    (wcar {:pool {} :spec {:host "localhost" :port 6379}}
+      (car/hset "oss.worker.bee.state" bee (generate-string report))
+      (car/zadd  "oss.worker.bee.tokens" credits-left bee )
+      (car/zadd  "oss.worker.bee.credit" reset bee)
+      (car/zadd  "oss.worker.bee.credit.rate" (str (:rate report))  bee )
+      (car/publish "oss.worker.bee.credit.line"  (generate-string report))
+      )))))
+;; bee has time reset time already set, so don't use it
+;; until the reset has been done.
+
+(defn pick-bee-by-random []
+  ; (log/info "Random bee pick")
+  (let [[hive states] (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
+                        (car/smembers "oss.worker.bees")
+                        (car/hgetall "oss.worker.bee.state"))
+        states (filter (fn[x] (or (> (epoch-sec) (Integer/parseInt (:X-RateLimit-Reset x)))
+                                  (> (Integer/parseInt (:X-RateLimit-Remaining x)) 0)))
+                    (map (fn [[x y]] (parse-string y true)) (partition 2 states)))
+        chosen (rand-nth states)]
+        (if chosen
+          (do
+            (log/infof "Choses %s" chosen)
+            (:bee chosen))
+          (do
+            (log/info "Rollback to random hive bee")
+            (rand-nth hive)))))
+
+(defn pick-bee-by-rank []
+  (let [hive (mapv identity (partition 2 (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
+              (car/zrangebyscore "oss.worker.bee.tokens" 10 5000 "WITHSCORES" ))))
+        selection (mapv identity (last hive))]
+        (if (or (nil? selection) (empty? selection))
+          (pick-bee-by-random)
+          (do
+            ; (log/infof "Lucky one is %s [%s]" selection hive)
+            (first selection)))))
+
+(defn pick-bee-by-rate []
+  (let [hive (mapv identity (partition 2 (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
+              (car/zrangebyscore "oss.worker.bee.credit.rate" 0.01 5000 "WITHSCORES" ))))
+        selection (mapv identity (last hive))]
+        (if (or (nil? selection) (empty? selection))
+          (pick-bee-by-random)
+          (do
+            ; (log/infof "Rate Lucky one is %s [%s]" selection hive)
+            (first selection)))))
+
+(defn pick-a-bee
+  []
+  (apply (rand-nth [pick-bee-by-rank
+                    pick-bee-by-rank
+                    pick-bee-by-random
+                    pick-bee-by-rate
+                    pick-bee-by-rate]) []))
+
+;; if the chosen bee has the credit 0
+
 (defn fetch-url
   "Picks up one of the worker bee as the delegate to fetch the URL and finds the
   next link. "
-  [url]
-  (let [fetcher (fn [url & args] (assign-worker-bee "get-url" (codec/url-encode url)
+  [url & {:keys [bee-picker] :or {bee-picker pick-a-bee}}]
+
+  (let [bee (bee-picker) ;
+        fetcher (fn [url & args] (assign-worker-bee "get-url" bee (codec/url-encode url)
                                   ; :bee-picker (fn [] "localhost:10554")
                                    ))]
       (let [next-step (fetch-url-and-next url {:get-url-fn fetcher})
             next-url (:next-url next-step)
-            ; _ (log/info (:next-url next-step))
-            ]
+            _ (log/sometimes 0.9 (log/info bee (:credits next-step)))]
+            (dd/increment {} "github.calls" 1 {:bee bee :result (not (nil? next-url))})
+            (credit-report bee (:credits next-step))
         (if (nil? next-url)
           next-step
-          (let [next-url* (clean-next-url next-url)
-                next-step* (assoc next-step :next-url next-url*)]
-
+          (do
+            (let [next-url* (clean-next-url next-url)
+                  next-step* (assoc next-step :next-url next-url*)]
             (log/info (:next-url next-step*))
             next-step*
-      )))))
+      ))))))
 
 
 (defn user-data
@@ -230,6 +306,8 @@
 
 (defn find-existing-projects
   [conn project-list]
+    (if (empty? project-list)
+      []
     (let [projects (map :full_name
                       (jdbc/query pg-db
                       (->(sqlh/select :full_name)
@@ -239,7 +317,7 @@
                          (sql/build)
                          (sql/format :quoting :ansi))))]
       ; (log/warn (format "Found projects: %d" (count projects)))
-      projects))
+      projects)))
 
 (defn insert-users
   [conn coll]
@@ -348,7 +426,7 @@
           :user-does-not-exist
           (let [{:keys [next-url data]} response]
             (when-let [user-info (select-keys data user-fields)]
-              (log/warn (format "%s -> %s" user-login user-info))
+              ; (log/warn (format "%s -> %s" user-login user-info))
               user-info)))))
 
 (defn expand-project
@@ -358,7 +436,7 @@
       (when (!nil? response)
         (let [proj-data (parse-string (:body response) true)]
           (when-let [proj-info (select-keys proj-data ghub-proj-fields)]
-            (log/warn (format "%s -> %s" proj (select-keys proj-info [:id :watchers :full_name])))
+            ; (log/warn (format "%s -> %s" proj (select-keys proj-info [:id :watchers :full_name])))
             proj-info)))))
 
 (defn user-starred
