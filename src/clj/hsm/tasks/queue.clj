@@ -9,9 +9,23 @@
             [clj-http.client                :as client]
             [truckerpath.clj-datadog.core :as dd]
             [taoensso.carmine :as car :refer (wcar)]
+            [raven-clj.core :refer [capture]]
+            [hsm.conf                       :as conf]
+            [raven-clj.interfaces :refer [stacktrace]]
             ))
 
-
+(defn exec-with-care
+  [exec-fn args]
+  (future
+    (try
+      (apply exec-fn args)
+      (catch Exception ex
+        (log/error ex)
+        (log/warnf "Error processing %s %s" exec-fn ex)
+        (capture (-> @conf/app-conf :data :sentry-dsn )
+                  (-> {:message (format "Processing Exception on %s" exec-fn)}
+                      (stacktrace ex)))
+        (log/warn "Captured trace")))))
 
 (defn process-msg
   [msg]
@@ -19,14 +33,14 @@
     (log/infof "Processing %s %s" type params)
     (try
       (condp = type
-        "update-project" (gh/update-project-remotely params)
-        "enhance-user" (gh/find-n-update-user nil params true)
+        "update-project" (future (gh/update-project-remotely params))
+        "enhance-user" (future (gh/find-n-update-user nil params true))
         "sync-user" (future
                       (gh/sync-some-users {:connection nil} (Integer/parseInt params)))
-        "sync-single-user" (gh/find-n-update-user {} params)
-        "import-org-events" (gh/import-org-events params)
+        "sync-single-user" (future (gh/find-n-update-user {} params))
+        "import-org-events" (future (gh/import-org-events params))
         "iterate-users" (future (gh/iterate-users-since (Long/parseLong params)))
-        "iterate-projects" (gh/iterate-projects-since (Long/parseLong params))
+        "iterate-projects" (exec-with-care gh/iterate-projects-since [(Long/parseLong params)])
         (log/warn (str "unexpected value ->" type))
         )
     (catch Exception ex

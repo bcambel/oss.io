@@ -156,11 +156,13 @@
       ; (log/info url)
      (when-let [result (try
                         (dd/timed {} "worker.bee.call" {:service "oss"}
-                          (-> (client/get url)
+                          (-> (client/get url header-settings)
                             (get :body)
                             (parse-string true)))
                         (catch Exception ex
-                          (log/error ex)))]
+                          (do
+                            (log/warnf "Failed in bee %s for %s %s" bee task param)
+                            (log/error ex))))]
       result)))
 
 (defn clean-next-url
@@ -189,8 +191,10 @@
     (when-let [reset (to-int (:X-RateLimit-Reset report))]
     (let [now (epoch-sec)
           credits-left (to-int (:X-RateLimit-Remaining report))
+          seconds-left (- reset now)
+          seconds-left (if (zero? seconds-left) 1 seconds-left)
           report (merge report {:bee bee :rate (if (zero? credits-left) 0
-                                                   (float (/ (- reset now) credits-left)))})]
+                                                   (float (/ credits-left seconds-left )))})]
     (wcar {:pool {} :spec {:host "localhost" :port 6379}}
       (car/hset "oss.worker.bee.state" bee (generate-string report))
       (car/zadd  "oss.worker.bee.tokens" credits-left bee )
@@ -201,18 +205,30 @@
 ;; bee has time reset time already set, so don't use it
 ;; until the reset has been done.
 
-(defn pick-bee-by-random []
+(defn pick-bee-by-random
+  []
+  (let [hive (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
+                        (car/smembers "oss.worker.bees"))]
+      (rand-nth hive)
+  ))
+
+(defn bees-with-proper-state
+  [states]
+  (filter (fn[x] (or (> (epoch-sec) (Integer/parseInt (:X-RateLimit-Reset x)))
+                            (> (Integer/parseInt (:X-RateLimit-Remaining x)) 0)))
+              (map (fn [[x y]] (parse-string y true)) (partition 2 states)))
+  )
+
+(defn pick-bee-by-random-with-state []
   ; (log/info "Random bee pick")
   (let [[hive states] (wcar  {:pool {} :spec {:host "localhost" :port 6379}}
                         (car/smembers "oss.worker.bees")
                         (car/hgetall "oss.worker.bee.state"))
-        states (filter (fn[x] (or (> (epoch-sec) (Integer/parseInt (:X-RateLimit-Reset x)))
-                                  (> (Integer/parseInt (:X-RateLimit-Remaining x)) 0)))
-                    (map (fn [[x y]] (parse-string y true)) (partition 2 states)))
-        chosen (rand-nth states)]
+        possible-bees (bees-with-proper-state states)
+        chosen (rand-nth possible-bees)]
         (if chosen
           (do
-            (log/infof "Choses %s" chosen)
+            ; (log/infof "Choses %s" chosen)
             (:bee chosen))
           (do
             (log/info "Rollback to random hive bee")
@@ -241,9 +257,9 @@
 (defn pick-a-bee
   []
   (apply (rand-nth [pick-bee-by-rank
-                    pick-bee-by-rank
+                    pick-bee-by-random-with-state
+                    pick-bee-by-random-with-state
                     pick-bee-by-random
-                    pick-bee-by-rate
                     pick-bee-by-rate]) []))
 
 ;; if the chosen bee has the credit 0
@@ -252,24 +268,26 @@
   "Picks up one of the worker bee as the delegate to fetch the URL and finds the
   next link. "
   [url & {:keys [bee-picker] :or {bee-picker pick-a-bee}}]
-
-  (let [bee (bee-picker) ;
-        fetcher (fn [url & args] (assign-worker-bee "get-url" bee (codec/url-encode url)
-                                  ; :bee-picker (fn [] "localhost:10554")
-                                   ))]
-      (let [next-step (fetch-url-and-next url {:get-url-fn fetcher})
-            next-url (:next-url next-step)
-            _ (log/sometimes 0.9 (log/info bee (:credits next-step)))]
-            (dd/increment {} "github.calls" 1 {:bee bee :result (not (nil? next-url))})
-            (credit-report bee (:credits next-step))
-        (if (nil? next-url)
-          next-step
-          (do
-            (let [next-url* (clean-next-url next-url)
-                  next-step* (assoc next-step :next-url next-url*)]
-            (log/info (:next-url next-step*))
-            next-step*
-      ))))))
+  (let [bee (bee-picker)
+        url-encoded (try
+                      (codec/url-encode url)
+                      (catch Exception ex
+                        (log/warnf "Failed to URL Encode %s" url )
+                          ))]
+      (when url-encoded
+        (let [fetcher (fn [url & args] (assign-worker-bee "get-url" bee url-encoded))
+              next-step (fetch-url-and-next url {:get-url-fn fetcher})
+              next-url (:next-url next-step)
+              _ (log/sometimes 0.009 (log/info bee (:credits next-step)))]
+              (dd/increment {} "github.calls" 1 {:bee bee :result (not (nil? next-url))})
+              (credit-report bee (:credits next-step))
+          (if (nil? next-url)
+            next-step
+            (do
+              (let [next-url* (clean-next-url next-url)
+                    next-step* (assoc next-step :next-url next-url*)]
+              (log/info (:next-url next-step*))
+              next-step*)))))))
 
 
 (defn user-data
@@ -419,7 +437,7 @@
   (let [url (format "%s/users/%s?"
                      ghub-root user-login (env :client-id) (env :client-secret))
         response (fetch-url url)]
-        (log/info response)
+        ; (log/info response)
         ;; iff the response is {:error 404}
         (if (or (= "Empty Response" (get response :reason ))
                 (= 404 (:error (:data response ))))
@@ -763,12 +781,22 @@
       (recur next-url (inc looped) max)
   )))
 
+(defn fetch-url-with-retry
+  [url]
+  (let [{:keys [success next-url data] :as result}  (fetch-url url)]
+    (if (nil? next-url)
+      (do
+        (log/infof "Retrying %s" url)
+        (let [{:keys [success next-url data] :as retry-result}  (fetch-url url)]
+          retry-result))
+      result)))
+
 (defn iterate-projects
   [url looped max]
     (log/warn (format "[PROJECTSINCE]Loop %d. %s" looped url))
-    (let [{:keys [success next-url data]} (fetch-url url)]
+    (let [{:keys [success next-url data]} (fetch-url-with-retry url)]
       (insert-projects {} data)
-      (if (>= looped max)
+      (if (or (nil? next-url) (>= looped max))
         :done
       (recur next-url (inc looped) max)
   )))

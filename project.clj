@@ -60,6 +60,7 @@
                            [hikari-cp "1.7.5"]
                            [org.clojars.runa/clj-kryo "1.5.0"]
                            [org.clojure/tools.namespace "0.3.0-alpha4"]
+                           [com.stuartsierra/frequencies "0.1.0"]
                            ]
                 :plugins [[lein-environ "1.0.0"]
                            [s3-wagon-private "1.1.2"]]
